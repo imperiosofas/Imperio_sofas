@@ -1,0 +1,46 @@
+import { useEffect } from 'react'
+import Lenis from 'lenis'
+import { MessageCircle } from 'lucide-react'
+import { WhatsAppLink } from './components/WhatsAppLink'
+import { Header } from './sections/Header'
+import { Hero } from './sections/Hero'
+import { Differentials } from './sections/Differentials'
+import { Catalog } from './sections/Catalog'
+import { Reviews } from './sections/Reviews'
+import { Location } from './sections/Location'
+import { FinalCta } from './sections/FinalCta'
+import { Footer } from './sections/Footer'
+
+function App() {
+  useEffect(() => {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (prefersReducedMotion) return
+
+    const lenis = new Lenis({ autoRaf: true, smoothWheel: true, lerp: 0.08, anchors: { offset: -88 } })
+    return () => lenis.destroy()
+  }, [])
+
+  return (
+    <div className="min-h-screen overflow-x-clip bg-ink text-ivory selection:bg-gold selection:text-ink">
+      <Header />
+      <main>
+        <Hero />
+        <Differentials />
+        <Catalog />
+        <Reviews />
+        <Location />
+        <FinalCta />
+      </main>
+      <Footer />
+      <WhatsAppLink
+        message="Olá! Vim pelo site da Império Sofás e quero conhecer os modelos disponíveis."
+        aria-label="Falar com a Império Sofás pelo WhatsApp"
+        className="fixed bottom-5 right-5 z-50 grid size-14 place-items-center rounded-full bg-[#25D366] text-white shadow-[0_12px_40px_rgba(37,211,102,.35)] transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold md:bottom-7 md:right-7"
+      >
+        <MessageCircle aria-hidden="true" size={27} strokeWidth={2.2} />
+      </WhatsAppLink>
+    </div>
+  )
+}
+
+export default App
