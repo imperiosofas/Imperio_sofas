@@ -42,7 +42,7 @@ export function Header() {
       </div>
       <AnimatePresence>
         {open && (
-          <motion.nav id="mobile-menu" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden border-t border-white/8 bg-ink lg:hidden" aria-label="Navegação móvel">
+          <motion.nav id="mobile-menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.12 }} className="overflow-hidden border-t border-white/8 bg-ink lg:hidden" aria-label="Navegação móvel">
             <div className="shell grid gap-1 py-4">
               {links.map(([label, href]) => <a key={href} href={href} onClick={() => setOpen(false)} className="rounded-lg px-3 py-3.5 text-base font-medium text-ivory/85 hover:bg-white/5 hover:text-gold">{label}</a>)}
               <WhatsAppLink message="Olá! Vim pelo site e quero falar com a Império Sofás." className="mt-3 flex min-h-12 items-center justify-center gap-2 rounded-full bg-gold px-5 py-3 font-bold text-ink">

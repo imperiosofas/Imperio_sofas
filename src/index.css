@@ -23,6 +23,7 @@
 }
 
 html {
+  scroll-padding-top: 96px;
   scroll-behavior: smooth;
   background: #070707;
 }
@@ -98,6 +99,18 @@ img {
 
 .catalog-swiper .swiper-pagination {
   bottom: 4px !important;
+}
+
+@media (max-width: 1023px), (pointer: coarse), (prefers-reduced-motion: reduce) {
+  .grain { display: none; }
+  [class*="backdrop-blur"] { backdrop-filter: none; }
+  .catalog-swiper .swiper-slide { opacity: 1; transform: none; }
+  .catalog-swiper article { box-shadow: none; }
+  header { background-color: #0d0d0d; }
+}
+
+@media (max-width: 1023px), (pointer: coarse) {
+  html { scroll-behavior: auto; }
 }
 
 @media (min-width: 640px) {

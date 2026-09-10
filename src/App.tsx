@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import Lenis from 'lenis'
+import { MotionConfig } from 'framer-motion'
+import { useEnhancedMotion } from './lib/useEnhancedMotion'
 import { MessageCircle } from 'lucide-react'
 import { WhatsAppLink } from './components/WhatsAppLink'
 import { Header } from './sections/Header'
@@ -12,15 +13,21 @@ import { FinalCta } from './sections/FinalCta'
 import { Footer } from './sections/Footer'
 
 function App() {
+  const enhancedMotion = useEnhancedMotion()
   useEffect(() => {
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (prefersReducedMotion) return
-
-    const lenis = new Lenis({ autoRaf: true, smoothWheel: true, lerp: 0.08, anchors: { offset: -88 } })
-    return () => lenis.destroy()
-  }, [])
+    if (!enhancedMotion) return
+    let cancelled = false
+    let destroy: (() => void) | undefined
+    void import('lenis').then(({ default: Lenis }) => {
+      if (cancelled) return
+      const lenis = new Lenis({ autoRaf: true, smoothWheel: true, lerp: 0.08, anchors: { offset: -88 } })
+      destroy = () => lenis.destroy()
+    })
+    return () => { cancelled = true; destroy?.() }
+  }, [enhancedMotion])
 
   return (
+    <MotionConfig reducedMotion="user">
     <div className="min-h-screen overflow-x-clip bg-ink text-ivory selection:bg-gold selection:text-ink">
       <Header />
       <main>
@@ -40,6 +47,7 @@ function App() {
         <MessageCircle aria-hidden="true" size={27} strokeWidth={2.2} />
       </WhatsAppLink>
     </div>
+    </MotionConfig>
   )
 }
 

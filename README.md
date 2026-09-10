@@ -26,9 +26,9 @@ O número existe em um único lugar: `src/config.ts`, constante `WHATSAPP_NUMBER
 
 1. Coloque as novas imagens em `src/assets/`, preferencialmente em WebP.
 2. Edite `src/data/products.ts` e atualize nome, tecido, descrição, preço, imagem e `srcSet`.
-3. Os itens atuais estão marcados no código como `TODO` porque são exemplos fictícios.
+3. O catálogo contém os cinco modelos reais enviados em 10/09/2026: Belize (2,20 m, 12x R$ 308), Berlim (2,50 m, 12x R$ 339), Dallas (2,90 m, 12x R$ 359), Ferrari (2,20 m, 12x R$ 234) e Máximo (2,30 m, 12x R$ 309). As parcelas foram transcritas dos nomes dos arquivos, sem presumir ausência de juros.
 
-As imagens atuais foram geradas por IA para uso como placeholder. As versões WebP em 640/1280 px (e 768/1536 px no hero) ajudam a reduzir o download em celulares.
+As fotos do catálogo ficam em `src/assets/products/`, com originais preservados em `originals/` e versões tratadas por IA em `enhanced/`. O prompt e a procedência estão em `enhanced/README.md`. Para regenerar os WebP responsivos de 480/800/1080 px, execute `node scripts/optimize-enhanced-products.mjs`. O carrossel usa proporção 11:10, sem o selo “Foto real” e sem faixas pretas, com enquadramento individual em `objectPosition` para priorizar cada sofá. O tratamento busca clareza e iluminação natural preservando modelo e ambiente; os originais continuam disponíveis para comparação. A imagem do hero continua ilustrativa, gerada por IA, em 768/1536 px.
 
 ## Atualizar avaliações e informações da loja
 
@@ -45,9 +45,23 @@ O Google Maps exibe o telefone `(12) 99218-0333`, enquanto o briefing confirma o
 
 ## Logo e conteúdo provisório
 
-O monograma no componente `src/components/Brand.tsx` é temporário e está marcado com `TODO`. Substitua-o pelo brasão oficial em SVG/WebP quando o arquivo da marca estiver disponível.
+A logo oficial recebida em 08/09/2026 aparece no cabeçalho, hero e rodapé. O original está em `public/imperio-sofas-logo.png`; versões WebP de 128 e 384 px pesam aproximadamente 3,5 KB e 11,4 KB. Para regenerar as versões: `node scripts/optimize-logo.mjs`. O desenho original é preservado; o recorte circular é feito somente na apresentação por CSS.
 
-Modelos, preços e imagens do catálogo são ilustrativos. Os cinco diferenciais seguem o briefing fornecido e devem passar pela validação comercial da marca antes da publicação.
+### Movimento adaptativo
+
+`src/lib/useEnhancedMotion.ts` habilita efeitos avançados somente a partir de 1024 px, com mouse e sem preferência por movimento reduzido. Em mobile há rolagem nativa, carrossel plano, conteúdo imediatamente visível e menu com fade curto. Lenis é importado somente quando necessário no desktop. Parallax e observadores dos componentes Reveal não são montados em mobile. Camadas de blur, textura e sombras do carrossel são removidas nesse modo.
+
+Verificação: build e lint passaram; logos carregaram e não houve overflow horizontal nas larguras verificadas. Menu móvel e arraste do carrossel (Berlim → Carina) funcionaram. Não foi realizado benchmark em celular físico.
+
+### Próximas fotos do Wagner — direção sugerida
+
+1. Foto vertical da cintura para cima, sorrindo, braços e mãos inteiros no enquadramento, luz natural e fundo simples. Recortar o fundo e usar ao lado do CTA final, com uma apresentação curta aprovada pelo Wagner.
+2. Foto espontânea sentado em um sofá do showroom: encaixa perto do catálogo e mostra a escala do produto.
+3. Vídeo de 15–20 segundos dando boas-vindas e convidando a visitar a loja. Usar capa estática e carregar o vídeo apenas ao clicar, sem autoplay.
+
+Enquanto essas fotos não chegam, hero e CTA convidam a enviar foto, medidas ou áudio da sala pelo WhatsApp. Não há retrato fictício ou depoimento inventado do Wagner.
+
+Modelos, medidas, parcelas e fotos do catálogo correspondem aos arquivos enviados pelo cliente. Os cinco diferenciais seguem o briefing fornecido e devem passar pela validação comercial da marca antes da publicação.
 
 ## SEO e imagem social
 

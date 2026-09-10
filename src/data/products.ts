@@ -1,19 +1,55 @@
-import berlim640 from '../assets/sofa-berlim-640.webp'
-import berlim1280 from '../assets/sofa-berlim-1280.webp'
-import carina640 from '../assets/sofa-carina-640.webp'
-import carina1280 from '../assets/sofa-carina-1280.webp'
-import nobile640 from '../assets/sofa-nobile-640.webp'
-import nobile1280 from '../assets/sofa-nobile-1280.webp'
-import verona640 from '../assets/sofa-verona-640.webp'
-import verona1280 from '../assets/sofa-verona-1280.webp'
-import palazzo640 from '../assets/sofa-palazzo-640.webp'
-import palazzo1280 from '../assets/sofa-palazzo-1280.webp'
+import belize480 from '../assets/products/belize-enhanced-480.webp'
+import belize800 from '../assets/products/belize-enhanced-800.webp'
+import belize1080 from '../assets/products/belize-enhanced-1080.webp'
+import berlim480 from '../assets/products/berlim-enhanced-480.webp'
+import berlim800 from '../assets/products/berlim-enhanced-800.webp'
+import berlim1080 from '../assets/products/berlim-enhanced-1080.webp'
+import dallas480 from '../assets/products/dallas-enhanced-480.webp'
+import dallas800 from '../assets/products/dallas-enhanced-800.webp'
+import dallas1080 from '../assets/products/dallas-enhanced-1080.webp'
+import ferrari480 from '../assets/products/ferrari-enhanced-480.webp'
+import ferrari800 from '../assets/products/ferrari-enhanced-800.webp'
+import ferrari1080 from '../assets/products/ferrari-enhanced-1080.webp'
+import maximo480 from '../assets/products/maximo-enhanced-480.webp'
+import maximo800 from '../assets/products/maximo-enhanced-800.webp'
+import maximo1080 from '../assets/products/maximo-enhanced-1080.webp'
 
-// TODO: Produtos, fotos e preços abaixo são placeholders. Substitua pelos itens reais da loja.
+// Fotos reais enviadas em 10/09/2026. Medidas e parcelas transcritas dos nomes dos arquivos.
+// Não presumir tecido, número de lugares ou parcelamento sem juros.
 export const products = [
-  { name: 'Sofá Berlim', tone: 'Linho areia', detail: 'Retrátil • 4 lugares', price: 'a partir de R$ 2.490', image: berlim1280, srcSet: `${berlim640} 640w, ${berlim1280} 1280w` },
-  { name: 'Sofá Carina', tone: 'Veludo terracota', detail: 'Reclinável • 3 lugares', price: 'a partir de R$ 2.290', image: carina1280, srcSet: `${carina640} 640w, ${carina1280} 1280w` },
-  { name: 'Sofá Nobile', tone: 'Bouclé verde', detail: 'Modular • com chaise', price: 'a partir de R$ 3.190', image: nobile1280, srcSet: `${nobile640} 640w, ${nobile1280} 1280w` },
-  { name: 'Sofá Verona', tone: 'Linho azul', detail: 'Compacto • 3 lugares', price: 'a partir de R$ 1.990', image: verona1280, srcSet: `${verona640} 640w, ${verona1280} 1280w` },
-  { name: 'Sofá Palazzo', tone: 'Suede grafite', detail: 'Retrátil • 4 lugares', price: 'a partir de R$ 2.790', image: palazzo1280, srcSet: `${palazzo640} 640w, ${palazzo1280} 1280w` },
+  {
+    name: 'Sofá Belize', size: '2,20 m', price: '12x de R$ 308,00',
+    image: belize800,
+    srcSet: `${belize480} 480w, ${belize800} 800w, ${belize1080} 1080w`,
+    objectPosition: 'center 65%',
+    alt: 'Sofá Belize de 2,20 m fotografado no showroom',
+  },
+  {
+    name: 'Sofá Berlim', size: '2,50 m', price: '12x de R$ 339,00',
+    image: berlim800,
+    srcSet: `${berlim480} 480w, ${berlim800} 800w, ${berlim1080} 1080w`,
+    objectPosition: 'center 50%',
+    alt: 'Sofá Berlim de 2,50 m fotografado no showroom',
+  },
+  {
+    name: 'Sofá Dallas', size: '2,90 m', price: '12x de R$ 359,00',
+    image: dallas800,
+    srcSet: `${dallas480} 480w, ${dallas800} 800w, ${dallas1080} 1080w`,
+    objectPosition: 'center 65%',
+    alt: 'Sofá Dallas de 2,90 m fotografado no showroom',
+  },
+  {
+    name: 'Sofá Ferrari', size: '2,20 m', price: '12x de R$ 234,00',
+    image: ferrari800,
+    srcSet: `${ferrari480} 480w, ${ferrari800} 800w, ${ferrari1080} 1080w`,
+    objectPosition: 'center 95%',
+    alt: 'Sofá Ferrari de 2,20 m fotografado no showroom',
+  },
+  {
+    name: 'Sofá Máximo', size: '2,30 m', price: '12x de R$ 309,00',
+    image: maximo800,
+    srcSet: `${maximo480} 480w, ${maximo800} 800w, ${maximo1080} 1080w`,
+    objectPosition: 'center 100%',
+    alt: 'Sofá Máximo de 2,30 m fotografado no showroom',
+  },
 ] as const
