@@ -51,15 +51,15 @@ A logo oficial recebida em 08/09/2026 aparece no cabeçalho, hero e rodapé. O o
 
 `src/lib/useEnhancedMotion.ts` habilita efeitos avançados somente a partir de 1024 px, com mouse e sem preferência por movimento reduzido. Em mobile há rolagem nativa, carrossel plano, conteúdo imediatamente visível e menu com fade curto. Lenis é importado somente quando necessário no desktop. Parallax e observadores dos componentes Reveal não são montados em mobile. Camadas de blur, textura e sombras do carrossel são removidas nesse modo.
 
-Verificação: build e lint passaram; logos carregaram e não houve overflow horizontal nas larguras verificadas. Menu móvel e arraste do carrossel (Berlim → Carina) funcionaram. Não foi realizado benchmark em celular físico.
+Verificação: build e lint passaram. Na revisão das fotos do Wagner, a página foi conferida em 320, 390 e 1440 px; as quatro novas fotos carregaram sem distorção. O mapa foi testado fechado, aberto e fechado novamente, e só é montado ao solicitar. A navegação dos cinco modelos foi validada na revisão anterior do catálogo. Não foi realizado benchmark em celular físico.
 
-### Próximas fotos do Wagner — direção sugerida
+### Fotografias do Wagner e da fachada
 
-1. Foto vertical da cintura para cima, sorrindo, braços e mãos inteiros no enquadramento, luz natural e fundo simples. Recortar o fundo e usar ao lado do CTA final, com uma apresentação curta aprovada pelo Wagner.
-2. Foto espontânea sentado em um sofá do showroom: encaixa perto do catálogo e mostra a escala do produto.
-3. Vídeo de 15–20 segundos dando boas-vindas e convidando a visitar a loja. Usar capa estática e carregar o vídeo apenas ao clicar, sem autoplay.
+As quatro fotos recebidas em 11/09/2026 estão integradas à página: braços abertos na abertura; apontando para cima no apoio ao catálogo; apontando para a direita à esquerda do convite final no desktop; fachada na seção de visita. No celular, o conteúdo é empilhado, com botões acessíveis e fotografias em proporções próprias, sem esticar rostos nem cortar as mãos.
 
-Enquanto essas fotos não chegam, hero e CTA convidam a enviar foto, medidas ou áudio da sala pelo WhatsApp. Não há retrato fictício ou depoimento inventado do Wagner.
+Os rostos não foram tratados por IA. Aplicamos somente recortes retangulares, redução de tamanho e compressão WebP, sem retoque, filtros de pele ou reconstrução generativa. Os originais ficam em `src/assets/store/originals/`, e o processamento reproduzível em `scripts/optimize-store-photos.mjs`. Execute `node scripts/optimize-store-photos.mjs` para regenerar as oito versões responsivas. As versões menores das quatro fotos somam aproximadamente 74 KB; o mapa só é carregado quando o visitante solicita sua abertura.
+
+`src/components/StorePhoto.tsx` centraliza proporções, textos alternativos, tamanhos e prioridades de carregamento. As fotos abaixo da primeira tela usam carregamento tardio. Os textos de apresentação são redação do site, sem atribuir uma fala fictícia ao Wagner.
 
 Modelos, medidas, parcelas e fotos do catálogo correspondem aos arquivos enviados pelo cliente. Os cinco diferenciais seguem o briefing fornecido e devem passar pela validação comercial da marca antes da publicação.
 

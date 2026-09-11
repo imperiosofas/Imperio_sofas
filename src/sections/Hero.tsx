@@ -3,6 +3,7 @@ import { ArrowDown, ArrowRight, MessageCircle, Star } from 'lucide-react'
 import { useRef } from 'react'
 import { useEnhancedMotion } from '../lib/useEnhancedMotion'
 import { WhatsAppLink } from '../components/WhatsAppLink'
+import { StorePhoto } from '../components/StorePhoto'
 import hero768 from '../assets/hero-sofa-768.webp'
 import hero1536 from '../assets/hero-sofa-1536.webp'
 
@@ -10,13 +11,13 @@ export function Hero() {
   const enhanced = useEnhancedMotion()
   const reduceMotion = useReducedMotion()
   return (
-    <section id="inicio" className="relative min-h-[760px] overflow-hidden pt-[76px] sm:min-h-[820px] lg:min-h-[780px] lg:pt-[88px]">
+    <section id="inicio" className="relative overflow-hidden pt-[76px] lg:pt-[88px]">
       {enhanced ? <ParallaxImage /> : <div className="absolute inset-0"><HeroImage /></div>}
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,7,7,.98)_0%,rgba(7,7,7,.88)_36%,rgba(7,7,7,.35)_67%,rgba(7,7,7,.16)_100%)] max-lg:bg-[linear-gradient(180deg,rgba(7,7,7,.55)_0%,rgba(7,7,7,.45)_32%,rgba(7,7,7,.96)_82%,#070707_100%)]" />
       <div className="grain absolute inset-0 opacity-30" />
-      <div className="shell relative z-10 flex min-h-[684px] items-end py-8 sm:min-h-[744px] sm:py-12 lg:min-h-[692px] lg:items-center">
-        <motion.div initial={reduceMotion || !enhanced ? false : { opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="w-full max-w-[680px]">
-          <img src="/imperio-sofas-logo-384.webp" srcSet="/imperio-sofas-logo-128.webp 128w, /imperio-sofas-logo-384.webp 384w" sizes="(min-width: 1024px) 144px, 112px" width="384" height="384" alt="Império Sofás — brasão oficial com leão dourado" className="mb-4 size-28 [clip-path:circle(46%)] lg:size-36" fetchPriority="high" />
+      <div className="shell relative z-10 grid items-center gap-9 py-10 sm:py-14 lg:min-h-[692px] lg:grid-cols-[1.15fr_1fr] lg:gap-14 lg:py-16">
+        <motion.div initial={reduceMotion || !enhanced ? false : { opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="min-w-0">
+          <img src="/imperio-sofas-logo-384.webp" srcSet="/imperio-sofas-logo-128.webp 128w, /imperio-sofas-logo-384.webp 384w" sizes="(min-width: 1024px) 128px, 88px" width="384" height="384" alt="Império Sofás — brasão oficial com leão dourado" className="mb-4 size-22 [clip-path:circle(46%)] lg:size-32" fetchPriority="high" />
           <p className="eyebrow">Direto de Taubaté para o seu lar</p>
           <h1 className="mt-4 text-balance font-display text-[2.8rem] font-semibold leading-[.96] tracking-[-.05em] text-white sm:text-6xl lg:text-7xl">
             Seu conforto merece <span className="text-gold">preço de fábrica.</span>
@@ -30,6 +31,14 @@ export function Hero() {
           </div>
           <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-ivory/75"><span className="inline-flex items-center gap-1.5"><Star size={14} fill="currentColor" className="text-gold" aria-hidden="true" /> 4,8 no Google · 140 avaliações</span><span>Entrega no Vale do Paraíba</span></div>
         </motion.div>
+        <figure className="mx-auto w-full max-w-xl overflow-hidden rounded-[1.5rem] border border-white/15 bg-ivory text-ink lg:mt-12 lg:rounded-[2rem]">
+          <StorePhoto photo="welcome" priority sizes="(min-width: 1280px) 540px, (min-width: 1024px) 44vw, (min-width: 640px) 576px, 92vw" className="h-auto w-full" />
+          <figcaption className="border-t border-black/8 px-6 py-5 sm:px-8 sm:py-7">
+            <div className="flex items-center gap-3"><span aria-hidden="true" className="h-px w-8 bg-[#917022]" /><p className="text-[.65rem] font-bold uppercase tracking-[.18em] text-[#78602a]">Quem está por trás da Império</p></div>
+            <p className="mt-3 font-display text-4xl font-semibold leading-none">Prazer, Wagner.</p>
+            <p className="mt-3 max-w-sm text-sm leading-6 text-black/65">Dono da Império Sofás Vale. Da primeira conversa à visita na loja, conforto começa com um atendimento próximo.</p>
+          </figcaption>
+        </figure>
       </div>
     </section>
   )

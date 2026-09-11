@@ -10,6 +10,7 @@ import 'swiper/css/navigation'
 import { products } from '../data/products'
 import { SectionHeading } from '../components/SectionHeading'
 import { WhatsAppLink } from '../components/WhatsAppLink'
+import { StorePhoto } from '../components/StorePhoto'
 
 export function Catalog() {
   const enhanced = useEnhancedMotion()
@@ -47,6 +48,22 @@ export function Catalog() {
         </Swiper>
       </div>
       <p className="shell mt-2 text-center text-xs leading-5 text-muted/80">Consulte disponibilidade, opções de tecido e condições de pagamento pelo WhatsApp.</p>
+      <div className="shell mt-10 sm:mt-14">
+        <div className="mx-auto grid max-w-4xl grid-cols-[minmax(0,1fr)_112px] overflow-hidden rounded-3xl border border-gold/20 bg-card sm:grid-cols-[1fr_260px]">
+          <div className="min-w-0 px-5 pt-6 sm:px-8 sm:pt-8">
+            <p className="eyebrow">Uma ajuda para escolher</p>
+            <h3 className="mt-3 font-display text-[1.65rem] font-semibold leading-tight sm:text-4xl">Gostou de algum desses modelos?</h3>
+          </div>
+          <figure className="self-center pr-4 pt-6 sm:row-span-2 sm:self-stretch sm:bg-[#ded9cf] sm:p-0">
+            <StorePhoto photo="catalog" sizes="(min-width: 640px) 260px, 96px" className="h-auto w-full rounded-xl sm:rounded-none" />
+            <figcaption className="hidden px-5 py-3 text-xs font-medium text-black/65 sm:block">Wagner · Império Sofás Vale</figcaption>
+          </figure>
+          <div className="col-span-2 px-5 pb-6 sm:col-span-1 sm:px-8 sm:pb-8">
+            <p className="mt-3 max-w-lg text-sm leading-6 text-muted">Conte para o Wagner o que você procura. Envie o modelo e as medidas da sala para conversar sobre as opções.</p>
+            <WhatsAppLink message="Olá, Wagner! Vi os modelos no site e quero ajuda para escolher. Posso enviar as medidas da minha sala?" className="mt-5 inline-flex min-h-12 items-center gap-2 rounded-full border border-gold/40 px-5 py-3 text-sm font-bold text-gold transition hover:bg-gold hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"><MessageCircle size={18} aria-hidden="true" /> Tirar minhas dúvidas <ArrowRight size={16} aria-hidden="true" /></WhatsAppLink>
+          </div>
+        </div>
+      </div>
     </section>
   )
 }
