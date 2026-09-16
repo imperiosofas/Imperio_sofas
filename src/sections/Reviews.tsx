@@ -19,7 +19,7 @@ export function Reviews() {
             <SectionHeading eyebrow="Quem compra, recomenda" title="Confiança construída em cada sala." />
             <Reveal className="mt-8 flex items-center gap-5">
               <div className="font-display text-6xl font-semibold text-ivory">4,8</div>
-              <div><div className="flex gap-1 text-gold" aria-label="4,8 de 5 estrelas">{Array.from({ length: 5 }).map((_, i) => <Star key={i} size={17} fill="currentColor" aria-hidden="true" />)}</div><p className="mt-2 text-sm text-muted">140 avaliações no Google</p></div>
+              <div><div className="flex gap-1 text-gold" role="img" aria-label="4,8 de 5 estrelas">{Array.from({ length: 5 }).map((_, i) => <Star key={i} size={17} fill="currentColor" aria-hidden="true" />)}</div><p className="mt-2 text-sm text-muted">140 avaliações no Google</p></div>
             </Reveal>
           </div>
           <div className="grid gap-3 md:grid-cols-3">
@@ -28,7 +28,7 @@ export function Reviews() {
                 <blockquote className="flex h-full flex-col rounded-[1.35rem] border border-white/8 bg-white/[.025] p-5 sm:p-6">
                   <Quote size={25} className="text-gold" aria-hidden="true" />
                   <p className="mt-5 flex-1 text-base leading-7 text-ivory/82">“{review.text}”</p>
-                  <footer className="mt-7 flex items-center justify-between border-t border-white/8 pt-4"><cite className="not-italic font-semibold text-ivory">{review.name}</cite><span className="flex text-gold" aria-label="5 estrelas">{Array.from({ length: 5 }).map((_, i) => <Star key={i} size={12} fill="currentColor" aria-hidden="true" />)}</span></footer>
+                  <footer className="mt-7 flex items-center justify-between border-t border-white/8 pt-4"><cite className="not-italic font-semibold text-ivory">{review.name}</cite><span className="flex text-gold" role="img" aria-label="5 estrelas">{Array.from({ length: 5 }).map((_, i) => <Star key={i} size={12} fill="currentColor" aria-hidden="true" />)}</span></footer>
                 </blockquote>
               </Reveal>
             ))}

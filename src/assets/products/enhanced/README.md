@@ -2,7 +2,7 @@
 
 Edição com a ferramenta integrada image_gen em 10/09/2026, uma chamada por foto original. Os arquivos originais permanecem em ../originals/.
 
-Arquivos: belize.png, berlim.png, dallas.png, ferrari.png e maximo.png. Versões para o site: ../{modelo}-enhanced-{480,800,1080}.webp, geradas com `node scripts/optimize-enhanced-products.mjs`.
+Arquivos: belize.png, berlim.png, dallas.png, ferrari.png e maximo.png. Versões para o site: ../{modelo}-enhanced-{480,720,800,1080}.webp, geradas com `node scripts/optimize-enhanced-products.mjs`.
 
 ## Prompt aplicado a cada fotografia
 

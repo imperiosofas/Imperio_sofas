@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://imperio-sofas-vale.vercel.app/sitemap.xml
+Sitemap: https://www.imperiosofas.com.br/sitemap.xml

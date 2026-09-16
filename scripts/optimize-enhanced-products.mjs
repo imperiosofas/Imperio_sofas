@@ -8,7 +8,7 @@ const root = new URL('../src/assets/products/', import.meta.url)
 await mkdir(new URL('enhanced/', root), { recursive: true })
 for (const slug of ['belize', 'berlim', 'dallas', 'ferrari', 'maximo']) {
   const source = new URL(`enhanced/${slug}.png`, root)
-  for (const width of [480, 800, 1080]) {
+  for (const width of [480, 720, 800, 1080]) {
     const result = await sharp(fileURLToPath(source)).rotate().resize({ width })
       .webp({ quality: 88, effort: 6 })
       .toFile(fileURLToPath(new URL(`${slug}-enhanced-${width}.webp`, root)))
