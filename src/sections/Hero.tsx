@@ -1,9 +1,10 @@
 import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
-import { ArrowDown, ArrowRight, MessageCircle, Star } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, MessageCircle, Star } from 'lucide-react'
 import { useRef } from 'react'
 import { useEnhancedMotion } from '../lib/useEnhancedMotion'
 import { WhatsAppLink } from '../components/WhatsAppLink'
 import { StorePhoto } from '../components/StorePhoto'
+import { FULL_CATALOG_URL } from '../lib/links'
 import hero768 from '../assets/hero-sofa-768.webp'
 import hero1536 from '../assets/hero-sofa-1536.webp'
 
@@ -27,7 +28,7 @@ export function Hero() {
             <WhatsAppLink message="Olá! Vim pelo site e quero ajuda para escolher meu sofá. Posso enviar uma foto e as medidas da minha sala?" className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-gold px-6 py-4 font-bold text-ink shadow-gold hover:bg-gold-light focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold">
               <MessageCircle size={20} aria-hidden="true" /> Encontrar meu sofá <ArrowRight size={17} aria-hidden="true" />
             </WhatsAppLink>
-            <a href="#catalogo" className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full border border-white/24 bg-black/25 px-6 py-4 font-semibold text-white hover:border-gold/50">Ver catálogo <ArrowDown size={17} aria-hidden="true" /></a>
+            <a href={FULL_CATALOG_URL} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full border border-gold/55 bg-black/45 px-6 py-4 font-semibold text-gold transition hover:border-gold hover:bg-gold/10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold">Ver catálogo completo <ArrowUpRight size={17} aria-hidden="true" /></a>
           </div>
           <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-ivory/75"><span className="inline-flex items-center gap-1.5"><Star size={14} fill="currentColor" className="text-gold" aria-hidden="true" /> 4,8 no Google · 140 avaliações</span><span>Entrega no Vale do Paraíba</span></div>
         </motion.div>

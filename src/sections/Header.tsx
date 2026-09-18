@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Menu, MessageCircle, X } from 'lucide-react'
+import { ArrowUpRight, Menu, MessageCircle, X } from 'lucide-react'
 import { Brand } from '../components/Brand'
 import { WhatsAppLink } from '../components/WhatsAppLink'
+import { FULL_CATALOG_URL } from '../lib/links'
 import { cn } from '../lib/utils'
 
 const links = [
@@ -33,6 +34,9 @@ export function Header() {
             <a key={href} href={href} className="rounded-sm text-sm font-medium text-ivory/75 transition-colors hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold">{label}</a>
           ))}
         </nav>
+        <a href={FULL_CATALOG_URL} target="_blank" rel="noopener noreferrer" className="hidden items-center gap-1.5 rounded-full border border-gold/45 px-4 py-3 text-sm font-semibold text-gold transition hover:border-gold hover:bg-gold/10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold xl:inline-flex">
+          Catálogo completo <ArrowUpRight size={16} aria-hidden="true" />
+        </a>
         <WhatsAppLink message="Olá! Vim pelo site e quero falar com a Império Sofás." className="hidden items-center gap-2 rounded-full bg-gold px-5 py-3 text-sm font-bold text-ink shadow-gold transition hover:-translate-y-0.5 hover:bg-gold-light focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold lg:inline-flex">
           <MessageCircle size={17} aria-hidden="true" /> Fale no WhatsApp
         </WhatsAppLink>
@@ -45,6 +49,9 @@ export function Header() {
           <motion.nav id="mobile-menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.12 }} className="overflow-hidden border-t border-white/8 bg-ink lg:hidden" aria-label="Navegação móvel">
             <div className="shell grid gap-1 py-4">
               {links.map(([label, href]) => <a key={href} href={href} onClick={() => setOpen(false)} className="rounded-lg px-3 py-3.5 text-base font-medium text-ivory/85 hover:bg-white/5 hover:text-gold">{label}</a>)}
+              <a href={FULL_CATALOG_URL} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)} className="mt-2 flex min-h-12 items-center justify-center gap-2 rounded-full border border-gold/45 bg-gold/10 px-5 py-3 font-bold text-gold hover:bg-gold/15 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold">
+                Ver catálogo completo <ArrowUpRight size={18} aria-hidden="true" />
+              </a>
               <WhatsAppLink message="Olá! Vim pelo site e quero falar com a Império Sofás." className="mt-3 flex min-h-12 items-center justify-center gap-2 rounded-full bg-gold px-5 py-3 font-bold text-ink">
                 <MessageCircle size={18} aria-hidden="true" /> Fale no WhatsApp
               </WhatsAppLink>
