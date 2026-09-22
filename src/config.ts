@@ -1,5 +1,5 @@
-// Único ponto de configuração do WhatsApp. Troque somente este valor quando necessário.
-export const WHATSAPP_NUMBER = '5512997148386'
+// Números dos vendedores. O link alterna entre eles a cada clique.
+export const WHATSAPP_NUMBERS = ['5512991174162', '5512991842454'] as const
 
 export const STORE = {
   name: 'Império Sofás',
@@ -10,6 +10,6 @@ export const STORE = {
   mapEmbedUrl: 'https://www.google.com/maps?q=Av.%20Cinderela%2C%202011%2C%20Taubat%C3%A9%20SP&output=embed',
 } as const
 
-export function buildWhatsAppUrl(message: string) {
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`
+export function buildWhatsAppUrl(message: string, number: (typeof WHATSAPP_NUMBERS)[number] = WHATSAPP_NUMBERS[0]) {
+  return `https://wa.me/${number}?text=${encodeURIComponent(message)}`
 }

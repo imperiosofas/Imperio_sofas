@@ -68,7 +68,7 @@ export function Catalog() {
           </figure>
           <div className="col-span-2 px-5 pb-6 sm:col-span-1 sm:px-8 sm:pb-8">
             <p className="mt-3 max-w-lg text-sm leading-6 text-muted">Conte para o Wagner o que você procura. Envie o modelo e as medidas da sala para conversar sobre as opções.</p>
-            <WhatsAppLink message="Olá, Wagner! Vi os modelos no site e quero ajuda para escolher. Posso enviar as medidas da minha sala?" className="mt-5 inline-flex min-h-12 items-center gap-2 rounded-full border border-gold/40 px-5 py-3 text-sm font-bold text-gold transition hover:bg-gold hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"><MessageCircle size={18} aria-hidden="true" /> Tirar minhas dúvidas <ArrowRight size={16} aria-hidden="true" /></WhatsAppLink>
+            <WhatsAppLink message="Olá, Wagner! Vi os modelos no site e quero ajuda para escolher. Posso enviar as medidas da minha sala?" className="mt-5 inline-flex min-h-12 items-center gap-2 rounded-full border border-gold/40 px-5 py-3 text-sm font-bold text-gold transition hover:bg-gold hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"><MessageCircle size={18} aria-hidden="true" /> Fale com nossos vendedores <ArrowRight size={16} aria-hidden="true" /></WhatsAppLink>
           </div>
         </div>
       </div>

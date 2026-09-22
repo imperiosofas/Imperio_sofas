@@ -38,7 +38,7 @@ export function Header() {
           Catálogo completo <ArrowUpRight size={16} aria-hidden="true" />
         </a>
         <WhatsAppLink message="Olá! Vim pelo site e quero falar com a Império Sofás." className="hidden items-center gap-2 rounded-full bg-gold px-5 py-3 text-sm font-bold text-ink shadow-gold transition hover:-translate-y-0.5 hover:bg-gold-light focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold lg:inline-flex">
-          <MessageCircle size={17} aria-hidden="true" /> Fale no WhatsApp
+          <MessageCircle size={17} aria-hidden="true" /> Fale com nossos vendedores
         </WhatsAppLink>
         <button type="button" onClick={() => setOpen((value) => !value)} className="grid size-11 place-items-center rounded-full border border-white/12 bg-white/5 text-ivory focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold lg:hidden" aria-expanded={open} aria-controls="mobile-menu" aria-label={open ? 'Fechar menu' : 'Abrir menu'}>
           {open ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
@@ -53,7 +53,7 @@ export function Header() {
                 Ver catálogo completo <ArrowUpRight size={18} aria-hidden="true" />
               </a>
               <WhatsAppLink message="Olá! Vim pelo site e quero falar com a Império Sofás." className="mt-3 flex min-h-12 items-center justify-center gap-2 rounded-full bg-gold px-5 py-3 font-bold text-ink">
-                <MessageCircle size={18} aria-hidden="true" /> Fale no WhatsApp
+                <MessageCircle size={18} aria-hidden="true" /> Fale com nossos vendedores
               </WhatsAppLink>
             </div>
           </motion.nav>
