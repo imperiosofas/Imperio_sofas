@@ -33,7 +33,7 @@ export const products = [
     name: 'Sofá Berlim', size: '2,50 m', price: '12x de R$ 339,00',
     image: berlim800,
     srcSet: `${berlim480} 480w, ${berlim720} 720w, ${berlim800} 800w, ${berlim1080} 1080w`,
-    objectPosition: 'center 50%',
+    objectPosition: 'center 65%',
     alt: 'Sofá Berlim de 2,50 m fotografado no showroom',
   },
   {
