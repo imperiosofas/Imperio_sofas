@@ -1,19 +1,16 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, MessageCircle, X } from "lucide-react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { Menu, ShoppingBag, X } from "lucide-react";
 import { Brand } from "../components/Brand";
-import { WhatsAppLink } from "../components/WhatsAppLink";
 import { cn } from "../lib/utils";
 
-const links = [
-  ["Início", "#inicio"],
-  ["Nossa história", "#historia"],
-  ["Diferenciais", "#diferenciais"],
-  ["Modelos", "#catalogo"],
-  ["Visite", "#localizacao"],
-] as const;
-
 export function Header() {
+  const pathname = usePathname();
+  const isHome = pathname === "/";
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -24,42 +21,75 @@ export function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const links = isHome
+    ? ([
+        ["Nossa história", "/#historia"],
+        ["Diferenciais", "/#diferenciais"],
+        ["Visite a loja", "/#localizacao"],
+        ["Sofás", "/loja/sofas"],
+      ] as const)
+    : ([
+        ["Início", "/#inicio"],
+        ["Sofás", "/loja/sofas"],
+        ["Todas as coleções", "/loja"],
+      ] as const);
+
   return (
     <header
       className={cn(
-        "fixed inset-x-0 top-0 z-50 border-b transition-colors duration-200",
-        scrolled || open
+        "inset-x-0 top-0 z-50 border-b transition-colors duration-200",
+        isHome ? "fixed" : "sticky",
+        !isHome || scrolled || open
           ? "border-white/8 bg-ink shadow-lg shadow-black/10"
           : "border-transparent bg-transparent",
       )}
     >
-      <div className="shell flex h-[76px] items-center justify-between gap-4 lg:h-[88px]">
+      <div className="shell flex h-[76px] items-center justify-between gap-2 sm:gap-4 lg:h-[88px]">
         <Brand />
         <nav
           className="hidden items-center gap-6 xl:flex"
           aria-label="Navegação principal"
         >
           {links.map(([label, href]) => (
-            <a
+            <Link
               key={href}
               href={href}
               className="rounded-sm text-sm font-medium text-ivory/75 transition-colors hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
             >
               {label}
-            </a>
+            </Link>
           ))}
         </nav>
-        <WhatsAppLink
-          message="Olá! Vim pelo site e quero ajuda para escolher um sofá para a minha casa."
-          className="hidden items-center gap-2 rounded-full bg-gold px-5 py-3 text-sm font-bold text-ink shadow-gold transition hover:-translate-y-0.5 hover:bg-gold-light focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold xl:inline-flex"
-        >
-          <MessageCircle size={17} aria-hidden="true" /> Fale com nossos
-          vendedores
-        </WhatsAppLink>
+        <div className="flex items-center gap-1 sm:gap-3">
+          <Link
+            href="/loja"
+            className="hidden min-h-11 items-center gap-2 rounded-full bg-gold px-5 py-3 text-sm font-bold text-ink shadow-gold transition-colors hover:bg-gold-light focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold sm:inline-flex"
+          >
+            Explorar a loja
+          </Link>
+          <Link
+            href="/carrinho"
+            aria-label="Sacola; compras online em preparação"
+            title="Sacola — compras online em preparação"
+            className="inline-flex size-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-ivory transition-colors hover:border-gold/50 hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold sm:w-auto sm:gap-2 sm:px-3"
+          >
+            <ShoppingBag size={19} aria-hidden="true" />
+            <span className="sr-only sm:not-sr-only sm:text-sm">Sacola</span>
+            <span className="hidden text-[.62rem] uppercase tracking-[.12em] text-gold/80 lg:inline">
+              Em breve
+            </span>
+          </Link>
+          <Link
+            href="/loja"
+            className="inline-flex min-h-11 items-center rounded-full bg-gold px-4 text-sm font-bold text-ink transition-colors hover:bg-gold-light focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold sm:hidden"
+          >
+            Loja
+          </Link>
+        </div>
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
-          className="grid size-11 place-items-center rounded-full border border-white/12 bg-white/5 text-ivory focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold xl:hidden"
+          className="grid size-11 shrink-0 place-items-center rounded-full border border-white/12 bg-white/5 text-ivory focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold xl:hidden"
           aria-expanded={open}
           aria-controls="mobile-menu"
           aria-label={open ? "Fechar menu" : "Abrir menu"}
@@ -79,23 +109,32 @@ export function Header() {
             aria-label="Navegação móvel"
           >
             <div className="shell grid gap-1 py-4">
+              <Link
+                href="/loja"
+                onClick={() => setOpen(false)}
+                className="mb-2 flex min-h-12 items-center justify-between rounded-xl bg-gold px-4 font-bold text-ink"
+              >
+                Explorar a loja
+                <ShoppingBag size={18} aria-hidden="true" />
+              </Link>
               {links.map(([label, href]) => (
-                <a
+                <Link
                   key={href}
                   href={href}
                   onClick={() => setOpen(false)}
                   className="rounded-lg px-3 py-3.5 text-base font-medium text-ivory/85 hover:bg-white/5 hover:text-gold"
                 >
                   {label}
-                </a>
+                </Link>
               ))}
-              <WhatsAppLink
-                message="Olá! Vim pelo site e quero ajuda para escolher um sofá para a minha casa."
-                className="mt-3 flex min-h-12 items-center justify-center gap-2 rounded-full bg-gold px-5 py-3 font-bold text-ink"
+              <Link
+                href="/carrinho"
+                onClick={() => setOpen(false)}
+                className="mt-2 flex min-h-12 items-center gap-3 rounded-lg px-3 py-3.5 font-medium text-ivory/85 hover:bg-white/5 hover:text-gold"
               >
-                <MessageCircle size={18} aria-hidden="true" /> Fale com nossos
-                vendedores
-              </WhatsAppLink>
+                <ShoppingBag size={18} aria-hidden="true" /> Sacola
+                <span className="text-xs text-gold/80">Em breve</span>
+              </Link>
             </div>
           </motion.nav>
         )}

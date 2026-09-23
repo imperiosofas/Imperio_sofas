@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { MotionConfig } from "framer-motion";
 import { MessageCircle } from "lucide-react";
 import { WhatsAppLink } from "./components/WhatsAppLink";
-import { Header } from "./sections/Header";
 import { Hero } from "./sections/Hero";
 import { SofaStory } from "./sections/SofaStory";
 import { Differentials } from "./sections/Differentials";
@@ -43,7 +42,6 @@ function App() {
   return (
     <MotionConfig reducedMotion="user">
       <div className="min-h-screen overflow-x-clip bg-ink text-ivory selection:bg-gold selection:text-ink">
-        <Header />
         <main>
           <Hero />
           <SofaStory />

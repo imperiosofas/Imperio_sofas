@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublishedProductBySlug } from "../../../../features/catalog/queries";
@@ -27,21 +26,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
   if (!product) notFound();
   return (
     <main className="min-h-screen bg-ink text-ivory">
-      <header className="border-b border-white/10 bg-ink-soft/80">
-        <div className="shell flex min-h-20 items-center justify-between gap-4">
-          <Link href="/loja" className="text-sm font-semibold text-gold">
-            ← Voltar para a loja
-          </Link>
-          <Image
-            src="/imperio-sofas-logo-384.webp"
-            alt="Império Sofás"
-            width={64}
-            height={64}
-            className="size-14 [clip-path:circle(46%)]"
-            priority
-          />
-        </div>
-      </header>
       <section className="section-pad">
         <div className="shell grid items-start gap-10 lg:grid-cols-2 lg:gap-16">
           <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-card">
@@ -75,6 +59,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <p className="mt-4 text-sm text-muted">
               Consulte a loja para confirmar a disponibilidade atual.
             </p>
+            <Link
+              href="/loja"
+              className="mt-6 inline-flex min-h-11 items-center rounded-full border border-gold/40 px-5 text-sm font-semibold text-gold transition hover:bg-gold hover:text-ink"
+            >
+              Voltar para a loja
+            </Link>
             <div className="mt-8 rounded-2xl border border-gold/20 bg-card/70 p-5 text-sm leading-6 text-muted">
               Estamos finalizando a experiência de compra online. Por enquanto,
               as informações desta página são para consulta; a compra pelo site

@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowDown, ArrowRight, MessageCircle } from "lucide-react";
+import { ArrowRight, MessageCircle, ShoppingBag } from "lucide-react";
 import { WhatsAppLink } from "../components/WhatsAppLink";
 import { useEnhancedMotion } from "../lib/useEnhancedMotion";
 import heroImage from "../assets/hero-sofa-1536.webp";
@@ -57,17 +58,17 @@ export function Hero() {
               acontece entre um momento e outro.
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <a
-                href="#historia"
+              <Link
+                href="/loja/sofas"
                 className="group inline-flex min-h-13 items-center justify-center gap-3 rounded-full bg-gold px-7 py-3.5 text-sm font-bold text-ink transition-colors hover:bg-gold-light focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
               >
-                Conheça os sofás
-                <ArrowDown
+                Ver coleção de sofás
+                <ShoppingBag
                   size={17}
                   aria-hidden="true"
-                  className="transition-transform group-hover:translate-y-1"
+                  className="transition-transform group-hover:translate-x-1"
                 />
-              </a>
+              </Link>
               <WhatsAppLink
                 message="Olá! Vim pelo site da Império Sofás e quero ajuda para encontrar o sofá ideal para a minha casa."
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/35 bg-black/20 px-5 py-3 text-sm font-semibold text-ivory transition-colors hover:border-gold/70 hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"

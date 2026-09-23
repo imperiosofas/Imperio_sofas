@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { ArrowDownRight } from "lucide-react";
 import { products } from "../data/products";
 import belizeScene from "../assets/products/belize-enhanced-1080.webp";
@@ -91,19 +92,10 @@ export function SofaStory() {
                     {chapter.title}
                   </h3>
                   <p className="story-chapter__description">{chapter.copy}</p>
-                  <a
-                    href={
-                      index === chapters.length - 1
-                        ? "#localizacao"
-                        : "#catalogo"
-                    }
-                    className="story-chapter__link"
-                  >
-                    {index === chapters.length - 1
-                      ? "Venha conhecer a loja"
-                      : "Veja os modelos"}
+                  <Link href="/loja/sofas" className="story-chapter__link">
+                    Ver coleção de sofás
                     <ArrowDownRight size={18} aria-hidden="true" />
-                  </a>
+                  </Link>
                 </div>
 
                 <div className="story-chapter__footer" aria-hidden="true">

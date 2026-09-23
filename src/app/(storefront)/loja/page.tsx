@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { CatalogEmptyState } from "../../../features/catalog/CatalogEmptyState";
 import { CatalogProductGrid } from "../../../features/catalog/CatalogProductGrid";
@@ -23,40 +22,6 @@ export default async function StorePage() {
   ]);
   return (
     <main className="min-h-screen bg-ink text-ivory">
-      <header className="border-b border-white/10 bg-ink-soft/80">
-        <div className="shell flex min-h-20 items-center justify-between gap-4">
-          <Link
-            href="/"
-            aria-label="Voltar para a página inicial da Império Sofás"
-          >
-            <Image
-              src="/imperio-sofas-logo-384.webp"
-              alt="Império Sofás"
-              width={64}
-              height={64}
-              className="size-14 [clip-path:circle(46%)]"
-              priority
-            />
-          </Link>
-          <nav
-            aria-label="Navegação da loja"
-            className="flex items-center gap-3 text-sm font-semibold"
-          >
-            <Link
-              href="/"
-              className="rounded-full px-4 py-2 text-muted transition hover:text-ivory"
-            >
-              Início
-            </Link>
-            <Link
-              href="/loja"
-              className="rounded-full bg-gold/10 px-4 py-2 text-gold"
-            >
-              Loja
-            </Link>
-          </nav>
-        </div>
-      </header>
       <section className="section-pad relative overflow-hidden">
         <div className="grain pointer-events-none absolute inset-0 opacity-30" />
         <div className="shell relative">

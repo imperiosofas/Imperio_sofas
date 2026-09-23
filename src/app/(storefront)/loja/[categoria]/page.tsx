@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CatalogEmptyState } from "../../../../features/catalog/CatalogEmptyState";
 import { CatalogProductGrid } from "../../../../features/catalog/CatalogProductGrid";
@@ -36,23 +34,6 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   const products = await getPublishedProducts(category.slug);
   return (
     <main className="min-h-screen bg-ink text-ivory">
-      <header className="border-b border-white/10 bg-ink-soft/80">
-        <div className="shell flex min-h-20 items-center justify-between gap-4">
-          <Link href="/" aria-label="Voltar para a página inicial">
-            <Image
-              src="/imperio-sofas-logo-384.webp"
-              alt="Império Sofás"
-              width={64}
-              height={64}
-              className="size-14 [clip-path:circle(46%)]"
-              priority
-            />
-          </Link>
-          <Link href="/loja" className="text-sm font-semibold text-gold">
-            Todas as coleções
-          </Link>
-        </div>
-      </header>
       <section className="section-pad">
         <div className="shell">
           <p className="eyebrow">Coleção</p>

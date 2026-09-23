@@ -53,3 +53,13 @@ Este arquivo separa validações locais determinísticas de homologações exter
 - O catálogo público usa adapter Supabase ou local, conforme ambiente; migrations e testes pgTAP ainda aguardam execução local.
 - Não há autenticação, carrinho, checkout, estoque ou admin.
 - A fundação não deve ser descrita como e-commerce pronto para produção.
+
+## Integração landing e loja
+
+| Verificação               | Resultado              | Evidência                                                                                            |
+| ------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------- |
+| Cabeçalho compartilhado   | Conferido no navegador | Landing, `/loja` e `/carrinho` usam a mesma marca, navegação responsiva, atalho de loja e sacola     |
+| CTA de compra da landing  | Conferido no navegador | Hero e cenas dos sofás levam a `/loja/sofas`; destaque da coleção leva a `/loja`                     |
+| Viewport mobile 390 × 844 | Conferido no navegador | Marca sem quebra, atalho da loja, ícone de sacola e menu permanecem visíveis                         |
+| Sacola informativa        | Conferido no navegador | `/carrinho` explica que compras online estão em preparação e oferece rotas de retorno                |
+| Limite comercial          | Mantido                | A sacola não simula itens, frete ou checkout; produtos em rascunho continuam fora da vitrine pública |
