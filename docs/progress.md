@@ -22,28 +22,29 @@
 
 ## Estado por incremento
 
-| Incremento                   | Estado                                 | Evidência/observação                                                                                               |
-| ---------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Fundação Next                | Executável                             | `npm run typecheck`, `npm run lint`, `npm run format:check` e `npm run build` passaram; a LP foi preservada em `/` |
-| Catálogo público persistente | Implementado, validação local pendente | Migration, seed, RLS, RPC e adapter Supabase; Docker não instalado neste ambiente                                  |
-| Carrinho e frete             | Não iniciado                           | Não há rotas nem regras server-side                                                                                |
-| Conta e autenticação         | Não iniciado                           | Não há Supabase Auth ou sessão                                                                                     |
-| Checkout e reserva           | Não iniciado                           | Não há pedidos, estoque ou transações                                                                              |
-| Mercado Pago                 | Bloqueado                              | Sem credenciais homologadas                                                                                        |
-| Admin e operação             | Não iniciado                           | Não há autorização, MFA ou painel                                                                                  |
-| Bling/NF-e                   | Bloqueado                              | Sem credenciais, parâmetros fiscais ou certificado homologado                                                      |
-| LGPD, relatórios e go-live   | Não iniciado/bloqueado                 | Dependem de dados, políticas e operação aprovados                                                                  |
+| Incremento                    | Estado                                 | Evidência/observação                                                                                               |
+| ----------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Fundação Next                 | Executável                             | `npm run typecheck`, `npm run lint`, `npm run format:check` e `npm run build` passaram; a LP foi preservada em `/` |
+| Identidade e landing imersiva | Implementada para revisão              | Hero editorial, narrativa por rolagem, apresentação de modelos e adaptação mobile-first; aguarda feedback visual   |
+| Catálogo público persistente  | Implementado, validação local pendente | Migration, seed, RLS, RPC e adapter Supabase; Docker não instalado neste ambiente                                  |
+| Carrinho e frete              | Não iniciado                           | Não há rotas nem regras server-side                                                                                |
+| Conta e autenticação          | Não iniciado                           | Não há Supabase Auth ou sessão                                                                                     |
+| Checkout e reserva            | Não iniciado                           | Não há pedidos, estoque ou transações                                                                              |
+| Mercado Pago                  | Bloqueado                              | Sem credenciais homologadas                                                                                        |
+| Admin e operação              | Não iniciado                           | Não há autorização, MFA ou painel                                                                                  |
+| Bling/NF-e                    | Bloqueado                              | Sem credenciais, parâmetros fiscais ou certificado homologado                                                      |
+| LGPD, relatórios e go-live    | Não iniciado/bloqueado                 | Dependem de dados, políticas e operação aprovados                                                                  |
 
 ## Próximo incremento recomendado
 
-Validar o primeiro slice persistente e iniciar conta/carrinho em paralelo:
+Após aprovar a direção visual, seguir pelo fluxo de administração de produtos antes de ampliar as telas públicas:
 
-1. instalar/iniciar Docker Desktop;
-2. rodar `npx supabase start`, `npm run db:reset` e `npm run db:test`;
-3. corrigir eventuais divergências SQL;
-4. apontar o app ao Supabase local com `CATALOG_SOURCE=supabase`;
-5. conferir catálogo no navegador;
-6. manter vendas desabilitadas.
+1. validar a landing e ajustar a identidade com o feedback do cliente;
+2. definir acesso seguro e papéis da área administrativa;
+3. construir cadastro/edição de produtos, variantes, fotos, preço, estoque e publicação;
+4. ligar a vitrine aos itens que o administrador publicar;
+5. validar migration, seed e RLS no Supabase local (`npx supabase start`, `npm run db:reset`, `npm run db:test`);
+6. avançar para carrinho, frete, pedido e checkout; manter vendas reais desabilitadas até homologar integrações.
 
 ## Critérios de progresso
 
@@ -55,4 +56,4 @@ Cada incremento deve registrar:
 - bloqueios externos e responsável a definir;
 - riscos de rollback e impacto no deploy atual.
 
-Até que essas evidências existam, o projeto deve ser descrito como landing page Vite/React em migração planejada, não como e-commerce pronto ou homologado.
+Até que essas evidências existam, o projeto deve ser descrito como uma aplicação em migração incremental, não como e-commerce pronto ou homologado.

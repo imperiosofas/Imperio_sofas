@@ -11,7 +11,6 @@ import { products } from '../data/products'
 import { SectionHeading } from '../components/SectionHeading'
 import { WhatsAppLink } from '../components/WhatsAppLink'
 import { StorePhoto } from '../components/StorePhoto'
-import { FULL_CATALOG_URL } from '../lib/links'
 
 export function Catalog() {
   const enhanced = useEnhancedMotion()
@@ -50,10 +49,10 @@ export function Catalog() {
       </div>
       <p className="shell mt-2 text-center text-xs leading-5 text-muted/80">Consulte disponibilidade, opções de tecido e condições de pagamento pelo WhatsApp.</p>
       <div className="shell mt-8 text-center sm:mt-10">
-        <h3 className="font-display text-3xl font-semibold leading-tight text-ivory sm:text-4xl">Gostou? Tem mais no nosso catálogo.</h3>
-        <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-muted sm:text-base">Explore o catálogo completo e encontre o sofá que combina com a sua casa.</p>
-        <a href={FULL_CATALOG_URL} className="mx-auto mt-6 flex min-h-12 w-full max-w-sm items-center justify-center gap-3 rounded-full bg-gold px-5 py-4 text-sm font-bold text-ink transition-colors hover:bg-gold-light focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold sm:w-fit sm:max-w-none sm:px-8 sm:text-base">
-          Ver catálogo completo <ArrowRight size={20} className="shrink-0" aria-hidden="true" />
+        <h3 className="font-display text-3xl font-semibold leading-tight text-ivory sm:text-4xl">O próximo passo pode ser sentir de perto.</h3>
+        <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-muted sm:text-base">Veja a loja em Taubaté e imagine cada modelo fazendo parte da sua casa.</p>
+        <a href="#localizacao" className="mx-auto mt-6 inline-flex min-h-12 items-center justify-center gap-3 rounded-full bg-gold px-6 py-4 text-sm font-bold text-ink transition-colors hover:bg-gold-light focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold">
+          Conheça a loja <ArrowRight size={20} className="shrink-0" aria-hidden="true" />
         </a>
       </div>
       <div className="shell mt-10 sm:mt-14">

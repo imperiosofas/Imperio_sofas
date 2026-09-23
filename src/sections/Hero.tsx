@@ -1,59 +1,118 @@
-import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
-import { ArrowRight, ArrowUpRight, MessageCircle, Star } from 'lucide-react'
-import { useRef } from 'react'
-import { useEnhancedMotion } from '../lib/useEnhancedMotion'
-import { WhatsAppLink } from '../components/WhatsAppLink'
-import { StorePhoto } from '../components/StorePhoto'
-import { FULL_CATALOG_URL } from '../lib/links'
-import hero768 from '../assets/hero-sofa-768.webp'
-import hero1536 from '../assets/hero-sofa-1536.webp'
+"use client";
 
-const assetUrl = (asset: string | { src: string }) => typeof asset === 'string' ? asset : asset.src
+import Image from "next/image";
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "framer-motion";
+import { ArrowDown, ArrowRight, MessageCircle } from "lucide-react";
+import { useRef } from "react";
+import { WhatsAppLink } from "../components/WhatsAppLink";
+import { useEnhancedMotion } from "../lib/useEnhancedMotion";
+import heroImage from "../assets/hero-sofa-1536.webp";
 
 export function Hero() {
-  const enhanced = useEnhancedMotion()
-  const reduceMotion = useReducedMotion()
+  const sectionRef = useRef<HTMLElement>(null);
+  const enhanced = useEnhancedMotion();
+  const reduceMotion = useReducedMotion();
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
+  const imageY = useTransform(scrollYProgress, [0, 1], ["0%", "10%"]);
+
   return (
-    <section id="inicio" className="relative overflow-hidden pt-[76px] lg:pt-[88px]">
-      {enhanced ? <ParallaxImage /> : <div className="absolute inset-0"><HeroImage /></div>}
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,7,7,.98)_0%,rgba(7,7,7,.88)_36%,rgba(7,7,7,.35)_67%,rgba(7,7,7,.16)_100%)] max-lg:bg-[linear-gradient(180deg,rgba(7,7,7,.55)_0%,rgba(7,7,7,.45)_32%,rgba(7,7,7,.96)_82%,#070707_100%)]" />
-      <div className="grain absolute inset-0 opacity-30" />
-      <div className="shell relative z-10 grid items-center gap-9 py-10 sm:py-14 lg:min-h-[692px] lg:grid-cols-[1.15fr_1fr] lg:gap-14 lg:py-16">
-        <motion.div initial={reduceMotion || !enhanced ? false : { opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="min-w-0">
-          <img src="/imperio-sofas-logo-384.webp" srcSet="/imperio-sofas-logo-128.webp 128w, /imperio-sofas-logo-384.webp 384w" sizes="(min-width: 1024px) 128px, 88px" width="384" height="384" alt="Império Sofás — brasão oficial com leão dourado" className="mb-4 size-22 [clip-path:circle(46%)] lg:size-32" fetchPriority="high" />
-          <p className="eyebrow">Direto de Taubaté para o seu lar</p>
-          <h1 className="mt-4 text-balance font-display text-[2.8rem] font-semibold leading-[.96] tracking-[-.05em] text-white sm:text-6xl lg:text-7xl">
-            Seu conforto merece <span className="text-gold">preço de fábrica.</span>
+    <section
+      id="inicio"
+      ref={sectionRef}
+      aria-labelledby="hero-title"
+      className="relative isolate flex min-h-[min(900px,100svh)] items-end overflow-hidden bg-ink pt-24 pb-12 sm:pb-16 lg:min-h-[min(940px,100svh)] lg:items-center lg:pt-28 lg:pb-20"
+    >
+      <motion.div
+        aria-hidden="true"
+        className="absolute inset-0 -inset-y-[8%]"
+        style={enhanced && !reduceMotion ? { y: imageY } : undefined}
+      >
+        <Image
+          src={heroImage}
+          alt="Sofá em um ambiente de showroom contemporâneo"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-[57%_center] lg:object-center"
+        />
+      </motion.div>
+
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-[linear-gradient(180deg,rgba(7,7,7,.34)_0%,rgba(7,7,7,.22)_22%,rgba(7,7,7,.46)_48%,#070707_100%)] lg:bg-[linear-gradient(90deg,rgba(7,7,7,.94)_0%,rgba(7,7,7,.76)_36%,rgba(7,7,7,.24)_69%,rgba(7,7,7,.08)_100%)]"
+      />
+      <div aria-hidden="true" className="grain absolute inset-0 opacity-25" />
+
+      <div className="shell relative z-10 grid w-full items-end gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(220px,.42fr)] lg:items-end lg:gap-16">
+        <motion.div
+          initial={reduceMotion || !enhanced ? false : { opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
+          className="max-w-4xl"
+        >
+          <p className="mb-5 flex items-center gap-3 text-[.68rem] font-bold uppercase tracking-[.22em] text-gold sm:text-xs">
+            <span className="h-px w-8 bg-gold" />
+            Império Sofás · Taubaté, SP
+          </p>
+          <h1
+            id="hero-title"
+            className="max-w-4xl text-balance font-display text-[clamp(3.35rem,12vw,6rem)] font-medium leading-[.88] tracking-[-.045em] text-ivory sm:text-[clamp(5rem,9vw,8.4rem)] lg:text-[clamp(6rem,8.4vw,9.4rem)]"
+          >
+            A vida fica
+            <br />
+            <span className="pl-[.55em] italic text-gold">mais em casa.</span>
           </h1>
-          <p className="mt-5 max-w-xl text-pretty text-base leading-7 text-ivory/76 sm:text-lg">Conte como é a sua sala. A gente ajuda você a escolher um sofá para se sentir em casa.</p>
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <WhatsAppLink message="Olá! Vim pelo site e quero ajuda para escolher meu sofá. Posso enviar uma foto e as medidas da minha sala?" className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-gold px-6 py-4 font-bold text-ink shadow-gold hover:bg-gold-light focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold">
-              <MessageCircle size={20} aria-hidden="true" /> Encontrar meu sofá <ArrowRight size={17} aria-hidden="true" />
-            </WhatsAppLink>
-            <a href={FULL_CATALOG_URL} className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full border border-gold/55 bg-black/45 px-6 py-4 font-semibold text-gold transition hover:border-gold hover:bg-gold/10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold">Ver catálogo completo <ArrowUpRight size={17} aria-hidden="true" /></a>
+          <div className="mt-7 grid gap-6 sm:grid-cols-[minmax(0,28rem)_auto] sm:items-end sm:gap-8 lg:mt-9">
+            <p className="max-w-md text-pretty text-sm leading-6 text-ivory/80 sm:text-base sm:leading-7">
+              Um sofá abre espaço para desacelerar, estar junto e viver a casa
+              do seu jeito. A escolha começa com uma boa conversa.
+            </p>
+            <div className="flex flex-col gap-3 sm:min-w-56">
+              <a
+                href="#historia"
+                className="group inline-flex min-h-13 items-center justify-center gap-3 rounded-full bg-gold px-6 py-3.5 text-sm font-bold text-ink transition hover:-translate-y-0.5 hover:bg-gold-light focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
+              >
+                Entre na história
+                <ArrowDown
+                  size={17}
+                  aria-hidden="true"
+                  className="transition-transform group-hover:translate-y-1"
+                />
+              </a>
+              <WhatsAppLink
+                message="Olá! Vim pelo site da Império Sofás e quero ajuda para encontrar o sofá ideal para a minha casa."
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/35 bg-black/20 px-5 py-3 text-sm font-semibold text-ivory backdrop-blur-sm transition hover:border-gold/70 hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
+              >
+                <MessageCircle size={17} aria-hidden="true" />
+                Converse com a gente
+              </WhatsAppLink>
+            </div>
           </div>
-          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-ivory/75"><span className="inline-flex items-center gap-1.5"><Star size={14} fill="currentColor" className="text-gold" aria-hidden="true" /> 4,8 no Google · 140 avaliações</span><span>Entrega no Vale do Paraíba</span></div>
         </motion.div>
-        <figure className="mx-auto w-full max-w-xl overflow-hidden rounded-[1.5rem] border border-white/15 bg-ivory text-ink lg:mt-12 lg:rounded-[2rem]">
-          <StorePhoto photo="welcome" priority sizes="(min-width: 1280px) 540px, (min-width: 1024px) 44vw, (min-width: 640px) 576px, 92vw" className="h-auto w-full" />
-          <figcaption className="border-t border-black/8 px-6 py-5 sm:px-8 sm:py-7">
-            <div className="flex items-center gap-3"><span aria-hidden="true" className="h-px w-8 bg-[#917022]" /><p className="text-[.65rem] font-bold uppercase tracking-[.18em] text-[#78602a]">Quem está por trás da Império</p></div>
-            <p className="mt-3 font-display text-4xl font-semibold leading-none">Prazer, Wagner.</p>
-            <p className="mt-3 max-w-sm text-sm leading-6 text-black/65">Dono da Império Sofás Vale. Da primeira conversa à visita na loja, conforto começa com um atendimento próximo.</p>
-          </figcaption>
-        </figure>
+
+        <a
+          href="#historia"
+          className="group hidden justify-self-end pb-1 text-right text-xs uppercase tracking-[.18em] text-ivory/65 transition hover:text-gold lg:flex lg:items-center lg:gap-4"
+        >
+          <span>Role para descobrir</span>
+          <span className="grid size-11 place-items-center rounded-full border border-white/30 transition group-hover:border-gold group-hover:bg-gold group-hover:text-ink">
+            <ArrowRight size={17} aria-hidden="true" />
+          </span>
+        </a>
       </div>
+
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-gold/65 to-transparent"
+      />
     </section>
-  )
-}
-
-function HeroImage() {
-  return <img src={assetUrl(hero1536)} srcSet={`${assetUrl(hero768)} 768w, ${assetUrl(hero1536)} 1536w`} sizes="100vw" width="1536" height="1024" alt="Sofá modular caramelo em showroom de estilo industrial" className="h-full w-full object-cover object-[61%_center] sm:object-center" fetchPriority="high" />
-}
-
-function ParallaxImage() {
-  const ref = useRef<HTMLDivElement>(null)
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
-  const imageY = useTransform(scrollYProgress, [0, 1], ['0%', '8%'])
-  return <div ref={ref} className="absolute inset-0"><motion.div style={{ y: imageY }} className="absolute inset-0"><HeroImage /></motion.div></div>
+  );
 }

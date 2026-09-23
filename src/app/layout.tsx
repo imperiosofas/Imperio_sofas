@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     template: "%s | Império Sofás",
   },
   description:
-    "Conheça a Império Sofás e encontre o modelo ideal para sua casa.",
+    "Descubra sofás para viver a casa do seu jeito e conte com atendimento próximo em Taubaté e no Vale do Paraíba.",
   robots:
     process.env.APP_ENV === "production"
       ? undefined

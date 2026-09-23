@@ -33,6 +33,15 @@ Este arquivo separa validações locais determinísticas de homologações exter
 | Adapter Supabase | Implementado; sem conexão testada       | RPCs validadas com Zod; ambiente sem credenciais configuradas        |
 | Seed comercial   | Criado                                  | Cinco produtos `draft`, preço nulo e inventário zero                 |
 
+## Landing imersiva
+
+| Verificação           | Resultado              | Evidência                                                                                |
+| --------------------- | ---------------------- | ---------------------------------------------------------------------------------------- |
+| Referências de design | Pesquisadas            | Westwing, Saccaro, Lider Interiores, Awwwards e Pinterest; fontes na conversa de entrega |
+| Mobile 390 × 844      | Conferido no navegador | Menu recolhido, CTAs empilhados, capítulos verticais e sem overflow horizontal           |
+| Desktop 1440 × 960    | Conferido no navegador | Navegação expandida, etapa sticky atualizada por capítulo e rolagem natural              |
+| Movimento reduzido    | Implementado           | Hero e transições respeitam `prefers-reduced-motion`; sem captura forçada da rolagem     |
+
 ## Limitações conhecidas
 
 - A landing page ainda usa `<img>` em alguns componentes; a migração para `next/image` fica para o refinamento do storefront.
