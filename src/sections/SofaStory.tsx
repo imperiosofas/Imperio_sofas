@@ -9,21 +9,21 @@ import { products } from "../data/products";
 const stories = [
   {
     product: products[0],
-    title: "O descanso também faz parte dos planos.",
-    copy: "Entre um dia e outro, existe aquele momento em que tudo pode esperar um pouco. A sala também é lugar de pausa.",
-    note: "Um canto para chamar de seu",
+    title: "Comece pelas medidas da sua sala.",
+    copy: "O Belize tem 2,20 m. Meça a parede e deixe espaço para a circulação antes de decidir onde ele vai ficar.",
+    note: "Primeiro, o espaço",
   },
   {
     product: products[1],
-    title: "Tem conversa que merece ficar mais um pouco.",
-    copy: "A visita chega, o café aparece e ninguém olha a hora. É bom quando a casa convida a ficar.",
-    note: "Espaço para estar junto",
+    title: "Compare os modelos com calma.",
+    copy: "O Berlim tem 2,50 m. Veja as proporções, os tecidos e o formato que funcionam para a rotina da sua casa.",
+    note: "Depois, o modelo",
   },
   {
     product: products[2],
-    title: "A casa acompanha os seus melhores encontros.",
-    copy: "Dos dias tranquilos aos momentos com a casa cheia, o ambiente ganha vida quando combina com quem vive nele.",
-    note: "Um lugar para compartilhar",
+    title: "Se puder, venha sentar e testar.",
+    copy: "O Dallas tem 2,90 m. Na loja em Taubaté, você pode ver os modelos de perto e conversar com a equipe sobre as opções.",
+    note: "Por fim, experimente",
   },
 ] as const;
 
@@ -37,11 +37,16 @@ export function SofaStory() {
     );
     if (!("IntersectionObserver" in window)) return;
 
+    const visibleChapters = new Map<Element, IntersectionObserverEntry>();
     const observer = new IntersectionObserver(
       (entries) => {
-        const current = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        for (const entry of entries) {
+          if (entry.isIntersecting) visibleChapters.set(entry.target, entry);
+          else visibleChapters.delete(entry.target);
+        }
+        const current = [...visibleChapters.values()].sort(
+          (a, b) => b.intersectionRatio - a.intersectionRatio,
+        )[0];
         const index = current?.target.getAttribute("data-sofa-chapter");
         if (index !== null && index !== undefined)
           setActiveStory(Number(index));
@@ -64,26 +69,47 @@ export function SofaStory() {
       <div className="shell">
         <div className="mb-12 grid gap-5 border-b border-black/12 pb-8 sm:mb-16 sm:pb-10 lg:grid-cols-[1fr_.7fr] lg:items-end lg:gap-12">
           <div>
-            <p className="eyebrow !text-[#93702d]">
-              Uma história em três momentos
-            </p>
+            <p className="eyebrow !text-[#93702d]">Do espaço ao teste</p>
             <h2
               id="story-title"
               className="mt-4 max-w-3xl font-display text-5xl font-medium leading-[.94] tracking-[-.035em] sm:text-6xl lg:text-7xl"
             >
-              A casa acontece
+              Escolha pensando
               <br className="hidden sm:block" />
-              <span className="italic text-[#93702d]">
-                onde você se sente bem.
-              </span>
+              <span className="italic text-[#93702d]">na sua sala.</span>
             </h2>
           </div>
           <p className="max-w-lg text-sm leading-6 text-black/65 sm:text-base sm:leading-7 lg:justify-self-end">
-            Mais do que preencher a sala, escolher um sofá é imaginar os
-            momentos que vão caber ali. Comece pelo que faz sentido para a sua
-            casa.
+            Meça o espaço, compare os modelos e, se puder, venha experimentar. A
+            equipe da loja pode ajudar em cada etapa.
           </p>
         </div>
+
+        <nav
+          aria-label="Progresso da escolha do sofá"
+          className="sticky top-[72px] z-20 mb-8 flex items-center gap-3 border-y border-black/10 bg-[#eee9df]/95 py-3 backdrop-blur-sm lg:hidden"
+        >
+          <span
+            className="shrink-0 font-display text-xl font-semibold tabular-nums text-[#93702d]"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {String(activeStory + 1).padStart(2, "0")}
+            <span className="px-1 text-black/30">/</span>
+            {String(stories.length).padStart(2, "0")}
+          </span>
+          <span className="min-w-0 flex-1 truncate text-xs font-semibold text-black/65">
+            {stories[activeStory]?.note}
+          </span>
+          <div className="flex gap-1.5" aria-hidden="true">
+            {stories.map((story, index) => (
+              <span
+                key={story.product.name}
+                className={`h-1 w-6 rounded-full transition-colors duration-200 ${index <= activeStory ? "bg-[#93702d]" : "bg-black/15"}`}
+              />
+            ))}
+          </div>
+        </nav>
 
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,.92fr)] lg:gap-16">
           <div className="hidden lg:block">

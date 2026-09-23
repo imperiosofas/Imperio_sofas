@@ -1,40 +1,23 @@
 "use client";
 
 import Image from "next/image";
-import {
-  motion,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-} from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowDown, ArrowRight, MessageCircle } from "lucide-react";
-import { useRef } from "react";
 import { WhatsAppLink } from "../components/WhatsAppLink";
 import { useEnhancedMotion } from "../lib/useEnhancedMotion";
 import heroImage from "../assets/hero-sofa-1536.webp";
 
 export function Hero() {
-  const sectionRef = useRef<HTMLElement>(null);
   const enhanced = useEnhancedMotion();
   const reduceMotion = useReducedMotion();
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end start"],
-  });
-  const imageY = useTransform(scrollYProgress, [0, 1], ["0%", "10%"]);
 
   return (
     <section
       id="inicio"
-      ref={sectionRef}
       aria-labelledby="hero-title"
       className="relative isolate flex min-h-[min(900px,100svh)] items-end overflow-hidden bg-ink pt-24 pb-12 sm:pb-16 lg:min-h-[min(940px,100svh)] lg:items-center lg:pt-28 lg:pb-20"
     >
-      <motion.div
-        aria-hidden="true"
-        className="absolute inset-0 -inset-y-[8%]"
-        style={enhanced && !reduceMotion ? { y: imageY } : undefined}
-      >
+      <div aria-hidden="true" className="absolute inset-0">
         <Image
           src={heroImage}
           alt="Sofá em um ambiente de showroom contemporâneo"
@@ -43,7 +26,7 @@ export function Hero() {
           sizes="100vw"
           className="object-cover object-[57%_center] lg:object-center"
         />
-      </motion.div>
+      </div>
 
       <div
         aria-hidden="true"
