@@ -63,3 +63,15 @@ Este arquivo separa validações locais determinísticas de homologações exter
 | Viewport mobile 390 × 844 | Conferido no navegador | Marca sem quebra, atalho da loja, ícone de sacola e menu permanecem visíveis                         |
 | Sacola informativa        | Conferido no navegador | `/carrinho` explica que compras online estão em preparação e oferece rotas de retorno                |
 | Limite comercial          | Mantido                | A sacola não simula itens, frete ou checkout; produtos em rascunho continuam fora da vitrine pública |
+
+## Conta e autenticação — 23/09/2026
+
+| Verificação                  | Resultado                 | Evidência                                                                                                         |
+| ---------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `npm run typecheck`          | Passou                    | Fluxos Supabase browser/server, callbacks, páginas privadas e TOTP compilam sem erros                             |
+| `npm run lint`               | Passou com avisos antigos | 0 erros; permanecem apenas 3 avisos de `<img>` em componentes preexistentes da landing                            |
+| `npm run format:check`       | Passou                    | Script agora inclui `proxy.ts`, `src/index.css`, `src/lib/supabase` e `src/features/auth`                         |
+| `npm run build`              | Passou                    | Next.js 16 gerou `/conta`, callback, recuperação e segurança; páginas com sessão foram mantidas dinâmicas         |
+| UI sem configuração Supabase | Conferida no navegador    | `/conta` mostra indisponibilidade explícita e desabilita o envio; sem login ou OTP de demonstração                |
+| Mobile 390 × 844             | Conferido visualmente     | Cabeçalho compacto, imagem editorial curta e formulário em coluna, sem overflow horizontal visível                |
+| Supabase/SMTP/PKCE/TOTP real | Pendente                  | `.env.local` e credenciais homologadas ausentes; signup, e-mail, sessão e MFA não foram simulados como funcionais |

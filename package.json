@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "format:check": "prettier --check next.config.ts postcss.config.mjs eslint.config.mjs scripts/check-production-ready.mjs README.md docs .github/workflows/ci.yml src/app src/lib/env src/lib/money.ts src/lib/links.ts src/features/catalog \"src/app/(storefront)\"",
+    "format:check": "prettier --check next.config.ts postcss.config.mjs eslint.config.mjs scripts/check-production-ready.mjs README.md docs .github/workflows/ci.yml proxy.ts src/index.css src/app src/lib/env src/lib/supabase src/lib/money.ts src/lib/links.ts src/features/catalog src/features/auth \"src/app/(storefront)\"",
     "typecheck": "tsc --noEmit",
     "db:reset": "supabase db reset --local",
     "db:test": "supabase test db",
