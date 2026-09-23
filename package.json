@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "format:check": "prettier --check next.config.ts postcss.config.mjs eslint.config.mjs scripts/check-production-ready.mjs src/app src/lib/env",
+    "format:check": "prettier --check next.config.ts postcss.config.mjs eslint.config.mjs scripts/check-production-ready.mjs src/app src/lib/env src/features/catalog \"src/app/(storefront)\"",
     "typecheck": "tsc --noEmit",
     "check:production": "node scripts/check-production-ready.mjs"
   },
