@@ -1,5 +1,5 @@
-// Números dos vendedores. O link alterna entre eles a cada clique.
-export const WHATSAPP_NUMBERS = ['5512991174162', '5512991842454'] as const
+// Número atual de atendimento da loja.
+export const WHATSAPP_NUMBERS = ['5512992180333'] as const
 
 export const STORE = {
   name: 'Império Sofás',
