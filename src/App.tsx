@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect } from 'react'
 import { MotionConfig } from 'framer-motion'
 import { useEnhancedMotion } from './lib/useEnhancedMotion'

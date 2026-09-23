@@ -19,41 +19,45 @@ import maximo720 from '../assets/products/maximo-enhanced-720.webp'
 import maximo800 from '../assets/products/maximo-enhanced-800.webp'
 import maximo1080 from '../assets/products/maximo-enhanced-1080.webp'
 
+type ImportedAsset = string | { src: string }
+
+const assetUrl = (asset: ImportedAsset) => typeof asset === 'string' ? asset : asset.src
+
 // Fotos reais enviadas em 10/09/2026. Medidas e parcelas transcritas dos nomes dos arquivos.
 // Não presumir tecido, número de lugares ou parcelamento sem juros.
 export const products = [
   {
     name: 'Sofá Belize', size: '2,20 m', price: '12x de R$ 308,00',
-    image: belize800,
-    srcSet: `${belize480} 480w, ${belize720} 720w, ${belize800} 800w, ${belize1080} 1080w`,
+    image: assetUrl(belize800),
+    srcSet: `${assetUrl(belize480)} 480w, ${assetUrl(belize720)} 720w, ${assetUrl(belize800)} 800w, ${assetUrl(belize1080)} 1080w`,
     objectPosition: 'center 65%',
     alt: 'Sofá Belize de 2,20 m fotografado no showroom',
   },
   {
     name: 'Sofá Berlim', size: '2,50 m', price: '12x de R$ 339,00',
-    image: berlim800,
-    srcSet: `${berlim480} 480w, ${berlim720} 720w, ${berlim800} 800w, ${berlim1080} 1080w`,
+    image: assetUrl(berlim800),
+    srcSet: `${assetUrl(berlim480)} 480w, ${assetUrl(berlim720)} 720w, ${assetUrl(berlim800)} 800w, ${assetUrl(berlim1080)} 1080w`,
     objectPosition: 'center 65%',
     alt: 'Sofá Berlim de 2,50 m fotografado no showroom',
   },
   {
     name: 'Sofá Dallas', size: '2,90 m', price: '12x de R$ 359,00',
-    image: dallas800,
-    srcSet: `${dallas480} 480w, ${dallas720} 720w, ${dallas800} 800w, ${dallas1080} 1080w`,
+    image: assetUrl(dallas800),
+    srcSet: `${assetUrl(dallas480)} 480w, ${assetUrl(dallas720)} 720w, ${assetUrl(dallas800)} 800w, ${assetUrl(dallas1080)} 1080w`,
     objectPosition: 'center 65%',
     alt: 'Sofá Dallas de 2,90 m fotografado no showroom',
   },
   {
     name: 'Sofá Ferrari', size: '2,20 m', price: '12x de R$ 234,00',
-    image: ferrari800,
-    srcSet: `${ferrari480} 480w, ${ferrari720} 720w, ${ferrari800} 800w, ${ferrari1080} 1080w`,
+    image: assetUrl(ferrari800),
+    srcSet: `${assetUrl(ferrari480)} 480w, ${assetUrl(ferrari720)} 720w, ${assetUrl(ferrari800)} 800w, ${assetUrl(ferrari1080)} 1080w`,
     objectPosition: 'center 95%',
     alt: 'Sofá Ferrari de 2,20 m fotografado no showroom',
   },
   {
     name: 'Sofá Máximo', size: '2,30 m', price: '12x de R$ 309,00',
-    image: maximo800,
-    srcSet: `${maximo480} 480w, ${maximo720} 720w, ${maximo800} 800w, ${maximo1080} 1080w`,
+    image: assetUrl(maximo800),
+    srcSet: `${assetUrl(maximo480)} 480w, ${assetUrl(maximo720)} 720w, ${assetUrl(maximo800)} 800w, ${assetUrl(maximo1080)} 1080w`,
     objectPosition: 'center 100%',
     alt: 'Sofá Máximo de 2,30 m fotografado no showroom',
   },

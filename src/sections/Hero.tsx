@@ -8,6 +8,8 @@ import { FULL_CATALOG_URL } from '../lib/links'
 import hero768 from '../assets/hero-sofa-768.webp'
 import hero1536 from '../assets/hero-sofa-1536.webp'
 
+const assetUrl = (asset: string | { src: string }) => typeof asset === 'string' ? asset : asset.src
+
 export function Hero() {
   const enhanced = useEnhancedMotion()
   const reduceMotion = useReducedMotion()
@@ -46,7 +48,7 @@ export function Hero() {
 }
 
 function HeroImage() {
-  return <img src={hero1536} srcSet={`${hero768} 768w, ${hero1536} 1536w`} sizes="100vw" width="1536" height="1024" alt="Sofá modular caramelo em showroom de estilo industrial" className="h-full w-full object-cover object-[61%_center] sm:object-center" fetchPriority="high" />
+  return <img src={assetUrl(hero1536)} srcSet={`${assetUrl(hero768)} 768w, ${assetUrl(hero1536)} 1536w`} sizes="100vw" width="1536" height="1024" alt="Sofá modular caramelo em showroom de estilo industrial" className="h-full w-full object-cover object-[61%_center] sm:object-center" fetchPriority="high" />
 }
 
 function ParallaxImage() {
