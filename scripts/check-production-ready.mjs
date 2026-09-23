@@ -1,5 +1,6 @@
 const requiredForProduction = [
   "APP_URL",
+  "CATALOG_SOURCE",
   "NEXT_PUBLIC_SUPABASE_URL",
   "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
   "SUPABASE_SERVICE_ROLE_KEY",
@@ -30,6 +31,8 @@ const errors = [];
 
 if (mode !== "live")
   errors.push("APP_ENV=production exige INTEGRATION_MODE=live.");
+if (process.env.CATALOG_SOURCE !== "supabase")
+  errors.push("APP_ENV=production exige CATALOG_SOURCE=supabase.");
 if (missing.length > 0)
   errors.push(`Variáveis ausentes: ${missing.join(", ")}.`);
 

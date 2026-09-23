@@ -1,1 +1,1 @@
-export const FULL_CATALOG_URL = 'https://imperiosofas-catalogo.vercel.app/'
+export const FULL_CATALOG_URL = "/loja";

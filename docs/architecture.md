@@ -2,7 +2,7 @@
 
 ## Status e escopo
 
-Este documento registra a arquitetura incremental proposta para o e-commerce. O baseline funcional/histórico do repositório é uma landing page estática em Vite, React e TypeScript. O worktree atual já contém uma fundação parcial de Next.js 16, mas a migração e a adição das integrações comerciais continuam sendo incrementais e incompletas.
+Este documento registra a arquitetura incremental proposta para o e-commerce. O baseline histórico do repositório é uma landing page estática em Vite, React e TypeScript. O app Next.js 16 já serve a landing page e as rotas do catálogo. Migration, seed e adapter Supabase estão implementados; a execução local do banco ainda depende de Docker, que não está instalado neste ambiente.
 
 Não há credenciais externas homologadas neste momento. Portanto, este documento não considera Mercado Pago, Bling, Supabase, Resend ou domínio de produção como integrações ativas.
 
@@ -18,9 +18,9 @@ O repositório contém:
 - Vite, React, TypeScript, Tailwind, Framer Motion, Lenis, Swiper e Lucide;
 - scripts de otimização de imagens.
 
-No baseline original não havia rotas comerciais, banco, migrations, autenticação, carrinho, pedidos, estoque operacional, pagamentos, webhooks, jobs, painel administrativo, testes automatizados ou CI. No worktree atual há apenas a fundação Next/metadata e validação de ambiente; ainda não há rotas comerciais, banco, migrations, autenticação, carrinho, pedidos, estoque operacional, pagamentos, webhooks, jobs ou painel administrativo funcionais.
+No baseline original não havia rotas comerciais, banco, migrations, autenticação, carrinho, pedidos, estoque operacional, pagamentos, webhooks, jobs, painel administrativo, testes automatizados ou CI. O estado atual acrescenta rotas de catálogo read-only e o primeiro slice de persistência versionado. Ainda não há autenticação, carrinho, pedidos, reserva operacional, pagamentos, webhooks, jobs ou painel administrativo funcionais.
 
-O worktree atual contém sinais de migração parcial, como scripts Next no `package.json`, `src/app/layout.tsx`, `src/app/page.tsx`, `src/app/robots.ts`, `src/app/sitemap.ts`, `next.config.ts` e validação de ambiente em `src/lib/env/server.ts`. Esses arquivos estão fora do escopo desta atualização documental e não foram alterados.
+O app contém `src/app`, Next.js 16 App Router, validação de ambiente, rotas `/loja` e `/produto/[slug]`, contratos de catálogo, adapters local/Supabase e arquivos SQL em `supabase/`. O seed contém cinco modelos em estado de rascunho, sem preço ou estoque vendável.
 
 O array de produtos é conteúdo de apresentação e não deve ser promovido diretamente a fonte de verdade de preço, SKU ou estoque.
 
@@ -55,7 +55,7 @@ Next.js 16, estrutura de rotas, design system mínimo, env validation, adapters,
 
 ### 1. Catálogo público
 
-Implementar `/loja` e `/produto/[slug]` com categorias, produtos, variantes, mídia, metadata, canonical, sitemap e filtro de rascunhos. O primeiro slice de banco deve conter apenas o necessário para catálogo. Os cinco modelos existentes entram como rascunhos; fixtures DEMO podem existir apenas em local/staging.
+Implementar `/loja` e `/produto/[slug]` com categorias, produtos, variantes, mídia, metadata, canonical, sitemap e filtro de rascunhos. O primeiro slice de banco contém tabelas, RLS fechado por padrão, RPC público filtrado, bucket privado e seed dos cinco modelos como rascunhos. Não há fixtures vendáveis.
 
 ### 2. Carrinho e frete
 

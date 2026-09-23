@@ -1,12 +1,6 @@
 import Link from "next/link";
 
-export function CatalogEmptyState({
-  draftCount,
-  categoryName,
-}: {
-  draftCount: number;
-  categoryName?: string;
-}) {
+export function CatalogEmptyState({ categoryName }: { categoryName?: string }) {
   return (
     <div className="mx-auto max-w-2xl rounded-[2rem] border border-gold/20 bg-card/80 p-8 text-center shadow-2xl shadow-black/20 sm:p-12">
       <p className="eyebrow">
@@ -27,18 +21,15 @@ export function CatalogEmptyState({
         >
           Conhecer a loja
         </Link>
-        <a
-          href="https://wa.me/5512992180333?text=Ol%C3%A1!%20Quero%20saber%20quais%20modelos%20est%C3%A3o%20dispon%C3%ADveis."
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          href="/#catalogo"
           className="rounded-full border border-gold/50 px-6 py-3 font-semibold text-gold transition hover:bg-gold/10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
         >
-          Falar com a loja
-        </a>
+          Ver os modelos em destaque
+        </Link>
       </div>
       <p className="mt-8 text-xs uppercase tracking-[.16em] text-muted/70">
-        {draftCount} modelos em revisão · nenhuma venda é iniciada por esta
-        página
+        Novos modelos chegam em breve · compra segura, informação confirmada
       </p>
     </div>
   );

@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { CatalogEmptyState } from "../../../features/catalog/CatalogEmptyState";
+import { CatalogProductGrid } from "../../../features/catalog/CatalogProductGrid";
 import {
-  getCatalogDraftCount,
   getCatalogCategories,
   getPublishedProducts,
 } from "../../../features/catalog/queries";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Loja",
@@ -15,10 +17,9 @@ export const metadata: Metadata = {
 };
 
 export default async function StorePage() {
-  const [categories, products, draftCount] = await Promise.all([
+  const [categories, products] = await Promise.all([
     getCatalogCategories(),
     getPublishedProducts(),
-    getCatalogDraftCount(),
   ]);
   return (
     <main className="min-h-screen bg-ink text-ivory">
@@ -81,9 +82,9 @@ export default async function StorePage() {
           </div>
           <div className="mt-12">
             {products.length > 0 ? (
-              <p>Produtos publicados: {products.length}</p>
+              <CatalogProductGrid products={products} />
             ) : (
-              <CatalogEmptyState draftCount={draftCount} />
+              <CatalogEmptyState />
             )}
           </div>
         </div>

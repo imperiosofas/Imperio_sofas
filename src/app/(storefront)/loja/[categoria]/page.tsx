@@ -3,18 +3,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CatalogEmptyState } from "../../../../features/catalog/CatalogEmptyState";
+import { CatalogProductGrid } from "../../../../features/catalog/CatalogProductGrid";
 import {
   getCatalogCategories,
-  getCatalogDraftCount,
   getPublishedProducts,
 } from "../../../../features/catalog/queries";
 
+export const dynamic = "force-dynamic";
+
 type CategoryPageProps = { params: Promise<{ categoria: string }> };
-export async function generateStaticParams() {
-  return (await getCatalogCategories()).map((category) => ({
-    categoria: category.slug,
-  }));
-}
 export async function generateMetadata({
   params,
 }: CategoryPageProps): Promise<Metadata> {
@@ -36,10 +33,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     (item) => item.slug === categoria,
   );
   if (!category) notFound();
-  const [products, draftCount] = await Promise.all([
-    getPublishedProducts(category.slug),
-    getCatalogDraftCount(),
-  ]);
+  const products = await getPublishedProducts(category.slug);
   return (
     <main className="min-h-screen bg-ink text-ivory">
       <header className="border-b border-white/10 bg-ink-soft/80">
@@ -70,12 +64,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           </p>
           <div className="mt-12">
             {products.length > 0 ? (
-              <p>Produtos publicados: {products.length}</p>
+              <CatalogProductGrid products={products} />
             ) : (
-              <CatalogEmptyState
-                draftCount={draftCount}
-                categoryName={category.name}
-              />
+              <CatalogEmptyState categoryName={category.name} />
             )}
           </div>
         </div>

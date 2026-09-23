@@ -19,6 +19,12 @@ export type CatalogProduct = {
   media: { src: string; alt: string }[];
 };
 
+export type PublishedCatalogProduct = CatalogProduct & {
+  status: "active";
+  priceCents: number;
+  sellableUnits: number;
+};
+
 export interface CatalogRepository {
   listCategories(): Promise<CatalogCategory[]>;
   listProducts(): Promise<CatalogProduct[]>;

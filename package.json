@@ -8,8 +8,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "format:check": "prettier --check next.config.ts postcss.config.mjs eslint.config.mjs scripts/check-production-ready.mjs src/app src/lib/env src/features/catalog \"src/app/(storefront)\"",
+    "format:check": "prettier --check next.config.ts postcss.config.mjs eslint.config.mjs scripts/check-production-ready.mjs README.md docs .github/workflows/ci.yml src/app src/lib/env src/lib/money.ts src/lib/links.ts src/features/catalog \"src/app/(storefront)\"",
     "typecheck": "tsc --noEmit",
+    "db:reset": "supabase db reset --local",
+    "db:test": "supabase test db",
     "check:production": "node scripts/check-production-ready.mjs"
   },
   "dependencies": {
@@ -39,6 +41,7 @@
     "eslint-config-prettier": "^10.1.8",
     "postcss": "^8.5.28",
     "sharp": "^0.35.4",
+    "supabase": "^2.117.0",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.2"
   }

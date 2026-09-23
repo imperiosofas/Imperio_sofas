@@ -4,12 +4,24 @@ Landing page estática em Vite + React + TypeScript, com Tailwind CSS, Framer Mo
 
 ## Rodar localmente
 
-Requer Node.js 20 ou superior.
+Requer Node.js 24. O banco local requer Docker Desktop.
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
+
+### Banco local e migrations
+
+O app usa o adaptador local de rascunhos por padrão. Para iniciar o Supabase local e validar migrations e regras de acesso:
+
+```bash
+npx supabase start
+npm run db:reset
+npm run db:test
+```
+
+`npm run db:reset` recria somente o banco Supabase local, reaplicando migrations e seed. Não passe uma URL remota nesse fluxo. Para apontar o app ao Supabase local, defina `CATALOG_SOURCE=supabase`, `NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321` e a chave publishable exibida por `npx supabase status`.
 
 Para gerar a versão de produção:
 

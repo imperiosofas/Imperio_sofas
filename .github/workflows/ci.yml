@@ -13,6 +13,31 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  database:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start local Supabase
+        run: npx supabase start
+
+      - name: Reset database and apply migrations
+        run: npm run db:reset
+
+      - name: Run database and RLS tests
+        run: npm run db:test
+
   quality:
     runs-on: ubuntu-latest
 
@@ -31,6 +56,12 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Format check
+        run: npm run format:check
 
       - name: Lint
         run: npm run lint

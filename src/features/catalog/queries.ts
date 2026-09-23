@@ -1,31 +1,33 @@
-import { localCatalogRepository } from "./localCatalogRepository";
-import type { CatalogCategory, CatalogProduct } from "./types";
+import { getCatalogRepository } from "./repository";
+import type {
+  CatalogCategory,
+  CatalogProduct,
+  PublishedCatalogProduct,
+} from "./types";
 
-const isPubliclySellable = (product: CatalogProduct) =>
+const isPubliclySellable = (
+  product: CatalogProduct,
+): product is PublishedCatalogProduct =>
   product.status === "active" &&
   product.priceCents !== null &&
   product.sellableUnits > 0;
 
 export async function getCatalogCategories(): Promise<CatalogCategory[]> {
-  return localCatalogRepository.listCategories();
+  return getCatalogRepository().listCategories();
 }
 export async function getPublishedProducts(
   categorySlug?: string,
-): Promise<CatalogProduct[]> {
-  const products = await localCatalogRepository.listProducts();
-  return products.filter(
-    (product) =>
-      isPubliclySellable(product) &&
-      (!categorySlug || product.categorySlug === categorySlug),
-  );
+): Promise<PublishedCatalogProduct[]> {
+  const products = await getCatalogRepository().listProducts();
+  return products
+    .filter(isPubliclySellable)
+    .filter(
+      (product) => !categorySlug || product.categorySlug === categorySlug,
+    );
 }
 export async function getPublishedProductBySlug(
   slug: string,
-): Promise<CatalogProduct | null> {
-  const product = await localCatalogRepository.getProductBySlug(slug);
+): Promise<PublishedCatalogProduct | null> {
+  const product = await getCatalogRepository().getProductBySlug(slug);
   return product && isPubliclySellable(product) ? product : null;
-}
-export async function getCatalogDraftCount(): Promise<number> {
-  const products = await localCatalogRepository.listProducts();
-  return products.filter((product) => product.status === "draft").length;
 }

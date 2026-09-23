@@ -5,6 +5,7 @@ const serverEnvSchema = z.object({
   APP_ENV: z.enum(["local", "staging", "production"]).default("local"),
   APP_URL: z.url().default("http://localhost:3000"),
   INTEGRATION_MODE: z.enum(["mock", "sandbox", "live"]).default("mock"),
+  CATALOG_SOURCE: z.enum(["local", "supabase"]).default("local"),
   NEXT_PUBLIC_SUPABASE_URL: z.url().optional(),
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1).optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
