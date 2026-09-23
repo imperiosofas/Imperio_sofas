@@ -22,18 +22,20 @@
 
 ## Estado por incremento
 
-| Incremento                    | Estado                                 | Evidência/observação                                                                                               |
-| ----------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Fundação Next                 | Executável                             | `npm run typecheck`, `npm run lint`, `npm run format:check` e `npm run build` passaram; a LP foi preservada em `/` |
-| Identidade e landing imersiva | Implementada para revisão              | Hero editorial, narrativa por rolagem, apresentação de modelos e adaptação mobile-first; aguarda feedback visual   |
-| Catálogo público persistente  | Implementado, validação local pendente | Migration, seed, RLS, RPC e adapter Supabase; Docker não instalado neste ambiente                                  |
-| Carrinho e frete              | Não iniciado                           | Não há rotas nem regras server-side                                                                                |
-| Conta e autenticação          | Não iniciado                           | Não há Supabase Auth ou sessão                                                                                     |
-| Checkout e reserva            | Não iniciado                           | Não há pedidos, estoque ou transações                                                                              |
-| Mercado Pago                  | Bloqueado                              | Sem credenciais homologadas                                                                                        |
-| Admin e operação              | Não iniciado                           | Não há autorização, MFA ou painel                                                                                  |
-| Bling/NF-e                    | Bloqueado                              | Sem credenciais, parâmetros fiscais ou certificado homologado                                                      |
-| LGPD, relatórios e go-live    | Não iniciado/bloqueado                 | Dependem de dados, políticas e operação aprovados                                                                  |
+| Incremento                    | Estado                                 | Evidência/observação                                                                                                         |
+| ----------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Fundação Next                 | Executável                             | `npm run typecheck`, `npm run lint`, `npm run format:check` e `npm run build` passaram; a LP foi preservada em `/`           |
+| Identidade e landing imersiva | Revisada para validação visual         | Hero editorial, três cenas sticky com fotos reais, movimento vinculado à rolagem e ritmo responsivo; aguarda feedback visual |
+| Catálogo público persistente  | Implementado, validação local pendente | Migration, seed, RLS, RPC e adapter Supabase; Docker não instalado neste ambiente                                            |
+| Carrinho e frete              | Não iniciado                           | Não há rotas nem regras server-side                                                                                          |
+| Conta e autenticação          | Não iniciado                           | Não há Supabase Auth ou sessão                                                                                               |
+| Checkout e reserva            | Não iniciado                           | Não há pedidos, estoque ou transações                                                                                        |
+| Mercado Pago                  | Bloqueado                              | Sem credenciais homologadas                                                                                                  |
+| Admin e operação              | Não iniciado                           | Não há autorização, MFA ou painel                                                                                            |
+| Bling/NF-e                    | Bloqueado                              | Sem credenciais, parâmetros fiscais ou certificado homologado                                                                |
+| LGPD, relatórios e go-live    | Não iniciado/bloqueado                 | Dependem de dados, políticas e operação aprovados                                                                            |
+
+Na revisão visual de 23/09/2026, a seção de história deixou de usar o cartão de produto fixo no desktop e a lista estática no celular. As três cenas agora compartilham a mesma estrutura de tela cheia, com foto, texto e navegação contextual; a rolagem permanece nativa. Diferenciais e avaliações foram reorganizados para manter o ritmo editorial depois da narrativa. O filtro de ruído do hero e o blur do cabeçalho foram retirados para reduzir composição visual durante o scroll. O ajuste de escala das fotos usa CSS scroll-driven animation como aprimoramento progressivo; a estrutura sticky continua funcional quando esse recurso não existe.
 
 ## Próximo incremento recomendado
 

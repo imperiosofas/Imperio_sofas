@@ -35,16 +35,21 @@ Este arquivo separa validações locais determinísticas de homologações exter
 
 ## Landing imersiva
 
-| Verificação           | Resultado              | Evidência                                                                                |
-| --------------------- | ---------------------- | ---------------------------------------------------------------------------------------- |
-| Referências de design | Pesquisadas            | Westwing, Saccaro, Lider Interiores, Awwwards e Pinterest; fontes na conversa de entrega |
-| Mobile 390 × 844      | Conferido no navegador | Menu recolhido, CTAs empilhados, capítulos verticais e sem overflow horizontal           |
-| Desktop 1440 × 960    | Conferido no navegador | Navegação expandida, etapa sticky atualizada por capítulo e rolagem natural              |
-| Movimento reduzido    | Implementado           | Hero e transições respeitam `prefers-reduced-motion`; sem captura forçada da rolagem     |
+| Verificação           | Resultado              | Evidência                                                                                                          |
+| --------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Referências de design | Pesquisadas            | Westwing, Saccaro, Lider Interiores, Awwwards, Pinterest e [Bolia](https://www.bolia.com/en/sofas/)                |
+| Mobile 390 × 844      | Conferido no navegador | Cenas de tela cheia, foto e texto legíveis, transição entre capítulos e sem overflow horizontal                    |
+| Mobile 360 × 640      | Conferido no navegador | Cena sticky com CTA e progresso visíveis; largura do documento dentro do viewport                                  |
+| Desktop 1440 × 900    | Conferido no navegador | Hero, abertura editorial, cena sticky fixada em `top: 0` e transição para o próximo sofá                           |
+| Movimento por scroll  | Conferido no navegador | Imagem mudou de escala de 1,0449 para 1,03809 após rolagem; scroll nativo, sem Lenis                               |
+| Movimento reduzido    | Implementado           | Animações por scroll só ativam com `prefers-reduced-motion: no-preference`                                         |
+| Qualidade do build    | Passou                 | Typecheck, build, `format:check` e Prettier dos arquivos alterados; lint com 0 erros e 3 avisos antigos de `<img>` |
 
 ## Limitações conhecidas
 
 - A landing page ainda usa `<img>` em alguns componentes; a migração para `next/image` fica para o refinamento do storefront.
+- As animações CSS ligadas à rolagem são um aprimoramento progressivo. Em navegadores sem `animation-timeline`, as cenas sticky continuam, mas as fotos não mudam de escala. Ainda falta conferir em um iPhone/Android físico.
+- Compatibilidade do efeito opcional consultada em [MDN `animation-timeline`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/animation-timeline).
 - O catálogo público usa adapter Supabase ou local, conforme ambiente; migrations e testes pgTAP ainda aguardam execução local.
 - Não há autenticação, carrinho, checkout, estoque ou admin.
 - A fundação não deve ser descrita como e-commerce pronto para produção.
