@@ -481,7 +481,7 @@ img {
 .auth-shell {
   position: relative;
   z-index: 1;
-  width: min(100%, 1100px);
+  width: min(100%, 1180px);
   margin-inline: auto;
 }
 
@@ -1266,15 +1266,15 @@ img {
 
   .auth-card {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
-    min-height: 660px;
+    grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
+    min-height: 640px;
     border-radius: 1.6rem;
   }
 
   .auth-form-panel {
     order: 1;
     align-self: center;
-    padding: clamp(2.5rem, 5vw, 4.5rem);
+    padding: clamp(2.5rem, 4vw, 4rem);
   }
 
   .auth-form-head {
@@ -1294,7 +1294,17 @@ img {
   }
 
   .auth-form {
-    gap: 1.05rem;
+    gap: 0.95rem;
+  }
+
+  .auth-form--register {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.9rem;
+  }
+
+  .auth-form--register .auth-submit,
+  .auth-form--register .auth-alert {
+    grid-column: auto;
   }
 
   .auth-form-panel--register .auth-form-head {

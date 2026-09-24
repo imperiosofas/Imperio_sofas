@@ -66,12 +66,13 @@ Este arquivo separa validações locais determinísticas de homologações exter
 
 ## Conta e autenticação — 23/09/2026
 
-| Verificação                   | Resultado                 | Evidência                                                                                                                    |
-| ----------------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `npm run typecheck`           | Passou                    | Fluxos Supabase browser/server, callbacks, páginas privadas e TOTP compilam sem erros                                        |
-| `npm run lint`                | Passou com avisos antigos | 0 erros; permanecem apenas 3 avisos de `<img>` em componentes preexistentes da landing                                       |
-| `npm run format:check`        | Passou                    | Script agora inclui `proxy.ts`, `src/index.css`, `src/lib/supabase` e `src/features/auth`                                    |
-| `npm run build`               | Passou                    | Next.js 16 gerou `/conta`, confirmação, callback, recuperação e segurança; páginas com sessão foram mantidas dinâmicas       |
-| UI sem configuração Supabase  | Conferida no navegador    | `/conta` mostra indisponibilidade explícita e desabilita o envio; sem login ou OTP de demonstração                           |
-| Mobile 390 × 844              | Conferido visualmente     | Cabeçalho compacto, imagem editorial curta e formulário em coluna, sem overflow horizontal visível                           |
-| Supabase/SMTP/token hash/TOTP | Pendente                  | `.env.local`, templates e credenciais homologadas ausentes; signup, e-mail, sessão e MFA não foram simulados como funcionais |
+| Verificação                   | Resultado                 | Evidência                                                                                                                                     |
+| ----------------------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run typecheck`           | Passou                    | Fluxos Supabase browser/server, callbacks, páginas privadas e TOTP compilam sem erros                                                         |
+| `npm run lint`                | Passou com avisos antigos | 0 erros; permanecem apenas 3 avisos de `<img>` em componentes preexistentes da landing                                                        |
+| `npm run format:check`        | Passou                    | Script agora inclui `proxy.ts`, `src/index.css`, `src/lib/supabase` e `src/features/auth`                                                     |
+| `npm run build`               | Passou                    | Next.js 16 gerou `/conta`, confirmação, callback, recuperação e segurança; páginas com sessão foram mantidas dinâmicas                        |
+| UI sem configuração Supabase  | Conferida no navegador    | `/conta` mostra indisponibilidade explícita e desabilita o envio; sem login ou OTP de demonstração                                            |
+| Mobile 390 × 844              | Conferido visualmente     | Cabeçalho compacto, imagem editorial curta e formulário em coluna, sem overflow horizontal visível                                            |
+| Refinamento desktop           | Checks locais passaram    | Cadastro >=900px agora mantém campos em coluna única; build, typecheck e formato passaram; lint sem erros (3 avisos preexistentes de `<img>`) |
+| Supabase/SMTP/token hash/TOTP | Pendente                  | `.env.local`, templates e credenciais homologadas ausentes; signup, e-mail, sessão e MFA não foram simulados como funcionais                  |

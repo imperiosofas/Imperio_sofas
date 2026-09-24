@@ -68,3 +68,9 @@ Até que essas evidências existam, o projeto deve ser descrito como uma aplica�
 - Login consulta AAL/fatores após senha e bloqueia a continuação quando não é possível confirmar o estado MFA. Se TOTP estiver ativo, solicita o código de seis dígitos antes de continuar.
 - Cadastro não define role. Admin, painel, papel, RLS administrativa e bootstrap continuam fora deste incremento.
 - Variáveis Supabase não estão presentes no ambiente local; UI validada em modo não configurado. Confirmação SSR, envio real de e-mail e operações Auth/MFA aguardam configuração do projeto, templates token hash e SMTP.
+
+### Refinamento visual desktop — 23/09/2026
+
+- Cadastro em desktop (>=900px) usa campos em coluna única para evitar controles estreitos no painel dividido; o layout de duas colunas permanece restrito às telas intermediárias, sem alterar o mobile já validado.
+- Painel de autenticação ampliado e proporção ajustada para dar mais presença à imagem editorial, com altura mínima ligeiramente reduzida.
+- Typecheck, lint, formatação e build passaram após o ajuste; lint conserva três avisos preexistentes de `<img>` na landing.
