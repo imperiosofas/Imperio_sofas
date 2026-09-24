@@ -16,13 +16,13 @@ Este arquivo lista dependências que impedem ativar venda real ou declarar o sis
 
 ## Bloqueios de infraestrutura e segurança
 
-| Status    | Bloqueio        | Evidência necessária                                                                         |
-| --------- | --------------- | -------------------------------------------------------------------------------------------- |
-| BLOQUEADO | Supabase        | Projeto correto, ambientes separados, acesso de desenvolvimento e política de backup/restore |
-| BLOQUEADO | Administração   | Responsáveis pelo bootstrap, recuperação de admin e guarda de segredos/TOTP                  |
-| BLOQUEADO | E-mail          | Domínio/remetente verificado e SMTP/API para autenticação e eventos comerciais               |
-| ABERTO    | Observabilidade | Canal de alerta, retenção de logs e regras de redaction aprovadas                            |
-| ABERTO    | Deploy          | Projeto Vercel, ambientes, proteção de staging, cron e procedimento de rollback              |
+| Status    | Bloqueio        | Evidência necessária                                                                                                                                                |
+| --------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| BLOQUEADO | Supabase        | Projeto `imperiosofas` confirmado e schema inicial aplicado; ainda faltam separação de ambientes, variáveis runtime, política de backup/restore e validação de Auth |
+| BLOQUEADO | Administração   | Responsáveis pelo bootstrap, recuperação de admin e guarda de segredos/TOTP                                                                                         |
+| BLOQUEADO | E-mail          | Domínio/remetente verificado e SMTP/API para autenticação e eventos comerciais                                                                                      |
+| ABERTO    | Observabilidade | Canal de alerta, retenção de logs e regras de redaction aprovadas                                                                                                   |
+| ABERTO    | Deploy          | Projeto Vercel, ambientes, proteção de staging, cron e procedimento de rollback                                                                                     |
 
 ## Bloqueios de pagamento
 

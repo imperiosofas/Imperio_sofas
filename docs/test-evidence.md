@@ -17,21 +17,22 @@ Este arquivo separa validações locais determinísticas de homologações exter
 
 ## Integrações externas
 
-| Integração   | Evidência atual                                                                                                                    |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Supabase     | CLI e arquivos locais configurados; stack não iniciada porque Docker não está instalado; sem projeto/credencial externo homologado |
-| Mercado Pago | Não configurado; nenhum pagamento ou webhook testado                                                                               |
-| Bling/NF-e   | Não configurado; nenhuma emissão ou certificado testado                                                                            |
-| Resend       | Não configurado; nenhum envio comercial testado                                                                                    |
+| Integração   | Evidência atual                                                                                                                  |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| Supabase     | Projeto remoto `imperiosofas` identificado e migration inicial aplicada; CLI local não validada porque Docker não está instalado |
+| Mercado Pago | Não configurado; nenhum pagamento ou webhook testado                                                                             |
+| Bling/NF-e   | Não configurado; nenhuma emissão ou certificado testado                                                                          |
+| Resend       | Não configurado; nenhum envio comercial testado                                                                                  |
 
 ## Catálogo persistente
 
-| Verificação      | Resultado                               | Evidência                                                            |
-| ---------------- | --------------------------------------- | -------------------------------------------------------------------- |
-| Migration e seed | Criados; execução pendente              | `supabase/migrations/202609230001_catalog.sql` e `supabase/seed.sql` |
-| RLS e RPC        | Testes pgTAP criados; execução pendente | `supabase/tests/catalog_public.sql`; exige Supabase local ativo      |
-| Adapter Supabase | Implementado; sem conexão testada       | RPCs validadas com Zod; ambiente sem credenciais configuradas        |
-| Seed comercial   | Criado                                  | Cinco produtos `draft`, preço nulo e inventário zero                 |
+| Verificação      | Resultado                                   | Evidência                                                                                                                                                                                     |
+| ---------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Migration e seed | Schema aplicado; seed pendente              | `supabase/migrations/20260924155912_catalog_initial_schema.sql`; versão remota `20260924155912`; seed não executado no banco remoto                                                           |
+| RLS e RPC        | Aplicados; pgTAP local pendente             | Cinco tabelas com RLS, funções RPC filtradas e bucket `catalog-images` privado; `supabase/tests/catalog_public.sql` aguarda Docker                                                            |
+| Adapter Supabase | Implementado; conexão da aplicação pendente | RPCs validadas com Zod; variáveis de ambiente do app ainda não configuradas                                                                                                                   |
+| Seed comercial   | Arquivo criado; remoto vazio                | O seed contém cinco rascunhos sem preço e sem estoque; não foi inserido no projeto remoto                                                                                                     |
+| Advisors         | Conferidos após aplicar                     | RLS sem policy é intencional: acesso direto permanece revogado; RPCs públicas são as projeções controladas. Há também aviso prévio em `public.rls_auto_enable` e recomendação de índice da FK |
 
 ## Landing imersiva
 
@@ -76,3 +77,16 @@ Este arquivo separa validações locais determinísticas de homologações exter
 | Mobile 390 × 844              | Conferido visualmente     | Cabeçalho compacto, imagem editorial curta e formulário em coluna, sem overflow horizontal visível                                            |
 | Refinamento desktop           | Checks locais passaram    | Cadastro >=900px agora mantém campos em coluna única; build, typecheck e formato passaram; lint sem erros (3 avisos preexistentes de `<img>`) |
 | Supabase/SMTP/token hash/TOTP | Pendente                  | `.env.local`, templates e credenciais homologadas ausentes; signup, e-mail, sessão e MFA não foram simulados como funcionais                  |
+
+## Refinamento da autenticação e banco remoto — 24/09/2026
+
+| Verificação                | Resultado                            | Evidência                                                                           |
+| -------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------- |
+| Transição login/cadastro   | Implementada; desktop conferido      | Cobertura animada adaptada por breakpoint; ciclo ida/volta e foco vistos no browser |
+| Entrada TOTP               | Implementada; backend não homologado | Input único acessível de seis dígitos, autofill/colar e código preservado no erro   |
+| Sucesso MFA                | Implementado; backend não homologado | Animação só começa após resposta bem-sucedida de `mfa.verify`                       |
+| Migration remota           | Aplicada e conferida                 | Projeto `imperiosofas`, versão `20260924155912`, tabelas e bucket presentes         |
+| Check de advisors Supabase | Executado                            | RLS ligado nas tabelas; avisos registrados na seção de catálogo acima               |
+| Operações reais Auth e MFA | Pendentes                            | Aplicação local ainda sem env; nenhum cadastro/login ou TOTP foi simulado           |
+| Desktop 1234 × 712         | Conferido manualmente                | Login↔cadastro, títulos, foco e rolagem até o botão conferidos                      |
+| Mobile 320–430 px          | Pendente                             | Viewports mobile ainda precisam de conferência visual nesta versão                  |

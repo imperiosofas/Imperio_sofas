@@ -4,7 +4,7 @@
 
 **Baseline:** landing page Vite/React/TypeScript.
 
-**Situação da migração:** fundação Next executável; catálogo read-only e schema Supabase implementados em etapas. O storefront pode consultar Supabase ou usar o adapter local apenas em desenvolvimento. O banco local ainda não foi iniciado porque Docker não está instalado neste ambiente. Autenticação, carrinho funcional, checkout e integrações seguem como próximos incrementos.
+**Situação da migração:** fundação Next executável; migration inicial do catálogo aplicada ao projeto Supabase remoto `imperiosofas` (versão `20260924155912`). As cinco tabelas têm RLS; o bucket de imagens é privado. O banco local ainda não foi iniciado porque Docker não está instalado neste ambiente. A aplicação local ainda não tem suas variáveis Supabase e o seed comercial não foi aplicado. Carrinho funcional, checkout e integrações seguem como próximos incrementos.
 
 **Credenciais externas:** não há credenciais homologadas registradas para Supabase, Mercado Pago, Bling, Resend, Vercel ou domínio de produção.
 
@@ -22,19 +22,19 @@
 
 ## Estado por incremento
 
-| Incremento                    | Estado                                 | Evidência/observação                                                                                                                                              |
-| ----------------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Fundação Next                 | Executável                             | `npm run typecheck`, `npm run lint`, `npm run format:check` e `npm run build` passaram; a LP foi preservada em `/`                                                |
-| Identidade e landing imersiva | Revisada para validação visual         | Hero editorial, três cenas sticky com fotos reais, movimento vinculado à rolagem e ritmo responsivo; aguarda feedback visual                                      |
-| Navegação landing/loja        | Integrada para validação visual        | Cabeçalho compartilhado nas rotas públicas, atalhos para loja/categoria, links da narrativa e rota de sacola com status transparente; sem carrinho funcional      |
-| Catálogo público persistente  | Implementado, validação local pendente | Migration, seed, RLS, RPC e adapter Supabase; Docker não instalado neste ambiente                                                                                 |
-| Carrinho e frete              | Não iniciado                           | `/carrinho` apresenta estado informativo; não há itens, frete ou regras server-side                                                                               |
-| Conta e autenticação          | Implementado; ativação pendente        | `/conta`: login, cadastro de cliente, confirmação/recuperação por token hash, sessão SSR e TOTP opt-in; faltam projeto, templates de e-mail, SMTP e validação E2E |
-| Checkout e reserva            | Não iniciado                           | Não há pedidos, estoque ou transações                                                                                                                             |
-| Mercado Pago                  | Bloqueado                              | Sem credenciais homologadas                                                                                                                                       |
-| Admin e operação              | Não iniciado                           | Não há autorização, MFA ou painel                                                                                                                                 |
-| Bling/NF-e                    | Bloqueado                              | Sem credenciais, parâmetros fiscais ou certificado homologado                                                                                                     |
-| LGPD, relatórios e go-live    | Não iniciado/bloqueado                 | Dependem de dados, políticas e operação aprovados                                                                                                                 |
+| Incremento                    | Estado                                  | Evidência/observação                                                                                                                                              |
+| ----------------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fundação Next                 | Executável                              | `npm run typecheck`, `npm run lint`, `npm run format:check` e `npm run build` passaram; a LP foi preservada em `/`                                                |
+| Identidade e landing imersiva | Revisada para validação visual          | Hero editorial, três cenas sticky com fotos reais, movimento vinculado à rolagem e ritmo responsivo; aguarda feedback visual                                      |
+| Navegação landing/loja        | Integrada para validação visual         | Cabeçalho compartilhado nas rotas públicas, atalhos para loja/categoria, links da narrativa e rota de sacola com status transparente; sem carrinho funcional      |
+| Catálogo público persistente  | Schema remoto aplicado; dados pendentes | Migration, RLS, RPC e bucket privado aplicados no projeto remoto; seed ainda não executado, sem produto vendável; Docker não instalado neste ambiente             |
+| Carrinho e frete              | Não iniciado                            | `/carrinho` apresenta estado informativo; não há itens, frete ou regras server-side                                                                               |
+| Conta e autenticação          | Implementado; ativação pendente         | `/conta`: login, cadastro de cliente, confirmação/recuperação por token hash, sessão SSR e TOTP opt-in; faltam projeto, templates de e-mail, SMTP e validação E2E |
+| Checkout e reserva            | Não iniciado                            | Não há pedidos, estoque ou transações                                                                                                                             |
+| Mercado Pago                  | Bloqueado                               | Sem credenciais homologadas                                                                                                                                       |
+| Admin e operação              | Não iniciado                            | Não há autorização, MFA ou painel                                                                                                                                 |
+| Bling/NF-e                    | Bloqueado                               | Sem credenciais, parâmetros fiscais ou certificado homologado                                                                                                     |
+| LGPD, relatórios e go-live    | Não iniciado/bloqueado                  | Dependem de dados, políticas e operação aprovados                                                                                                                 |
 
 Na revisão visual de 23/09/2026, a seção de história deixou de usar o cartão de produto fixo no desktop e a lista estática no celular. As três cenas agora compartilham a mesma estrutura de tela cheia, com foto, texto e navegação contextual; a rolagem permanece nativa. Diferenciais e avaliações foram reorganizados para manter o ritmo editorial depois da narrativa. O filtro de ruído do hero e o blur do cabeçalho foram retirados para reduzir composição visual durante o scroll. O ajuste de escala das fotos usa CSS scroll-driven animation como aprimoramento progressivo; a estrutura sticky continua funcional quando esse recurso não existe.
 
@@ -74,3 +74,12 @@ Até que essas evidências existam, o projeto deve ser descrito como uma aplica�
 - Cadastro em desktop (>=900px) usa campos em coluna única para evitar controles estreitos no painel dividido; o layout de duas colunas permanece restrito às telas intermediárias, sem alterar o mobile já validado.
 - Painel de autenticação ampliado e proporção ajustada para dar mais presença à imagem editorial, com altura mínima ligeiramente reduzida.
 - Typecheck, lint, formatação e build passaram após o ajuste; lint conserva três avisos preexistentes de `<img>` na landing.
+
+### Refinamento de autenticação e primeiro schema remoto — 24/09/2026
+
+- Login, cadastro e MFA agora compartilham o mesmo painel; uma cobertura visual curta oculta a troca de estado, com eixo responsivo e respeito a movimento reduzido. A página pode rolar em telas pequenas, e os campos de cadastro permanecem em coluna única.
+- A entrada TOTP foi compartilhada com a tela de segurança, mantém os dígitos ao falhar e usa animação de sucesso apenas depois da confirmação do Supabase.
+- Migration de catálogo aplicada ao projeto Supabase `imperiosofas`, ref `qsafyqsskwbjnailgoev`, versão registrada `20260924155912`; arquivo versionado renomeado para corresponder à versão remota.
+- A aplicação ainda não está conectada em runtime: faltam variáveis locais e a configuração Auth/e-mail. A migration não publicou produtos nem inseriu seed; operações de checkout, administração e venda real continuam indisponíveis.
+- Advisors remotos apontaram o aviso anterior em `public.rls_auto_enable`, alertas de execução autenticada para RPCs do catálogo (funções intencionais e filtradas) e recomendação informativa de índice em `product_media.variant_id`.
+- RLS está habilitado sem policies nas tabelas do catálogo de propósito: papéis client não recebem acesso SQL direto; a vitrine usa somente as RPCs de leitura filtrada. QA manual em desktop `1234 × 712` conferiu login/cadastro, foco e rolagem; os viewports móveis ainda faltam neste ciclo.

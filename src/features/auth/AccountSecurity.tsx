@@ -12,50 +12,13 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { createSupabaseBrowserClient } from "../../lib/supabase/client";
+import { OtpCodeInput } from "./OtpCodeInput";
 
 type TotpFactor = {
   id: string;
   status: "verified" | "unverified";
   friendly_name?: string;
 };
-
-function CodeInput({
-  id,
-  code,
-  onChange,
-  invalid,
-}: {
-  id: string;
-  code: string;
-  onChange: (value: string) => void;
-  invalid: boolean;
-}) {
-  return (
-    <div className="auth-code-wrap">
-      <div className="auth-code-slots" aria-hidden="true">
-        {Array.from({ length: 6 }, (_, i) => (
-          <span key={i} className={i === code.length ? "is-active" : ""}>
-            {code[i] ?? ""}
-          </span>
-        ))}
-      </div>
-      <input
-        id={id}
-        className="auth-code-input"
-        aria-label="Código TOTP de seis dígitos"
-        aria-invalid={invalid}
-        autoComplete="one-time-code"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        maxLength={6}
-        value={code}
-        onChange={(event) =>
-          onChange(event.target.value.replace(/\D/g, "").slice(0, 6))
-        }
-      />
-    </div>
-  );
-}
 
 export function AccountSecurity() {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
@@ -143,7 +106,6 @@ export function AccountSecurity() {
       setError(
         "Código incorreto ou expirado. Confira o relógio do celular e tente novamente.",
       );
-      setCode("");
       return;
     }
     setQrCode("");
@@ -176,7 +138,6 @@ export function AccountSecurity() {
     if (verifyError) {
       setBusy(false);
       setError("Código incorreto ou expirado.");
-      setCode("");
       return;
     }
     const { error: unenrollError } = await supabase.auth.mfa.unenroll({
@@ -277,14 +238,19 @@ export function AccountSecurity() {
                 <label className="auth-label" htmlFor="totp-enroll-code">
                   02 · Digite o código mostrado no app
                 </label>
-                <CodeInput
+                <p id="totp-enroll-code-help" className="auth-helper">
+                  Digite ou cole os seis números do app autenticador.
+                </p>
+                <OtpCodeInput
                   id="totp-enroll-code"
-                  code={code}
+                  value={code}
                   onChange={setCode}
                   invalid={Boolean(error)}
+                  disabled={busy}
+                  describedBy={error ? "auth-error" : "totp-enroll-code-help"}
                 />
                 {error && (
-                  <p className="auth-alert" role="alert">
+                  <p className="auth-alert" id="auth-error" role="alert">
                     {error}
                   </p>
                 )}
@@ -313,14 +279,19 @@ export function AccountSecurity() {
               <label className="auth-label" htmlFor="totp-disable-code">
                 Para desativar, confirme com o código atual
               </label>
-              <CodeInput
+              <p id="totp-disable-code-help" className="auth-helper">
+                Digite ou cole os seis números do app autenticador.
+              </p>
+              <OtpCodeInput
                 id="totp-disable-code"
-                code={code}
+                value={code}
                 onChange={setCode}
                 invalid={Boolean(error)}
+                disabled={busy}
+                describedBy={error ? "auth-error" : "totp-disable-code-help"}
               />
               {error && (
-                <p className="auth-alert" role="alert">
+                <p className="auth-alert" id="auth-error" role="alert">
                   {error}
                 </p>
               )}
