@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "../index.css";
 import { Header } from "../sections/Header";
+import { BottomNavigation } from "../sections/BottomNavigation";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
@@ -31,6 +32,7 @@ export default function RootLayout({
       <body>
         <Header />
         {children}
+        <BottomNavigation />
       </body>
     </html>
   );
