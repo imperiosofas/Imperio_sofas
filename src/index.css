@@ -515,6 +515,12 @@ img {
   box-shadow: 0 2rem 6rem rgb(0 0 0 / 38%);
 }
 
+.auth-visual-photo {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+}
+
 .auth-shutter {
   position: absolute;
   z-index: 5;
@@ -539,7 +545,6 @@ img {
   color: #181712;
 }
 
-.auth-kicker,
 .auth-overline,
 .account-card-label {
   display: block;
@@ -556,7 +561,7 @@ img {
 }
 
 .auth-overline {
-  margin-top: 1.45rem;
+  margin-top: 0.5rem;
   color: #92712b;
 }
 
@@ -586,7 +591,6 @@ img {
 
 .auth-state-stage {
   position: relative;
-  min-height: 20rem;
 }
 
 .auth-form--register {
@@ -917,12 +921,17 @@ img {
   object-position: center 56%;
 }
 
+.auth-visual-image--register {
+  object-position: center 52%;
+}
+
 .auth-visual-shade {
   position: absolute;
+  z-index: 1;
   inset: 0;
   background:
-    linear-gradient(95deg, rgb(7 7 7 / 76%), rgb(7 7 7 / 18%) 76%),
-    linear-gradient(0deg, rgb(7 7 7 / 38%), transparent 70%);
+    linear-gradient(95deg, rgb(7 7 7 / 58%), rgb(7 7 7 / 8%) 84%),
+    linear-gradient(0deg, rgb(7 7 7 / 42%), transparent 76%);
 }
 
 .auth-visual-top,
@@ -933,30 +942,15 @@ img {
 
 .auth-visual-copy {
   position: absolute;
+  z-index: 2;
   top: 50%;
   left: 1.2rem;
   width: min(78%, 22rem);
   transform: translateY(-50%);
 }
 
-.auth-visual-rule {
-  display: block;
-  width: 2rem;
-  height: 2px;
-  margin-bottom: 0.5rem;
-  background: var(--color-gold);
-}
-
-.auth-visual-eyebrow {
-  color: #e1c783;
-  font-size: 0.57rem;
-  font-weight: 750;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
 .auth-visual-title {
-  margin-top: 0.28rem;
+  margin: 0;
   font-family: var(--font-display);
   font-size: 1.8rem;
   font-weight: 500;
@@ -1359,27 +1353,25 @@ img {
 
   .auth-card {
     display: grid;
-    grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
-    min-height: 640px;
+    grid-template-areas: "form visual";
+    grid-template-columns: minmax(0, 0.96fr) minmax(0, 1.04fr);
+    min-height: min(39rem, calc(100svh - 5rem));
     border-radius: 1.6rem;
   }
 
-  .auth-state-stage {
-    min-height: 21rem;
+  .auth-card--register {
+    grid-template-areas: "visual form";
+    grid-template-columns: minmax(0, 1.04fr) minmax(0, 0.96fr);
   }
 
   .auth-form-panel {
-    order: 1;
+    grid-area: form;
     align-self: center;
-    padding: clamp(2.5rem, 4vw, 4rem);
+    padding: clamp(2rem, 3.5vw, 3rem);
   }
 
   .auth-form-head {
-    margin-bottom: 1.8rem;
-  }
-
-  .auth-overline {
-    margin-top: 2rem;
+    margin-bottom: 1.25rem;
   }
 
   .auth-title {
@@ -1414,11 +1406,11 @@ img {
 
   .auth-switch {
     justify-content: flex-start;
-    margin-top: 1.35rem;
+    margin-top: 1rem;
   }
 
   .auth-visual {
-    order: 2;
+    grid-area: visual;
     min-height: 100%;
   }
 
@@ -1430,15 +1422,16 @@ img {
     background:
       linear-gradient(
         180deg,
-        rgb(7 7 7 / 38%),
+        rgb(7 7 7 / 28%),
         transparent 35%,
-        rgb(7 7 7 / 74%)
+        rgb(7 7 7 / 66%)
       ),
-      linear-gradient(90deg, rgb(7 7 7 / 28%), transparent 80%);
+      linear-gradient(90deg, rgb(7 7 7 / 20%), transparent 80%);
   }
 
   .auth-visual-top {
     position: absolute;
+    z-index: 2;
     inset: 1.5rem 1.6rem auto;
     display: flex;
     align-items: center;
@@ -1452,18 +1445,13 @@ img {
 
   .auth-visual-copy {
     top: auto;
-    bottom: 5.6rem;
+    bottom: 2rem;
     left: 2.2rem;
     transform: none;
   }
 
   .auth-visual-title {
-    margin-top: 0.45rem;
     font-size: clamp(3.2rem, 4.5vw, 4.9rem);
-  }
-
-  .auth-visual-eyebrow {
-    font-size: 0.65rem;
   }
 
   .auth-visual-description {
@@ -1473,28 +1461,6 @@ img {
     color: rgb(244 239 228 / 76%);
     font-size: 0.83rem;
     line-height: 1.6;
-  }
-
-  .auth-visual-footer {
-    position: absolute;
-    bottom: 1.6rem;
-    left: 2.2rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: rgb(244 239 228 / 76%);
-    font-size: 0.72rem;
-  }
-
-  .auth-edition {
-    position: absolute;
-    right: 1.6rem;
-    bottom: 1.6rem;
-    display: block;
-    color: rgb(244 239 228 / 56%);
-    font-size: 0.55rem;
-    font-weight: 700;
-    letter-spacing: 0.16em;
   }
 
   .auth-footer {
@@ -1582,12 +1548,12 @@ img {
     border-radius: 1.2rem;
   }
 
-  .auth-visual {
-    min-height: 7.5rem;
+  .auth-input {
+    font-size: 1rem;
   }
 
-  .auth-kicker {
-    display: none;
+  .auth-visual {
+    min-height: 7.5rem;
   }
 
   .auth-form-head {

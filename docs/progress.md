@@ -83,3 +83,12 @@ Até que essas evidências existam, o projeto deve ser descrito como uma aplica�
 - A aplicação ainda não está conectada em runtime: faltam variáveis locais e a configuração Auth/e-mail. A migration não publicou produtos nem inseriu seed; operações de checkout, administração e venda real continuam indisponíveis.
 - Advisors remotos apontaram o aviso anterior em `public.rls_auto_enable`, alertas de execução autenticada para RPCs do catálogo (funções intencionais e filtradas) e recomendação informativa de índice em `product_media.variant_id`.
 - RLS está habilitado sem policies nas tabelas do catálogo de propósito: papéis client não recebem acesso SQL direto; a vitrine usa somente as RPCs de leitura filtrada. QA manual em desktop `1234 × 712` conferiu login/cadastro, foco e rolagem; os viewports móveis ainda faltam neste ciclo.
+
+### Refinamento visual de autenticação — 24/09/2026
+
+- `/conta` removeu o kicker superior do formulário e os rótulos redundantes de login/cadastro; também removeu os dois textos pequenos que ocupavam o rodapé da foto.
+- A composição desktop alterna por estado: login com formulário à esquerda e foto à direita; cadastro inverte os painéis. A cobertura animada existente foi preservada; a foto Berlim/Maximo faz crossfade leve junto da mudança.
+- O painel usa fotos locais de produtos da mesma linguagem visual, overlay mais sutil e espaçamento sem altura mínima artificial no estágio do formulário. O foco automático não desloca/corta o cartão em desktop; a rolagem assistida continua restrita a viewports compactos.
+- Fluxos, validações, sessão, confirmação, recuperação e MFA/TOTP Supabase não foram alterados.
+- Typecheck, lint (0 erros; 3 avisos preexistentes de `<img>`), `format:check` e build passaram. QA visual manual da transição e das duas composições concluído em desktop `1234 × 712`.
+- QA mobile `320–430 px` ainda pendente: esta sessão do navegador não disponibilizou controle de viewport/emulação de dispositivo. Não houve teste em aparelho físico nem submissão real aos fluxos Supabase.

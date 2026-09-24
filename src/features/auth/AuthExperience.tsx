@@ -17,15 +17,9 @@ import {
   useReducedMotion,
   type Variants,
 } from "framer-motion";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Eye,
-  EyeOff,
-  KeyRound,
-  ShieldCheck,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import sofa from "../../assets/products/berlim-enhanced-800.webp";
+import signupSofa from "../../assets/products/maximo-enhanced-800.webp";
 import { Brand } from "../../components/Brand";
 import { createSupabaseBrowserClient } from "../../lib/supabase/client";
 import { MfaSuccessSequence } from "./MfaSuccessSequence";
@@ -129,7 +123,11 @@ export function AuthExperience({
       const heading =
         formPanelRef.current?.querySelector<HTMLElement>(".auth-form-head");
       const headingTop = heading?.getBoundingClientRect().top;
-      if (headingTop !== undefined && (headingTop < 0 || headingTop > 160)) {
+      if (
+        window.matchMedia("(max-width: 899px)").matches &&
+        headingTop !== undefined &&
+        (headingTop < 0 || headingTop > 160)
+      ) {
         formPanelRef.current?.scrollIntoView({
           block: "start",
           behavior: reduceMotion ? "auto" : "smooth",
@@ -384,9 +382,6 @@ export function AuthExperience({
             }`}
           >
             <div className="auth-form-head">
-              <span className="auth-kicker">
-                IMPÉRIO SOFÁS · VALE DO PARAÍBA
-              </span>
               <AnimatePresence mode="wait">
                 <motion.div
                   key={view}
@@ -398,17 +393,15 @@ export function AuthExperience({
                     ease: "easeOut",
                   }}
                 >
-                  <p className="auth-overline">
-                    {isMfa
-                      ? "SEGURANÇA EM DUAS ETAPAS"
-                      : isRegister
-                        ? "CRIE SUA CONTA"
+                  {!isLogin && !isRegister && (
+                    <p className="auth-overline">
+                      {isMfa
+                        ? "SEGURANÇA EM DUAS ETAPAS"
                         : isRecover
                           ? "ACESSO À CONTA"
-                          : isLogin
-                            ? "BEM-VINDO DE VOLTA"
-                            : "QUASE LÁ"}
-                  </p>
+                          : "QUASE LÁ"}
+                    </p>
+                  )}
                   <h1 className="auth-title">{title}</h1>
                   <p className="auth-subtitle">{intro}</p>
                 </motion.div>
@@ -731,16 +724,50 @@ export function AuthExperience({
 
           <aside
             className="auth-visual"
-            aria-label="Ambiente de estar com sofá Império"
+            aria-label={
+              isRegister
+                ? "Sala com sofá Maximo da Império Sofás"
+                : "Sala com sofá Berlim da Império Sofás"
+            }
           >
-            <Image
-              src={sofa}
-              alt="Sofá de linhas contemporâneas em uma sala acolhedora"
-              fill
-              sizes="(min-width: 900px) 50vw, 100vw"
-              priority
-              className="auth-visual-image"
-            />
+            <motion.div
+              className="auth-visual-photo"
+              aria-hidden="true"
+              initial={false}
+              animate={{ opacity: isRegister ? 0 : 1 }}
+              transition={{
+                duration: reduceMotion ? 0 : 0.55,
+                ease: "easeInOut",
+              }}
+            >
+              <Image
+                src={sofa}
+                alt=""
+                fill
+                sizes="(min-width: 900px) 50vw, 100vw"
+                priority
+                className="auth-visual-image"
+              />
+            </motion.div>
+            <motion.div
+              className="auth-visual-photo"
+              aria-hidden="true"
+              initial={false}
+              animate={{ opacity: isRegister ? 1 : 0 }}
+              transition={{
+                duration: reduceMotion ? 0 : 0.55,
+                ease: "easeInOut",
+              }}
+            >
+              <Image
+                src={signupSofa}
+                alt=""
+                fill
+                sizes="(min-width: 900px) 50vw, 100vw"
+                loading="eager"
+                className="auth-visual-image auth-visual-image--register"
+              />
+            </motion.div>
             <div className="auth-visual-shade" />
             <div className="auth-visual-top">
               <Brand className="auth-brand-light" />
@@ -749,24 +776,27 @@ export function AuthExperience({
               </Link>
             </div>
             <div className="auth-visual-copy">
-              <span className="auth-visual-rule" />
-              <p className="auth-visual-eyebrow">
-                O conforto mora nos detalhes
-              </p>
               <p className="auth-visual-title">
-                Um lugar seu.
-                <br />
-                <em>Do seu jeito.</em>
+                {isRegister ? (
+                  <>
+                    Uma casa
+                    <br />
+                    <em>mais sua.</em>
+                  </>
+                ) : (
+                  <>
+                    Um lugar seu.
+                    <br />
+                    <em>Do seu jeito.</em>
+                  </>
+                )}
               </p>
               <p className="auth-visual-description">
-                A casa muda quando a gente encontra o lugar certo para ficar.
+                {isRegister
+                  ? "Comece a descobrir o conforto que combina com você."
+                  : "A casa muda quando a gente encontra o lugar certo para ficar."}
               </p>
             </div>
-            <div className="auth-visual-footer">
-              <KeyRound size={15} />
-              <span>Seus dados, tratados com cuidado.</span>
-            </div>
-            <span className="auth-edition">EST. VALE DO PARAÍBA</span>
           </aside>
           <motion.div
             className={`auth-shutter auth-shutter--${transitionDirection}`}

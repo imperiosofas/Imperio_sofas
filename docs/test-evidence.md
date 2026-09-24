@@ -90,3 +90,18 @@ Este arquivo separa validações locais determinísticas de homologações exter
 | Operações reais Auth e MFA | Pendentes                            | Aplicação local ainda sem env; nenhum cadastro/login ou TOTP foi simulado           |
 | Desktop 1234 × 712         | Conferido manualmente                | Login↔cadastro, títulos, foco e rolagem até o botão conferidos                      |
 | Mobile 320–430 px          | Pendente                             | Viewports mobile ainda precisam de conferência visual nesta versão                  |
+
+## Refinamento visual da autenticação — 24/09/2026
+
+| Verificação                   | Resultado                        | Evidência                                                                                                   |
+| ----------------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Formulário sem rótulos extras | Conferido no navegador           | Kicker da marca e overlines de login/cadastro removidos; textos inferiores da foto removidos                |
+| Login desktop                 | Conferido manualmente (1234×712) | Formulário à esquerda; foto Berlim à direita; hierarquia e foco visíveis sem corte após reload              |
+| Cadastro desktop              | Conferido manualmente (1234×712) | Foto Maximo à esquerda; formulário à direita; mudança de imagem e conteúdo sincronizada à cobertura animada |
+| Foco após trocar estado       | Conferido manualmente            | Não rola o cartão no desktop; em viewports compactos mantém a rolagem assistida ao formulário               |
+| Mobile 320–430 px             | Pendente                         | A sessão de navegador não oferece emulação/controle de viewport; requer conferência em viewport ou aparelho |
+| `npm run typecheck`           | Passou                           | `tsc --noEmit`                                                                                              |
+| `npm run lint`                | Passou com avisos antigos        | 0 erros; somente 3 avisos preexistentes de `<img>` fora da tela de autenticação                             |
+| `npm run format:check`        | Passou                           | Todos os arquivos incluídos no script estão formatados                                                      |
+| `npm run build`               | Passou                           | Next.js 16 compilou e gerou as rotas da aplicação                                                           |
+| Fluxos Supabase               | Não alterados/não homologados    | Sem variáveis locais; signup, e-mail, sessão e MFA não foram exercitados contra o serviço                   |
