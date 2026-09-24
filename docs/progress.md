@@ -100,3 +100,13 @@ Até que essas evidências existam, o projeto deve ser descrito como uma aplica�
 - Inputs passaram a 52 px de altura e 16 px de fonte; labels/helpers ficaram maiores e mais espaçados; CTA, toggle de senha, links de alternância/recuperação e retorno foram ampliados para 48 px ou mais.
 - Teclas móveis indicam avançar/ir; email mantém `type=email`, autocomplete e desativação de capitalização. O viewport declara `viewport-fit=cover` e `interactive-widget=resizes-content`, sem bloquear zoom do usuário.
 - A lógica de autenticação não mudou. A sessão atual não dispõe de emulação de device/viewport; portanto os tamanhos `320`, `360`, `375`, `390` e `430 px`, teclado virtual e overflow horizontal precisam de validação visual em navegador emulado ou aparelho antes de serem considerados homologados.
+
+### Estabilidade e motion no fluxo mobile — 24/09/2026
+
+- Em `/conta`, login e cadastro agora compartilham uma stage fixa; cada formulário (incluindo seu link de alternância) ocupa a mesma camada absoluta. A stage tem `33rem` e a altura total do cartão não muda na troca. O painel visual compacto mantém 108 px.
+- No breakpoint mobile, a troca de formulário percorre diagonal/vertical com `transform` e `opacity`, sincronizada à cobertura existente. As fotos Berlim e Maximo cruzam em direções opostas com deslocamento/escala sutis. A composição e o eixo da animação desktop não foram alterados.
+- O foco pós-alternância vai ao título com `preventScroll`, sem abrir teclado nem reposicionar a página. Recuperação, confirmação, MFA, validações e chamadas Supabase seguem sem alterações; somente o par login/cadastro usa o modo sobreposto.
+- As órbitas decorativas foram ocultadas somente no mobile; `body` deixa de impor `min-width:320px` apenas quando `/conta` está presente. Isso removeu a rolagem residual e o overflow horizontal em viewport de 320 px.
+- No navegador com overrides de viewport, os ciclos login→cadastro→login foram executados em `320`, `360`, `375`, `390` e `430 px`: cartão manteve `853,98 px`, topo `65,59 px`, rolagem interna `0` e sem overflow horizontal. Inputs ficaram com `52 px`/`16 px`; CTA `52 px`; toggle/alternância `48 × 48 px`.
+- O foco do e-mail foi testado nas mesmas larguras com viewport de altura reduzida para `420 px` (simulação de espaço após teclado): campo focado permaneceu visível, fonte de `16 px` e sem overflow. A sessão não oferece teclado virtual nativo; QA em aparelho real continua recomendável.
+- Typecheck, lint, formatação e build executados após o ajuste final; lint mantém apenas os três avisos antigos de `<img>` em outros componentes. Interação desktop conferida em `1234 × 900`; layout segue as áreas `form visual`/`visual form` existentes.

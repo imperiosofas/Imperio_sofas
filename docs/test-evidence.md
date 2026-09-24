@@ -120,3 +120,18 @@ Este arquivo separa validações locais determinísticas de homologações exter
 | Viewports 320/360/375/390/430 px  | Pendente                         | Nenhum controle de viewport/emulador mobile disponível nesta sessão                               |
 | Teclado virtual, toque e overflow | Pendente                         | Requer navegador com device emulation ou aparelho; não inferido a partir do CSS                   |
 | Supabase real                     | Não exercitado                   | Fluxos de conta não foram submetidos nem alterados                                                |
+
+## Estabilidade e motion mobile em `/conta` — 24/09/2026
+
+| Verificação                                        | Resultado                                  | Evidência                                                                                                  |
+| -------------------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| 320/360/375/390/430 px: login→cadastro→login       | Passou no navegador                        | Nos cinco widths, cartão: `y=65,59 px`, altura `853,98 px`, `scrollTop=0`; sem overflow horizontal         |
+| Altura da composição entre estados                 | Estável                                    | Mesmas medidas do cartão no login, cadastro e retorno; formulário é sobreposto dentro da stage de `528 px` |
+| Movimento formulário e imagem                      | Conferido nos dois sentidos                | Capturas no meio da transição; fotos cruzam de opacidade ~0,5 com deslocamento diagonal oposto             |
+| Campos e ações                                     | Passou                                     | Input `52 px`/`16 px`; CTA `52 px`; revelar senha `48×48 px`; alternância `48 px`, 13,59 px após CTA       |
+| Foco com altura reduzida (`420 px`)                | Passou como simulação de teclado           | E-mail focado e inteiramente visível nas cinco larguras; `type=email`, sem overflow horizontal             |
+| Teclado virtual nativo                             | Não disponível nesta sessão                | A altura foi reduzida no emulador, mas não há teclado de aparelho/iOS/Android real                         |
+| CTA e toggle em viewport baixo                     | Conferidos sem envio                       | CTA vazio acionou validação nativa sem submeter; mostrar senha continuou operável                          |
+| Desktop (`1234×900`)                               | Conferido; breakpoints existentes mantidos | Grid calculada continua `"form visual"` no login e `"visual form"` no cadastro                             |
+| Supabase/auth/MFA                                  | Preservados e não exercitados              | Mudanças limitadas a apresentação, motion, foco e organização dos controles                                |
+| `npm run typecheck`, `lint`, `format:check`, build | Passaram                                   | Lint: 0 erros; 3 avisos preexistentes de `<img>` em componentes fora da tela de autenticação               |

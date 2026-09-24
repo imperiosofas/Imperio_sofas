@@ -49,6 +49,31 @@ const formVariants: Variants = {
   }),
 };
 
+const mobileFormVariants: Variants = {
+  enter: (direction: number) => ({
+    opacity: 0,
+    x: direction > 0 ? 8 : -8,
+    y: direction > 0 ? 18 : -18,
+  }),
+  center: {
+    opacity: 1,
+    x: 0,
+    y: 0,
+    transition: {
+      duration: 0.3,
+      ease: [0.22, 0.72, 0.22, 1],
+      staggerChildren: 0.035,
+      delayChildren: 0.025,
+    },
+  },
+  exit: (direction: number) => ({
+    opacity: 0,
+    x: direction > 0 ? -6 : 6,
+    y: direction > 0 ? -12 : 12,
+    transition: { duration: 0.16, ease: "easeIn" },
+  }),
+};
+
 const fieldVariants: Variants = {
   enter: { opacity: 0, y: 5 },
   center: {
@@ -98,6 +123,7 @@ export function AuthExperience({
     "forward" | "backward"
   >("forward");
   const [isCompactViewport, setIsCompactViewport] = useState(false);
+  const [isAccountSwap, setIsAccountSwap] = useState(false);
   const [mfaVerified, setMfaVerified] = useState(false);
   const isLogin = view === "login";
   const isRegister = view === "register";
@@ -116,6 +142,12 @@ export function AuthExperience({
     if (transitionPhase !== "idle") return;
     if (focusAfterTransitionRef.current) {
       focusAfterTransitionRef.current = false;
+      if (isCompactViewport && (view === "login" || view === "register")) {
+        formPanelRef.current
+          ?.querySelector<HTMLElement>(".auth-title")
+          ?.focus({ preventScroll: true });
+        return;
+      }
       if (view === "mfa") codeInputRef.current?.focus({ preventScroll: true });
       else if (view === "sent")
         sentStatusRef.current?.focus({ preventScroll: true });
@@ -137,7 +169,7 @@ export function AuthExperience({
     }
     if (view === "mfa" && !mfaVerified)
       codeInputRef.current?.focus({ preventScroll: true });
-  }, [mfaVerified, reduceMotion, transitionPhase, view]);
+  }, [isCompactViewport, mfaVerified, reduceMotion, transitionPhase, view]);
 
   function transitionTo(next: View, focusAfter = true) {
     if (next === view) return;
@@ -148,12 +180,17 @@ export function AuthExperience({
         ? "backward"
         : "forward",
     );
+    setIsAccountSwap(
+      (view === "login" || view === "register") &&
+        (next === "login" || next === "register"),
+    );
     pendingViewRef.current = next;
     focusAfterTransitionRef.current = focusAfter;
     if (reduceMotion) {
       pendingViewRef.current = null;
       setView(next);
       setTransitionPhase("idle");
+      setIsAccountSwap(false);
     } else {
       setTransitionPhase("cover");
     }
@@ -173,7 +210,10 @@ export function AuthExperience({
       setTransitionPhase("reveal");
       return;
     }
-    if (transitionPhase === "reveal") setTransitionPhase("idle");
+    if (transitionPhase === "reveal") {
+      setTransitionPhase("idle");
+      setIsAccountSwap(false);
+    }
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -375,8 +415,9 @@ export function AuthExperience({
           className={`auth-card${isRegister ? " auth-card--register" : ""}${isMfa ? " auth-card--mfa" : ""}`}
         >
           <motion.section
-            layout
+            layout={!isCompactViewport || !isAccountSwap}
             ref={formPanelRef}
+            data-auth-view={view}
             className={`auth-form-panel${
               isRegister ? " auth-form-panel--register" : ""
             }`}
@@ -402,7 +443,9 @@ export function AuthExperience({
                           : "QUASE LÁ"}
                     </p>
                   )}
-                  <h1 className="auth-title">{title}</h1>
+                  <h1 className="auth-title" tabIndex={-1}>
+                    {title}
+                  </h1>
                   <p className="auth-subtitle">{intro}</p>
                 </motion.div>
               </AnimatePresence>
@@ -416,7 +459,7 @@ export function AuthExperience({
             )}
             <div className="auth-state-stage">
               <AnimatePresence
-                mode="wait"
+                mode={isCompactViewport && isAccountSwap ? "sync" : "wait"}
                 initial={false}
                 custom={transitionDirection === "forward" ? 1 : -1}
               >
@@ -538,7 +581,11 @@ export function AuthExperience({
                       isRegister ? " auth-form--register" : ""
                     }`}
                     onSubmit={submit}
-                    variants={formVariants}
+                    variants={
+                      isCompactViewport && isAccountSwap
+                        ? mobileFormVariants
+                        : formVariants
+                    }
                     custom={transitionDirection === "forward" ? 1 : -1}
                     initial="enter"
                     animate="center"
@@ -700,33 +747,32 @@ export function AuthExperience({
                             : "Entrar na minha conta"}
                       {!busy && <ArrowRight size={17} />}
                     </motion.button>
+                    <div className="auth-switch">
+                      <span>
+                        {isRegister
+                          ? "Já tem uma conta?"
+                          : isRecover
+                            ? "Lembrou sua senha?"
+                            : "Ainda não tem conta?"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          changeView(
+                            isRegister || isRecover ? "login" : "register",
+                          )
+                        }
+                      >
+                        {isRegister || isRecover ? "Entrar" : "Criar conta"}
+                      </button>
+                    </div>
                   </motion.form>
                 )}
               </AnimatePresence>
             </div>
-
-            {view !== "mfa" && view !== "sent" && (
-              <div className="auth-switch">
-                <span>
-                  {isRegister
-                    ? "Já tem uma conta?"
-                    : isRecover
-                      ? "Lembrou sua senha?"
-                      : "Ainda não tem conta?"}
-                </span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    changeView(isRegister || isRecover ? "login" : "register")
-                  }
-                >
-                  {isRegister || isRecover ? "Entrar" : "Criar conta"}
-                </button>
-              </div>
-            )}
           </motion.section>
 
-          <aside
+          <motion.aside
             className="auth-visual"
             aria-label={
               isRegister
@@ -738,7 +784,13 @@ export function AuthExperience({
               className="auth-visual-photo"
               aria-hidden="true"
               initial={false}
-              animate={{ opacity: isRegister ? 0 : 1 }}
+              animate={{
+                opacity: isRegister ? 0 : 1,
+                x: isCompactViewport && !reduceMotion && isRegister ? -14 : 0,
+                y: isCompactViewport && !reduceMotion && isRegister ? -10 : 0,
+                scale:
+                  isCompactViewport && !reduceMotion && isRegister ? 1.04 : 1,
+              }}
               transition={{
                 duration: reduceMotion ? 0 : 0.55,
                 ease: "easeInOut",
@@ -757,7 +809,13 @@ export function AuthExperience({
               className="auth-visual-photo"
               aria-hidden="true"
               initial={false}
-              animate={{ opacity: isRegister ? 1 : 0 }}
+              animate={{
+                opacity: isRegister ? 1 : 0,
+                x: isCompactViewport && !reduceMotion && !isRegister ? 14 : 0,
+                y: isCompactViewport && !reduceMotion && !isRegister ? 10 : 0,
+                scale:
+                  isCompactViewport && !reduceMotion && !isRegister ? 1.04 : 1,
+              }}
               transition={{
                 duration: reduceMotion ? 0 : 0.55,
                 ease: "easeInOut",
@@ -801,7 +859,7 @@ export function AuthExperience({
                   : "A casa muda quando a gente encontra o lugar certo para ficar."}
               </p>
             </div>
-          </aside>
+          </motion.aside>
           <motion.div
             className={`auth-shutter auth-shutter--${transitionDirection}`}
             aria-hidden="true"
