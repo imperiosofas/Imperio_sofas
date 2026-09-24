@@ -92,3 +92,11 @@ Até que essas evidências existam, o projeto deve ser descrito como uma aplica�
 - Fluxos, validações, sessão, confirmação, recuperação e MFA/TOTP Supabase não foram alterados.
 - Typecheck, lint (0 erros; 3 avisos preexistentes de `<img>`), `format:check` e build passaram. QA visual manual da transição e das duas composições concluído em desktop `1234 × 712`.
 - QA mobile `320–430 px` ainda pendente: esta sessão do navegador não disponibilizou controle de viewport/emulação de dispositivo. Não houve teste em aparelho físico nem submissão real aos fluxos Supabase.
+
+### Ergonomia mobile de autenticação — 24/09/2026
+
+- Removida também a faixa externa “Atendimento próximo, em cada etapa. Conheça a coleção” da rota `/conta`.
+- No mobile, o painel de imagem ficou compacto (108 px) e sem slogan sobreposto; o formulário ganha prioridade vertical. A página usa `100dvh`, rolagem interna e safe-area insets para aproveitar melhor a tela e tolerar o teclado virtual.
+- Inputs passaram a 52 px de altura e 16 px de fonte; labels/helpers ficaram maiores e mais espaçados; CTA, toggle de senha, links de alternância/recuperação e retorno foram ampliados para 48 px ou mais.
+- Teclas móveis indicam avançar/ir; email mantém `type=email`, autocomplete e desativação de capitalização. O viewport declara `viewport-fit=cover` e `interactive-widget=resizes-content`, sem bloquear zoom do usuário.
+- A lógica de autenticação não mudou. A sessão atual não dispõe de emulação de device/viewport; portanto os tamanhos `320`, `360`, `375`, `390` e `430 px`, teclado virtual e overflow horizontal precisam de validação visual em navegador emulado ou aparelho antes de serem considerados homologados.

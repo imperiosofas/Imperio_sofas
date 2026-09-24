@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "../index.css";
 import { Header } from "../sections/Header";
 
@@ -14,6 +14,13 @@ export const metadata: Metadata = {
     process.env.APP_ENV === "production"
       ? undefined
       : { index: false, follow: false },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({

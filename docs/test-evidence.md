@@ -105,3 +105,18 @@ Este arquivo separa validações locais determinísticas de homologações exter
 | `npm run format:check`        | Passou                           | Todos os arquivos incluídos no script estão formatados                                                      |
 | `npm run build`               | Passou                           | Next.js 16 compilou e gerou as rotas da aplicação                                                           |
 | Fluxos Supabase               | Não alterados/não homologados    | Sem variáveis locais; signup, e-mail, sessão e MFA não foram exercitados contra o serviço                   |
+
+## Ergonomia mobile da autenticação — 24/09/2026
+
+| Verificação                       | Resultado                        | Evidência                                                                                         |
+| --------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Faixa promocional inferior        | Removida                         | O bloco deixou de ser renderizado em `/conta`                                                     |
+| Painel mobile                     | Ajustado no CSS                  | Imagem limitada a 108 px e sem slogan; prioridade visual e de altura transferida ao formulário    |
+| Campos e tipografia               | Ajustados no CSS                 | Inputs com 52 px mínimos e 16 px; labels e ajuda ampliados, com mais distância vertical           |
+| Áreas de toque                    | Ajustadas no CSS                 | CTA, senha, links de login/cadastro/recuperação e retorno com ao menos 48 px de altura            |
+| Teclado, safe area e altura útil  | Configurados; falta QA em device | `enterKeyHint`, `100dvh`, safe-area insets, `viewport-fit=cover`, teclado redimensiona o conteúdo |
+| Login/cadastro e alternância      | Lógica preservada                | Alterações restritas à apresentação e atributos de ergonomia                                      |
+| Toggle, recuperação e alternância | Conferidos no navegador          | Mostrar/ocultar senha, abrir recuperação, voltar ao login e abrir cadastro; nenhum dado enviado   |
+| Viewports 320/360/375/390/430 px  | Pendente                         | Nenhum controle de viewport/emulador mobile disponível nesta sessão                               |
+| Teclado virtual, toque e overflow | Pendente                         | Requer navegador com device emulation ou aparelho; não inferido a partir do CSS                   |
+| Supabase real                     | Não exercitado                   | Fluxos de conta não foram submetidos nem alterados                                                |

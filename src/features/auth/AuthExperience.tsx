@@ -558,6 +558,7 @@ export function AuthExperience({
                           className="auth-input"
                           type="text"
                           autoComplete="name"
+                          enterKeyHint="next"
                           maxLength={100}
                           value={name}
                           onChange={(event) => setName(event.target.value)}
@@ -576,6 +577,7 @@ export function AuthExperience({
                         type="email"
                         autoComplete="email"
                         autoCapitalize="none"
+                        enterKeyHint="next"
                         spellCheck={false}
                         value={email}
                         aria-describedby={error ? "auth-form-error" : undefined}
@@ -610,6 +612,7 @@ export function AuthExperience({
                             autoComplete={
                               isRegister ? "new-password" : "current-password"
                             }
+                            enterKeyHint={isRegister ? "next" : "go"}
                             minLength={isRegister ? 12 : undefined}
                             value={password}
                             aria-describedby={
@@ -655,6 +658,7 @@ export function AuthExperience({
                           className="auth-input"
                           type={showPassword ? "text" : "password"}
                           autoComplete="new-password"
+                          enterKeyHint="go"
                           minLength={12}
                           value={confirmPassword}
                           aria-describedby={
@@ -824,12 +828,6 @@ export function AuthExperience({
             onAnimationComplete={handleShutterAnimationComplete}
           />
         </motion.div>
-        <p className="auth-footer">
-          Atendimento próximo, em cada etapa.{" "}
-          <Link href="/loja/sofas">
-            Conheça a coleção <ArrowRight size={13} />
-          </Link>
-        </p>
       </div>
     </main>
   );
