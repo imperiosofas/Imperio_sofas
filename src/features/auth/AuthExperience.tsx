@@ -1,6 +1,12 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import {
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -11,7 +17,6 @@ import {
   Eye,
   EyeOff,
   KeyRound,
-  LockKeyhole,
   ShieldCheck,
 } from "lucide-react";
 import sofa from "../../assets/products/berlim-enhanced-800.webp";
@@ -74,6 +79,7 @@ export function AuthExperience({
 }) {
   const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+  const formPanelRef = useRef<HTMLElement>(null);
   const [view, setView] = useState<View>("login");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -91,6 +97,11 @@ export function AuthExperience({
   const isRecover = view === "recover";
   const isMfa = view === "mfa";
 
+  useLayoutEffect(() => {
+    const page = formPanelRef.current?.closest<HTMLElement>(".auth-page");
+    if (page) page.scrollTop = 0;
+  }, [view]);
+
   function changeView(next: View) {
     setError(null);
     setNotice(null);
@@ -102,9 +113,7 @@ export function AuthExperience({
     setError(null);
     setNotice(null);
     if (!isConfigured || !supabase) {
-      setError(
-        "A autenticação ainda não está conectada ao Supabase deste projeto.",
-      );
+      setError("Não foi possível acessar sua conta agora. Tente novamente.");
       return;
     }
     if (isRegister && password !== confirmPassword) {
@@ -272,8 +281,16 @@ export function AuthExperience({
             <ArrowLeft size={15} /> Loja
           </Link>
         </div>
-        <div className="auth-card">
-          <section className="auth-form-panel">
+        <motion.div
+          layout
+          className={`auth-card${isRegister ? " auth-card--register" : ""}`}
+        >
+          <section
+            ref={formPanelRef}
+            className={`auth-form-panel${
+              isRegister ? " auth-form-panel--register" : ""
+            }`}
+          >
             <div className="auth-form-head">
               <span className="auth-kicker">
                 IMPÉRIO SOFÁS · VALE DO PARAÍBA
@@ -309,16 +326,6 @@ export function AuthExperience({
                 novamente.
               </p>
             )}
-            {!isConfigured && (
-              <p className="auth-config-note" role="status">
-                <span>
-                  <LockKeyhole size={16} />
-                </span>
-                O acesso real será ativado quando o Supabase deste projeto
-                estiver configurado.
-              </p>
-            )}
-
             <AnimatePresence mode="wait">
               {view === "sent" ? (
                 <motion.div
@@ -389,7 +396,9 @@ export function AuthExperience({
               ) : (
                 <motion.form
                   key={view}
-                  className="auth-form"
+                  className={`auth-form${
+                    isRegister ? " auth-form--register" : ""
+                  }`}
                   onSubmit={submit}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -504,11 +513,7 @@ export function AuthExperience({
                       {error}
                     </p>
                   )}
-                  <button
-                    className="auth-submit"
-                    type="submit"
-                    disabled={busy || !isConfigured}
-                  >
+                  <button className="auth-submit" type="submit" disabled={busy}>
                     {busy
                       ? "Aguarde…"
                       : isRegister
@@ -518,12 +523,6 @@ export function AuthExperience({
                           : "Entrar na minha conta"}
                     {!busy && <ArrowRight size={17} />}
                   </button>
-                  {isRegister && (
-                    <p className="auth-legal">
-                      Cadastro por e-mail com confirmação e senha gerenciada
-                      pelo Supabase Auth.
-                    </p>
-                  )}
                 </motion.form>
               )}
             </AnimatePresence>
@@ -588,7 +587,7 @@ export function AuthExperience({
             </div>
             <span className="auth-edition">EST. VALE DO PARAÍBA</span>
           </aside>
-        </div>
+        </motion.div>
         <p className="auth-footer">
           Atendimento próximo, em cada etapa.{" "}
           <Link href="/loja/sofas">

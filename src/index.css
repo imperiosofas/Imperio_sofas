@@ -559,6 +559,23 @@ img {
   gap: 0.9rem;
 }
 
+.auth-form--register {
+  gap: 0.72rem;
+}
+
+@media (min-width: 420px) {
+  .auth-form--register {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 0.72rem 0.75rem;
+  }
+
+  .auth-form--register .auth-submit,
+  .auth-form--register .auth-alert {
+    grid-column: 1 / -1;
+  }
+}
+
 .auth-field {
   display: grid;
   gap: 0.4rem;
@@ -678,8 +695,7 @@ img {
   opacity: 0.53;
 }
 
-.auth-alert,
-.auth-config-note {
+.auth-alert {
   border: 1px solid #b35c42;
   border-radius: 0.7rem;
   background: #fff3ec;
@@ -687,22 +703,6 @@ img {
   color: #773624;
   font-size: 0.76rem;
   line-height: 1.5;
-}
-
-.auth-config-note {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.55rem;
-  margin-bottom: 1rem;
-  border-color: #d9c28f;
-  background: #f8f1df;
-  color: #5c4a24;
-}
-
-.auth-config-note span {
-  display: inline-flex;
-  flex: 0 0 auto;
-  padding-top: 0.08rem;
 }
 
 .auth-switch {
@@ -1297,6 +1297,14 @@ img {
     gap: 1.05rem;
   }
 
+  .auth-form-panel--register .auth-form-head {
+    margin-bottom: 1.2rem;
+  }
+
+  .auth-form-panel--register .auth-title {
+    font-size: clamp(2.7rem, 3.5vw, 3.5rem);
+  }
+
   .auth-switch {
     justify-content: flex-start;
     margin-top: 1.35rem;
@@ -1481,11 +1489,6 @@ img {
 
   .auth-title {
     font-size: clamp(2.1rem, 8vw, 2.6rem);
-  }
-
-  .auth-config-note {
-    margin-bottom: 0.65rem;
-    padding-block: 0.55rem;
   }
 }
 
