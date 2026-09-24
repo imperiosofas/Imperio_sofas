@@ -683,7 +683,7 @@ img {
 }
 
 .auth-helper {
-  color: #777064;
+  color: #6b665c;
   font-size: 0.78rem;
   line-height: 1.5;
 }
@@ -741,7 +741,7 @@ img {
   justify-content: center;
   gap: 0.35rem;
   margin-top: 1.1rem;
-  color: #777064;
+  color: #6b665c;
   font-size: 0.76rem;
 }
 
@@ -1661,7 +1661,18 @@ img {
   display: none;
 }
 
-@media (max-width: 1023px) {
+/* The primary input device, not a resized desktop viewport, selects navigation. */
+.site-header__desktop-nav {
+  display: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .site-header__desktop-nav {
+    display: flex;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
   body {
     padding-bottom: calc(5.25rem + max(0.65rem, env(safe-area-inset-bottom)));
   }

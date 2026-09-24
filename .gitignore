@@ -9,10 +9,14 @@ lerna-debug.log*
 
 node_modules
 .next
+.next-e2e
 dist
 dist-ssr
 *.local
 *.tsbuildinfo
+playwright-report
+test-results
+.lighthouseci
 
 # Environment files
 .env

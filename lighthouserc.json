@@ -1,0 +1,19 @@
+{
+  "ci": {
+    "collect": {
+      "startServerCommand": "npm run start -- --hostname 127.0.0.1 --port 3101",
+      "startServerReadyPattern": "Ready in",
+      "url": [
+        "http://127.0.0.1:3101/",
+        "http://127.0.0.1:3101/loja",
+        "http://127.0.0.1:3101/conta"
+      ],
+      "numberOfRuns": 1,
+      "settings": { "chromeFlags": "--no-sandbox" }
+    },
+    "upload": {
+      "target": "filesystem",
+      "outputDir": ".lighthouseci"
+    }
+  }
+}

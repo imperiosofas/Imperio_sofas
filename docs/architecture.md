@@ -93,6 +93,12 @@ As interfaces previstas são `PaymentGateway`, `FiscalGateway`, `MailGateway` e 
 
 Jobs devem ser persistidos e reivindicados por lease. Cron, retry e reconciliação precisam ser idempotentes. Vercel, Supabase e fornecedores só devem ser considerados homologados quando houver evidência registrada em `docs/progress.md`.
 
+### Navegação responsiva e fronteira de conta
+
+- A navegação inferior depende do ponteiro primário (`pointer: coarse` + `hover: none`), não de uma largura isolada; ponteiro fino mantém o header mesmo quando a janela é estreita. Dispositivos touch grandes continuam com bottom nav.
+- Páginas de conta validam claims no servidor e consultam AAL antes de liberar conteúdo privado; sessões MFA incompletas seguem para desafio TOTP.
+- MCPs de inspeção e scanners rodam localmente no Codex/host. Testes e relatórios de Lighthouse são executados no próprio checkout e ficam fora do Git.
+
 ## Fora do baseline e fora do primeiro incremento
 
 Checkout transparente, SMS, reconhecimento de dispositivo, estoque omnicanal, scrollytelling avançado, analytics de marketing, emissão fiscal automática sem supervisão e ativação de venda real não fazem parte do primeiro incremento.

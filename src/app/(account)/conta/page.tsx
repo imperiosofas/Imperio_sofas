@@ -3,6 +3,7 @@ import { AuthExperience } from "../../../features/auth/AuthExperience";
 import { AccountHome } from "../../../features/auth/AccountHome";
 import { createSupabaseServerClient } from "../../../lib/supabase/server";
 import { isSupabaseAuthConfigured } from "../../../lib/supabase/config";
+import { getAccountAccess } from "../../../lib/supabase/account-access";
 
 export const metadata: Metadata = {
   title: "Minha conta",
@@ -34,17 +35,33 @@ export default async function AccountPage({
   const supabase = await createSupabaseServerClient();
 
   if (supabase) {
-    const { data } = await supabase.auth.getClaims();
-    const email =
-      typeof data?.claims?.email === "string" ? data.claims.email : null;
-    if (email) return <AccountHome email={email} />;
+    const access = await getAccountAccess(supabase);
+    if (access.status === "authenticated")
+      return <AccountHome email={access.email} />;
+    if (access.status === "mfa_required")
+      return (
+        <AuthExperience
+          isConfigured={isSupabaseAuthConfigured()}
+          nextPath={nextPath}
+          initialError={null}
+          initialMfaRequired
+        />
+      );
+    if (access.status === "unavailable")
+      return (
+        <AuthExperience
+          isConfigured={isSupabaseAuthConfigured()}
+          nextPath={nextPath}
+          initialError="Não foi possível confirmar a segurança da sessão. Tente novamente."
+        />
+      );
   }
 
   return (
     <AuthExperience
       isConfigured={isSupabaseAuthConfigured()}
       nextPath={nextPath}
-      initialError={typeof params.erro === "string" ? params.erro : null}
+      initialError={params.erro === "confirmacao" ? "confirmacao" : null}
     />
   );
 }

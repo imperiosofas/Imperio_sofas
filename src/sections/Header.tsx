@@ -52,7 +52,7 @@ export function Header() {
         <Brand />
 
         <nav
-          className="hidden items-center gap-8 lg:flex"
+          className="site-header__desktop-nav items-center gap-8"
           aria-label="Navegação principal"
         >
           {navigationItems.map(({ label, href, isActive }) => {

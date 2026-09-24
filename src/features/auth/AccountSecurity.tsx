@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -28,6 +28,7 @@ export function AccountSecurity() {
   const [secret, setSecret] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
+  const operationLock = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -39,6 +40,20 @@ export function AccountSecurity() {
       return;
     }
     setFactor(data.totp.find((item) => item.status === "verified") ?? null);
+  }
+
+  async function runOperation(operation: () => Promise<void>) {
+    if (operationLock.current) return;
+    operationLock.current = true;
+    setBusy(true);
+    try {
+      await operation();
+    } catch {
+      setError("Não foi possível concluir a operação. Tente novamente.");
+    } finally {
+      operationLock.current = false;
+      setBusy(false);
+    }
   }
 
   useEffect(() => {
@@ -63,22 +78,22 @@ export function AccountSecurity() {
 
   async function beginSetup() {
     if (!supabase) return;
-    setBusy(true);
     setError(null);
     setMessage(null);
-    const { data, error: enrollError } = await supabase.auth.mfa.enroll({
-      factorType: "totp",
-      friendlyName: "Império Sofás",
+    await runOperation(async () => {
+      const { data, error: enrollError } = await supabase.auth.mfa.enroll({
+        factorType: "totp",
+        friendlyName: "Império Sofás",
+      });
+      if (enrollError) {
+        setError("Não foi possível iniciar a configuração. Tente novamente.");
+        return;
+      }
+      setFactorId(data.id);
+      setQrCode(data.totp.qr_code);
+      setSecret(data.totp.secret);
+      setCode("");
     });
-    setBusy(false);
-    if (enrollError) {
-      setError("Não foi possível iniciar a configuração. Tente novamente.");
-      return;
-    }
-    setFactorId(data.id);
-    setQrCode(data.totp.qr_code);
-    setSecret(data.totp.secret);
-    setCode("");
   }
 
   async function verifySetup(event: FormEvent<HTMLFormElement>) {
@@ -87,32 +102,31 @@ export function AccountSecurity() {
       setError("Informe os seis dígitos do seu autenticador.");
       return;
     }
-    setBusy(true);
     setError(null);
-    const { data: challenge, error: challengeError } =
-      await supabase.auth.mfa.challenge({ factorId });
-    if (challengeError || !challenge) {
-      setBusy(false);
-      setError("Não foi possível validar o código agora. Tente de novo.");
-      return;
-    }
-    const { error: verifyError } = await supabase.auth.mfa.verify({
-      factorId,
-      challengeId: challenge.id,
-      code,
+    await runOperation(async () => {
+      const { data: challenge, error: challengeError } =
+        await supabase.auth.mfa.challenge({ factorId });
+      if (challengeError || !challenge) {
+        setError("Não foi possível validar o código agora. Tente de novo.");
+        return;
+      }
+      const { error: verifyError } = await supabase.auth.mfa.verify({
+        factorId,
+        challengeId: challenge.id,
+        code,
+      });
+      if (verifyError) {
+        setError(
+          "Código incorreto ou expirado. Confira o relógio do celular e tente novamente.",
+        );
+        return;
+      }
+      setQrCode("");
+      setSecret("");
+      setCode("");
+      setMessage("App autenticador ativado para esta conta.");
+      await loadFactors();
     });
-    setBusy(false);
-    if (verifyError) {
-      setError(
-        "Código incorreto ou expirado. Confira o relógio do celular e tente novamente.",
-      );
-      return;
-    }
-    setQrCode("");
-    setSecret("");
-    setCode("");
-    setMessage("App autenticador ativado para esta conta.");
-    await loadFactors();
   }
 
   async function disableFactor(event: FormEvent<HTMLFormElement>) {
@@ -121,38 +135,36 @@ export function AccountSecurity() {
       setError("Informe o código atual do autenticador para continuar.");
       return;
     }
-    setBusy(true);
     setError(null);
-    const { data: challenge, error: challengeError } =
-      await supabase.auth.mfa.challenge({ factorId: factor.id });
-    if (challengeError || !challenge) {
-      setBusy(false);
-      setError("Não foi possível verificar sua identidade. Tente novamente.");
-      return;
-    }
-    const { error: verifyError } = await supabase.auth.mfa.verify({
-      factorId: factor.id,
-      challengeId: challenge.id,
-      code,
+    await runOperation(async () => {
+      const { data: challenge, error: challengeError } =
+        await supabase.auth.mfa.challenge({ factorId: factor.id });
+      if (challengeError || !challenge) {
+        setError("Não foi possível verificar sua identidade. Tente novamente.");
+        return;
+      }
+      const { error: verifyError } = await supabase.auth.mfa.verify({
+        factorId: factor.id,
+        challengeId: challenge.id,
+        code,
+      });
+      if (verifyError) {
+        setError("Código incorreto ou expirado.");
+        return;
+      }
+      const { error: unenrollError } = await supabase.auth.mfa.unenroll({
+        factorId: factor.id,
+      });
+      if (unenrollError) {
+        setError(
+          "A verificação passou, mas não foi possível remover o autenticador.",
+        );
+        return;
+      }
+      setFactor(null);
+      setCode("");
+      setMessage("Verificação em duas etapas desativada.");
     });
-    if (verifyError) {
-      setBusy(false);
-      setError("Código incorreto ou expirado.");
-      return;
-    }
-    const { error: unenrollError } = await supabase.auth.mfa.unenroll({
-      factorId: factor.id,
-    });
-    setBusy(false);
-    if (unenrollError) {
-      setError(
-        "A verificação passou, mas não foi possível remover o autenticador.",
-      );
-      return;
-    }
-    setFactor(null);
-    setCode("");
-    setMessage("Verificação em duas etapas desativada.");
   }
 
   async function copySecret() {

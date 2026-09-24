@@ -88,10 +88,12 @@ export function AuthExperience({
   isConfigured,
   nextPath,
   initialError,
+  initialMfaRequired = false,
 }: {
   isConfigured: boolean;
   nextPath: string;
   initialError: string | null;
+  initialMfaRequired?: boolean;
 }) {
   const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
@@ -104,7 +106,7 @@ export function AuthExperience({
   const focusAfterTransitionRef = useRef(false);
   const submitLockRef = useRef(false);
   const successRedirectRef = useRef(false);
-  const [view, setView] = useState<View>("login");
+  const [view, setView] = useState<View>(initialMfaRequired ? "mfa" : "login");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -137,6 +139,102 @@ export function AuthExperience({
     media.addEventListener("change", syncViewport);
     return () => media.removeEventListener("change", syncViewport);
   }, []);
+
+  useEffect(() => {
+    const authClient = supabase;
+    if (!initialMfaRequired || !authClient) return;
+    let active = true;
+
+    async function startPendingMfaChallenge(
+      client: NonNullable<typeof supabase>,
+    ) {
+      setBusy(true);
+      setError(null);
+      try {
+        const [assuranceResult, factorsResult] = await Promise.all([
+          client.auth.mfa.getAuthenticatorAssuranceLevel(),
+          client.auth.mfa.listFactors(),
+        ]);
+        if (
+          assuranceResult.error ||
+          factorsResult.error ||
+          !assuranceResult.data ||
+          !factorsResult.data
+        ) {
+          throw new Error(
+            "Não foi possível iniciar a verificação em duas etapas. Tente novamente.",
+          );
+        }
+
+        if (assuranceResult.data.currentLevel === "aal2") {
+          router.replace(nextPath);
+          router.refresh();
+          return;
+        }
+
+        const verifiedTotp = factorsResult.data.totp.find(
+          (factor) => factor.status === "verified",
+        );
+        if (!verifiedTotp) {
+          throw new Error(
+            "Esta sessão exige uma verificação adicional não disponível nesta tela. Saia e entre novamente ou fale com o atendimento.",
+          );
+        }
+
+        const { data: challenge, error: challengeError } =
+          await client.auth.mfa.challenge({ factorId: verifiedTotp.id });
+        if (challengeError || !challenge) {
+          throw new Error(
+            "Não foi possível iniciar a verificação em duas etapas. Tente novamente.",
+          );
+        }
+        if (!active) return;
+        setFactorId(verifiedTotp.id);
+        setChallengeId(challenge.id);
+      } catch (caught) {
+        if (active) {
+          setError(
+            caught instanceof Error
+              ? caught.message
+              : "Não foi possível iniciar a verificação em duas etapas. Tente novamente.",
+          );
+        }
+      } finally {
+        if (active) setBusy(false);
+      }
+    }
+
+    void startPendingMfaChallenge(authClient);
+    return () => {
+      active = false;
+    };
+  }, [initialMfaRequired, nextPath, router, supabase]);
+
+  useEffect(() => {
+    if (transitionPhase === "idle") return;
+
+    const transitionTimer = window.setTimeout(
+      () => {
+        if (transitionPhase === "cover") {
+          const nextView = pendingViewRef.current;
+          if (!nextView) {
+            setTransitionPhase("idle");
+            return;
+          }
+          pendingViewRef.current = null;
+          setView(nextView);
+          setTransitionPhase("reveal");
+          return;
+        }
+
+        setTransitionPhase("idle");
+        setIsAccountSwap(false);
+      },
+      transitionPhase === "cover" ? 320 : 360,
+    );
+
+    return () => window.clearTimeout(transitionTimer);
+  }, [transitionPhase]);
 
   useLayoutEffect(() => {
     if (transitionPhase !== "idle") return;
@@ -199,21 +297,6 @@ export function AuthExperience({
   function changeView(next: View) {
     if (submitLockRef.current || transitionPhase !== "idle") return;
     transitionTo(next);
-  }
-
-  function handleShutterAnimationComplete() {
-    if (transitionPhase === "cover") {
-      const nextView = pendingViewRef.current;
-      if (!nextView) return;
-      pendingViewRef.current = null;
-      setView(nextView);
-      setTransitionPhase("reveal");
-      return;
-    }
-    if (transitionPhase === "reveal") {
-      setTransitionPhase("idle");
-      setIsAccountSwap(false);
-    }
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -451,10 +534,11 @@ export function AuthExperience({
               </AnimatePresence>
             </div>
 
-            {initialError === "confirmacao" && (
+            {initialError && (
               <p className="auth-alert" role="alert">
-                Não foi possível confirmar este link. Peça um novo e tente
-                novamente.
+                {initialError === "confirmacao"
+                  ? "Não foi possível confirmar este link. Peça um novo e tente novamente."
+                  : initialError}
               </p>
             )}
             <div className="auth-state-stage">
@@ -757,11 +841,11 @@ export function AuthExperience({
                       </span>
                       <button
                         type="button"
-                        onClick={() =>
+                        onClick={() => {
                           changeView(
                             isRegister || isRecover ? "login" : "register",
-                          )
-                        }
+                          );
+                        }}
                       >
                         {isRegister || isRecover ? "Entrar" : "Criar conta"}
                       </button>
@@ -883,7 +967,6 @@ export function AuthExperience({
                     : 0.34,
               ease: [0.72, 0, 0.28, 1] as const,
             }}
-            onAnimationComplete={handleShutterAnimationComplete}
           />
         </motion.div>
       </div>

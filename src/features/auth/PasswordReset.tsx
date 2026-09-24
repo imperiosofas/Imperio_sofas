@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, KeyRound } from "lucide-react";
@@ -13,11 +13,13 @@ export function PasswordReset() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
+  const submitLock = useRef(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitLock.current) return;
     setError(null);
     if (password.length < 12) {
       setError("Use uma senha com pelo menos 12 caracteres.");
@@ -31,20 +33,31 @@ export function PasswordReset() {
       setError("A autenticação ainda não está conectada ao Supabase.");
       return;
     }
+    submitLock.current = true;
     setBusy(true);
-    const { error: updateError } = await supabase.auth.updateUser({ password });
-    setBusy(false);
-    if (updateError) {
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({
+        password,
+      });
+      if (updateError) {
+        setError(
+          "Não foi possível atualizar a senha. Solicite um novo link de recuperação.",
+        );
+        return;
+      }
+      setDone(true);
+      window.setTimeout(() => {
+        router.replace("/conta");
+        router.refresh();
+      }, 1800);
+    } catch {
       setError(
         "Não foi possível atualizar a senha. Solicite um novo link de recuperação.",
       );
-      return;
+    } finally {
+      submitLock.current = false;
+      setBusy(false);
     }
-    setDone(true);
-    window.setTimeout(() => {
-      router.replace("/conta");
-      router.refresh();
-    }, 1800);
   }
 
   return (
