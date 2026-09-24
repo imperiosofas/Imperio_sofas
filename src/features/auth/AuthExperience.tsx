@@ -178,7 +178,7 @@ export function AuthExperience({
           password,
           options: {
             data: { full_name: name.trim() },
-            emailRedirectTo: `${window.location.origin}/auth/callback?next=%2Fconta`,
+            emailRedirectTo: `${window.location.origin}/auth/confirm?next=%2Fconta`,
           },
         });
         if (signUpError)
@@ -195,7 +195,7 @@ export function AuthExperience({
       if (isRecover) {
         const { error: recoveryError } =
           await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${window.location.origin}/auth/callback?next=%2Fconta%2Fredefinir-senha`,
+            redirectTo: `${window.location.origin}/auth/confirm?next=%2Fconta%2Fredefinir-senha`,
           });
         if (recoveryError)
           throw new Error(
