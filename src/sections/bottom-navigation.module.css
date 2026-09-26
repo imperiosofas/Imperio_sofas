@@ -1,0 +1,119 @@
+.dockRoot {
+  display: none;
+}
+
+@media (max-width: 1199px) {
+  :global(body):has(.dockRoot) {
+    padding-bottom: calc(106px + max(12px, env(safe-area-inset-bottom)));
+  }
+
+  .dockRoot {
+    position: fixed;
+    z-index: 60;
+    inset: auto 0 0;
+    display: block;
+    padding: 0 max(12px, env(safe-area-inset-right))
+      max(12px, env(safe-area-inset-bottom))
+      max(12px, env(safe-area-inset-left));
+    pointer-events: none;
+  }
+
+  .dockBar {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: min(100%, 22rem);
+    height: 70px;
+    margin-inline: auto;
+    isolation: isolate;
+  }
+
+  .dockPlate {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    filter: drop-shadow(0 8px 14px rgb(0 0 0 / 30%));
+    pointer-events: none;
+  }
+
+  .dockSurface {
+    fill: #15120f;
+    stroke: rgb(244 239 228 / 22%);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .goldBead {
+    position: absolute;
+    z-index: 2;
+    top: -24px;
+    left: 0;
+    width: 46px;
+    height: 46px;
+    margin-left: -23px;
+    border: 1px solid #f5d78d;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #f1ce78, #d7aa42 70%);
+    color: #21190d;
+    box-shadow:
+      0 3px 9px rgb(0 0 0 / 25%),
+      inset 0 1px 1px rgb(255 255 255 / 25%);
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  .carriedIcon {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+  }
+
+  .dockLink {
+    position: relative;
+    z-index: 3;
+    display: grid;
+    min-width: 48px;
+    min-height: 94px;
+    margin-top: -24px;
+    border-radius: 14px;
+    color: #f4efe4;
+    text-decoration: none;
+    pointer-events: auto;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .dockLink:focus-visible {
+    outline: 2px solid #efca6a;
+    outline-offset: 3px;
+  }
+
+  .dockIcon {
+    position: absolute;
+    top: 38px;
+    left: calc(50% - 21px);
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+  }
+
+  .dockLabel {
+    position: absolute;
+    inset: auto 0 16px;
+    color: #efca6a;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: center;
+    white-space: nowrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .goldBead {
+    will-change: auto;
+  }
+}

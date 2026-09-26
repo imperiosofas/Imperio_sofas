@@ -3,17 +3,62 @@ import AxeBuilder from "@axe-core/playwright";
 
 const phoneWidths = [320, 360, 375, 390, 430];
 
-test("desktop keeps top navigation after a narrow window resize", async ({
-  page,
-}) => {
+test("navigation follows layout from desktop to tablet", async ({ page }) => {
   await page.setViewportSize({ width: 1360, height: 900 });
   await page.goto("/");
   await expect(page.locator(".site-header__desktop-nav")).toBeVisible();
-  await expect(page.locator(".bottom-navigation")).toBeHidden();
+  await expect(page.locator("nav[class*='dockBar']")).toBeHidden();
 
   await page.setViewportSize({ width: 768, height: 900 });
-  await expect(page.locator(".site-header__desktop-nav")).toBeVisible();
-  await expect(page.locator(".bottom-navigation")).toBeHidden();
+  await expect(page.locator(".site-header__desktop-nav")).toBeHidden();
+  await expect(page.locator("nav[class*='dockBar']")).toBeVisible();
+});
+
+test("mobile story keeps the product legible while scrolling", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.goto("/");
+  const cta = page.getByRole("link", { name: "Explorar a loja" });
+  const dock = page.locator("nav[class*='dockBar']");
+  const ctaBox = await cta.boundingBox();
+  const dockBox = await dock.boundingBox();
+  expect(ctaBox).not.toBeNull();
+  expect(dockBox).not.toBeNull();
+  expect(dockBox!.y - (ctaBox!.y + ctaBox!.height)).toBeGreaterThan(16);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const range = await page
+    .locator("[data-story-track]")
+    .evaluate((element) => element.clientHeight - window.innerHeight);
+  const stage = page.locator("[data-story-stage]");
+  const media = page.locator("[data-story-media]");
+  for (const progress of [0.45, 0.6, 0.93]) {
+    await page.evaluate(
+      (top) => window.scrollTo({ top, behavior: "instant" }),
+      range * progress,
+    );
+    await expect
+      .poll(async () => Math.round((await stage.boundingBox())!.y))
+      .toBe(0);
+    await expect(media).toBeVisible();
+  }
+  const collection = page.getByRole("link", { name: "Ver coleção de sofás" });
+  await expect(collection).toBeVisible();
+  await expect
+    .poll(() =>
+      page
+        .locator('[data-story-copy="collection"]')
+        .evaluate((element) => Number(getComputedStyle(element).opacity)),
+    )
+    .toBe(1);
+  expect(
+    (await collection.boundingBox())!.y +
+      (await collection.boundingBox())!.height,
+  ).toBeLessThan((await dock.boundingBox())!.y - 24);
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth),
+  ).toBeLessThanOrEqual(390);
 });
 
 for (const width of phoneWidths) {
@@ -29,11 +74,11 @@ for (const width of phoneWidths) {
     const page = await context.newPage();
 
     await page.goto("/");
-    await expect(page.locator(".bottom-navigation")).toBeVisible();
+    await expect(page.locator("nav[class*='dockBar']")).toBeVisible();
     await expect(page.locator(".site-header__desktop-nav")).toBeHidden();
-    await expect(page.locator(".bottom-navigation a")).toHaveCount(3);
+    await expect(page.locator("nav[class*='dockBar'] a")).toHaveCount(3);
     await expect(
-      page.locator(".bottom-navigation a[aria-current='page']"),
+      page.locator("nav[class*='dockBar'] a[aria-current='page']"),
     ).toHaveAttribute("href", "/");
     await expect(page.locator("body")).toHaveJSProperty(
       "scrollWidth",
@@ -45,7 +90,7 @@ for (const width of phoneWidths) {
     const scrollBefore = await page.evaluate(() => window.scrollY);
     await page.getByRole("button", { name: "Criar conta" }).click();
     await expect(page.getByLabel("Como podemos chamar você?")).toBeVisible();
-    await expect(page.locator(".bottom-navigation")).toBeVisible();
+    await expect(page.locator("nav[class*='dockBar']")).toBeVisible();
     expect(await page.evaluate(() => window.scrollY)).toBe(scrollBefore);
     const backToLogin = page.getByRole("button", {
       name: "Entrar",
@@ -75,13 +120,13 @@ test("touch tablet uses bottom navigation in portrait and landscape", async ({
   });
   const page = await context.newPage();
   await page.goto("/loja");
-  await expect(page.locator(".bottom-navigation")).toBeVisible();
+  await expect(page.locator("nav[class*='dockBar']")).toBeVisible();
   await expect(
-    page.locator(".bottom-navigation a[aria-current='page']"),
+    page.locator("nav[class*='dockBar'] a[aria-current='page']"),
   ).toHaveAttribute("href", "/loja");
 
   await page.setViewportSize({ width: 1180, height: 820 });
-  await expect(page.locator(".bottom-navigation")).toBeVisible();
+  await expect(page.locator("nav[class*='dockBar']")).toBeVisible();
   await expect(page.locator(".site-header__desktop-nav")).toBeHidden();
   await context.close();
 });
@@ -96,12 +141,12 @@ test("store and product routes keep Loja active", async ({ browser }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/loja/sofas");
   await expect(
-    page.locator(".bottom-navigation a[aria-current='page']"),
+    page.locator("nav[class*='dockBar'] a[aria-current='page']"),
   ).toHaveAttribute("href", "/loja");
 
   await page.goto("/produto/berlim");
   await expect(
-    page.locator(".bottom-navigation a[aria-current='page']"),
+    page.locator("nav[class*='dockBar'] a[aria-current='page']"),
   ).toHaveAttribute("href", "/loja");
   await context.close();
 });

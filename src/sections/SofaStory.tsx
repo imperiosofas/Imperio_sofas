@@ -1,119 +1,207 @@
+"use client";
+
+import { useRef, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowDownRight } from "lucide-react";
-import { products } from "../data/products";
-import belizeScene from "../assets/products/belize-enhanced-1080.webp";
-import berlimScene from "../assets/products/berlim-enhanced-1080.webp";
-import dallasScene from "../assets/products/dallas-enhanced-1080.webp";
+import { ArrowDown, ArrowUpRight } from "lucide-react";
+import {
+  motion,
+  useScroll,
+  useTransform,
+  type MotionStyle,
+} from "framer-motion";
+import heroImage from "../assets/hero-sofa-1536.webp";
+import belizeImage from "../assets/products/belize-enhanced-1080.webp";
+import berlimImage from "../assets/products/berlim-enhanced-1080.webp";
+import dallasImage from "../assets/products/dallas-enhanced-1080.webp";
+import styles from "./SofaStory.module.css";
 
-const chapters = [
-  {
-    product: products[0],
-    image: belizeScene,
-    title: "O lugar de voltar para casa.",
-    copy: "Belize, 2,20 m. Veja a proporção do sofá no espaço real da loja e imagine como ele ficaria na sua sala.",
-    tone: "belize",
-  },
-  {
-    product: products[1],
-    image: berlimScene,
-    title: "A conversa pode ficar.",
-    copy: "Berlim, 2,50 m. Uma medida diferente muda toda a composição do ambiente. Compare com calma.",
-    tone: "berlim",
-  },
-  {
-    product: products[2],
-    image: dallasScene,
-    title: "Mais sala para viver.",
-    copy: "Dallas, 2,90 m. Venha sentar, conferir os detalhes e conversar sobre as opções na loja em Taubaté.",
-    tone: "dallas",
-  },
-] as const;
+/** One viewport, one clock: copy and media share the same scroll timeline. */
+export function SofaStory({ children }: { children: ReactNode }) {
+  const track = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: track,
+    offset: ["start start", "end end"],
+  });
+  // Keep masks, transforms and opacity on the same measured clock. Mixing
+  // native ViewTimeline opacity with JS transforms desynchronizes this stage.
+  const progress = useTransform(() => scrollYProgress.get());
 
-export function SofaStory() {
+  const heroScale = useTransform(progress, [0, 0.38], [1, 1.24]);
+  const heroParallax = useTransform(progress, [0, 0.38], ["0%", "-8%"]);
+  const heroY = useTransform(progress, [0, 0.1, 0.3], [0, -16, -150]);
+  const heroOpacity = useTransform(progress, [0, 0.13, 0.28], [1, 1, 0]);
+  const heroDisplay = useTransform(progress, (p) =>
+    p < 0.3 ? "flex" : "none",
+  );
+
+  const productY = useTransform(progress, [0.17, 0.39], ["105%", "0%"]);
+  const productScale = useTransform(
+    progress,
+    [0.17, 0.55, 0.8],
+    [1.24, 1.08, 1],
+  );
+  const productPan = useTransform(progress, [0.25, 0.6], ["4%", "-3%"]);
+  const arrange = useTransform(progress, [0.57, 0.87], [0, 1]);
+  const fan = useTransform(progress, [0.65, 0.91], [0, 1]);
+
+  const comfortY = useTransform(
+    progress,
+    [0.25, 0.4, 0.56, 0.72],
+    [90, 0, -12, -125],
+  );
+  const comfortOpacity = useTransform(
+    progress,
+    [0.25, 0.37, 0.57, 0.69],
+    [0, 1, 1, 0],
+  );
+  const comfortDisplay = useTransform(progress, (p) =>
+    p > 0.24 && p < 0.72 ? "flex" : "none",
+  );
+  const collectionY = useTransform(progress, [0.66, 0.88], [100, 0]);
+  const collectionOpacity = useTransform(progress, [0.66, 0.8], [0, 1]);
+  const collectionDisplay = useTransform(progress, (p) =>
+    p > 0.65 ? "flex" : "none",
+  );
+  const shade = useTransform(progress, [0.48, 0.83], [1, 0.16]);
+
   return (
-    <section
-      id="historia"
-      aria-labelledby="story-title"
-      className="story bg-[#171410] text-ivory"
-    >
-      <div className="story-intro shell">
-        <div>
-          <p className="eyebrow">Uma sala, muitas formas de estar</p>
-          <h2 id="story-title" className="story-intro__title font-display">
-            Veja o sofá <em>ganhar espaço.</em>
-          </h2>
-        </div>
-        <p className="story-intro__copy">
-          Belize, Berlim e Dallas. Três modelos fotografados na loja, cada um
-          com uma medida e uma presença diferentes. Role para conhecer de perto.
-        </p>
-      </div>
-
-      <div className="story-track">
-        {chapters.map((chapter, index) => (
-          <article
-            key={chapter.product.name}
-            id={`capitulo-${index + 1}`}
-            className={`story-chapter story-chapter--${chapter.tone}`}
-            aria-labelledby={`chapter-title-${index + 1}`}
+    <div id="historia" className={styles.experience}>
+      <div ref={track} id="inicio" className={styles.track} data-story-track>
+        <div className={styles.stage} data-story-stage>
+          <motion.div
+            className={styles.heroMedia}
+            style={{ scale: heroScale, y: heroParallax }}
+            aria-hidden="true"
           >
-            <div className="story-chapter__scene">
-              <figure className="story-chapter__media">
-                <Image
-                  src={chapter.image}
-                  alt={chapter.product.alt}
-                  fill
-                  sizes="(min-width: 1024px) 54vw, 100vw"
-                  className="story-chapter__image"
-                  loading="lazy"
-                />
-                <figcaption className="story-chapter__photo-label">
-                  Na loja em Taubaté
-                </figcaption>
-              </figure>
+            <Image
+              src={heroImage}
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className={styles.heroPhoto}
+            />
+            <div className={styles.heroShade} />
+          </motion.div>
 
-              <div className="story-chapter__copy">
-                <div className="story-chapter__topline">
-                  <span>Império Sofás</span>
-                  <span className="story-chapter__index">
-                    {String(index + 1).padStart(2, "0")} / 03
-                  </span>
-                </div>
-
-                <div className="story-chapter__main">
-                  <p className="story-chapter__product">
-                    {chapter.product.name} <span>· {chapter.product.size}</span>
-                  </p>
-                  <h3
-                    id={`chapter-title-${index + 1}`}
-                    className="story-chapter__title font-display"
-                  >
-                    {chapter.title}
-                  </h3>
-                  <p className="story-chapter__description">{chapter.copy}</p>
-                  <Link href="/loja/sofas" className="story-chapter__link">
-                    Ver coleção de sofás
-                    <ArrowDownRight size={18} aria-hidden="true" />
-                  </Link>
-                </div>
-
-                <div className="story-chapter__footer" aria-hidden="true">
-                  <span>Continue rolando</span>
-                  <span className="story-chapter__progress">
-                    {chapters.map((item, step) => (
-                      <span
-                        key={item.product.name}
-                        className={step <= index ? "is-current" : ""}
-                      />
-                    ))}
-                  </span>
-                </div>
-              </div>
+          <motion.div
+            className={styles.productStage}
+            style={
+              { y: productY, "--arrange": arrange, "--fan": fan } as MotionStyle
+            }
+            aria-hidden="true"
+            data-story-media
+          >
+            <div className={`${styles.sideCard} ${styles.cardLeft}`}>
+              <Image
+                src={berlimImage}
+                alt=""
+                fill
+                sizes="(min-width: 900px) 30vw, 60vw"
+              />
+              <span>
+                Berlim <small>2,50 m</small>
+              </span>
             </div>
-          </article>
-        ))}
+            <div className={`${styles.sideCard} ${styles.cardRight}`}>
+              <Image
+                src={dallasImage}
+                alt=""
+                fill
+                sizes="(min-width: 900px) 30vw, 60vw"
+              />
+              <span>
+                Dallas <small>2,90 m</small>
+              </span>
+            </div>
+            <div className={styles.mainMedia}>
+              <motion.div
+                className={styles.mainPhoto}
+                style={{ scale: productScale, y: productPan }}
+              >
+                <Image src={belizeImage} alt="" fill sizes="100vw" />
+              </motion.div>
+              <motion.div
+                className={styles.productShade}
+                style={{ opacity: shade }}
+              />
+              <span className={styles.mediaName}>
+                Belize <small>2,20 m</small>
+              </span>
+            </div>
+          </motion.div>
+
+          <motion.div
+            className={`${styles.copy} ${styles.heroCopy}`}
+            style={{ y: heroY, opacity: heroOpacity, display: heroDisplay }}
+            data-story-copy="hero"
+          >
+            <p className={styles.eyebrow}>Império Sofás · Taubaté</p>
+            <h1>
+              A vida fica <em>mais em casa.</em>
+            </h1>
+            <p className={styles.description}>
+              Um lugar para receber, descansar e deixar o dia lá fora.
+            </p>
+            <Link href="/loja" className={styles.primaryLink}>
+              Explorar a loja <ArrowUpRight size={19} aria-hidden="true" />
+            </Link>
+            <span className={styles.scrollHint} aria-hidden="true">
+              <ArrowDown size={15} /> Role para sentir de perto
+            </span>
+          </motion.div>
+
+          <motion.div
+            className={`${styles.copy} ${styles.comfortCopy}`}
+            style={{
+              y: comfortY,
+              opacity: comfortOpacity,
+              display: comfortDisplay,
+            }}
+            data-story-copy="comfort"
+          >
+            <p className={styles.eyebrow}>01 / De perto</p>
+            <h2>
+              O conforto está <em>nos detalhes.</em>
+            </h2>
+            <p className={styles.description}>
+              Conheça o Belize. São 2,20 m para imaginar na sua sala — do
+              primeiro olhar ao momento de sentar.
+            </p>
+            <div className={styles.measure}>
+              <span /> <p>Belize · 2,20 m</p> <span />
+            </div>
+          </motion.div>
+
+          <motion.div
+            className={`${styles.copy} ${styles.collectionCopy}`}
+            style={{
+              y: collectionY,
+              opacity: collectionOpacity,
+              display: collectionDisplay,
+            }}
+            data-story-copy="collection"
+          >
+            <p className={styles.eyebrow}>02 / Seu próximo encontro</p>
+            <h2>
+              Qual combina <em>com a sua casa?</em>
+            </h2>
+            <p className={styles.description}>
+              Belize, Berlim, Dallas. Explore medidas e modelos e encontre o
+              seu.
+            </p>
+            <Link href="/loja/sofas" className={styles.primaryLink}>
+              Ver coleção de sofás <ArrowUpRight size={19} aria-hidden="true" />
+            </Link>
+          </motion.div>
+
+          <div className={styles.progressRail} aria-hidden="true">
+            <motion.span style={{ scaleX: progress }} />
+          </div>
+        </div>
       </div>
-    </section>
+      <div className={styles.collectionBridge}>{children}</div>
+    </div>
   );
 }
