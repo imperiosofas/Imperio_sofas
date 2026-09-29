@@ -1,88 +1,88 @@
 "use client";
 
-import {
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type FormEvent,
-} from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  AnimatePresence,
-  motion,
-  useReducedMotion,
-  type Variants,
-} from "framer-motion";
-import { ArrowLeft, ArrowRight, Eye, EyeOff, ShieldCheck } from "lucide-react";
-import sofa from "../../assets/products/berlim-enhanced-800.webp";
-import signupSofa from "../../assets/products/maximo-enhanced-800.webp";
-import { Brand } from "../../components/Brand";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { ArrowLeft, ArrowRight, MailCheck, ShieldCheck } from "lucide-react";
 import { createSupabaseBrowserClient } from "../../lib/supabase/client";
 import { MfaSuccessSequence } from "./MfaSuccessSequence";
 import { OtpCodeInput } from "./OtpCodeInput";
+import {
+  AuthAccountStage,
+  type AccountMode,
+  type AuthStep,
+  type OAuthProvider,
+} from "./AuthAccountStage";
+import { AuthField } from "./AuthField";
+import styles from "./auth-experience.module.css";
 
-type View = "login" | "register" | "recover" | "mfa" | "sent";
+type View = AccountMode | "recover" | "mfa" | "sent";
 
-const formVariants: Variants = {
-  enter: (direction: number) => ({
-    opacity: 0,
-    x: direction > 0 ? 12 : -12,
-  }),
-  center: {
-    opacity: 1,
-    x: 0,
-    transition: {
-      duration: 0.24,
-      ease: [0.22, 0.72, 0.22, 1],
-      staggerChildren: 0.035,
-      delayChildren: 0.025,
-    },
-  },
-  exit: (direction: number) => ({
-    opacity: 0,
-    x: direction > 0 ? -7 : 7,
-    transition: { duration: 0.12, ease: "easeIn" },
-  }),
-};
+function friendlyInitialError(value: string | null) {
+  if (value === "confirmacao") {
+    return "Este link não pôde ser confirmado. Peça um novo e tente novamente.";
+  }
+  if (value === "oauth") {
+    return "Não foi possível continuar com este provedor. Tente novamente ou use seu e-mail.";
+  }
+  return value;
+}
 
-const mobileFormVariants: Variants = {
-  enter: (direction: number) => ({
-    opacity: 0,
-    x: direction > 0 ? 8 : -8,
-    y: direction > 0 ? 18 : -18,
-  }),
-  center: {
-    opacity: 1,
-    x: 0,
-    y: 0,
-    transition: {
-      duration: 0.3,
-      ease: [0.22, 0.72, 0.22, 1],
-      staggerChildren: 0.035,
-      delayChildren: 0.025,
-    },
-  },
-  exit: (direction: number) => ({
-    opacity: 0,
-    x: direction > 0 ? -6 : 6,
-    y: direction > 0 ? -12 : 12,
-    transition: { duration: 0.16, ease: "easeIn" },
-  }),
-};
+function getTitle(view: View) {
+  switch (view) {
+    case "login":
+      return "Que bom ter você de volta.";
+    case "register":
+      return "Crie sua conta.";
+    case "recover":
+      return "Vamos recuperar seu acesso.";
+    case "mfa":
+      return "Confirme que é você.";
+    case "sent":
+      return "Confira sua caixa de entrada.";
+  }
+}
 
-const fieldVariants: Variants = {
-  enter: { opacity: 0, y: 5 },
-  center: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.2, ease: "easeOut" },
-  },
-  exit: { opacity: 0, y: -2, transition: { duration: 0.08 } },
-};
+function getSubtitle(view: View) {
+  switch (view) {
+    case "login":
+      return "Entre para acompanhar suas escolhas e continuar de onde parou.";
+    case "register":
+      return "Guarde suas escolhas e tenha uma experiência completa com a Império Sofás.";
+    case "recover":
+      return "Informe seu e-mail para receber as instruções, se houver uma conta vinculada.";
+    case "mfa":
+      return "Digite o código atual do app autenticador vinculado à sua conta.";
+    case "sent":
+      return "Enviamos uma mensagem segura para o endereço informado, quando aplicável.";
+  }
+}
+
+function friendlyAuthFailure(
+  value: unknown,
+  fallback: string,
+  options: { weakPassword?: boolean } = {},
+) {
+  if (!value || typeof value !== "object") return fallback;
+  const error = value as { status?: unknown; code?: unknown; name?: unknown };
+
+  if (error.status === 429) {
+    return "Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente novamente.";
+  }
+  if (options.weakPassword && error.code === "weak_password") {
+    return "Essa senha não atende aos requisitos de segurança da conta. Escolha outra e tente novamente.";
+  }
+  if (error.name === "AuthRetryableFetchError" || error.status === 0) {
+    return "Não foi possível conectar agora. Confira sua conexão e tente novamente.";
+  }
+  return fallback;
+}
+
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
 
 export function AuthExperience({
   isConfigured,
@@ -97,18 +97,15 @@ export function AuthExperience({
 }) {
   const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
-  const reduceMotion = useReducedMotion();
-  const formPanelRef = useRef<HTMLElement>(null);
-  const firstFieldRef = useRef<HTMLInputElement>(null);
+  const reducedMotion = Boolean(useReducedMotion());
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
   const codeInputRef = useRef<HTMLInputElement>(null);
-  const sentStatusRef = useRef<HTMLDivElement>(null);
-  const pendingViewRef = useRef<View | null>(null);
-  const focusAfterTransitionRef = useRef(false);
   const submitLockRef = useRef(false);
   const successRedirectRef = useRef(false);
   const [view, setView] = useState<View>(initialMfaRequired ? "mfa" : "login");
+  const [step, setStep] = useState<AuthStep>("email");
   const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -116,29 +113,27 @@ export function AuthExperience({
   const [factorId, setFactorId] = useState("");
   const [challengeId, setChallengeId] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [busyProvider, setBusyProvider] = useState<OAuthProvider | null>(null);
+  const [error, setError] = useState<string | null>(() =>
+    friendlyInitialError(initialError),
+  );
   const [notice, setNotice] = useState<string | null>(null);
-  const [transitionPhase, setTransitionPhase] = useState<
-    "idle" | "cover" | "reveal"
-  >("idle");
-  const [transitionDirection, setTransitionDirection] = useState<
-    "forward" | "backward"
-  >("forward");
-  const [isCompactViewport, setIsCompactViewport] = useState(false);
-  const [isAccountSwap, setIsAccountSwap] = useState(false);
   const [mfaVerified, setMfaVerified] = useState(false);
-  const isLogin = view === "login";
-  const isRegister = view === "register";
-  const isRecover = view === "recover";
-  const isMfa = view === "mfa";
+
+  const googleEnabled =
+    isConfigured && process.env.NEXT_PUBLIC_AUTH_GOOGLE_ENABLED === "true";
+  const appleEnabled =
+    isConfigured && process.env.NEXT_PUBLIC_AUTH_APPLE_ENABLED === "true";
 
   useEffect(() => {
-    const media = window.matchMedia("(max-width: 899px)");
-    const syncViewport = () => setIsCompactViewport(media.matches);
-    syncViewport();
-    media.addEventListener("change", syncViewport);
-    return () => media.removeEventListener("change", syncViewport);
-  }, []);
+    if (view !== "mfa" || mfaVerified) return;
+    const focusDelay = initialMfaRequired ? 0 : reducedMotion ? 120 : 230;
+    const timeout = window.setTimeout(
+      () => codeInputRef.current?.focus({ preventScroll: true }),
+      focusDelay,
+    );
+    return () => window.clearTimeout(timeout);
+  }, [initialMfaRequired, mfaVerified, reducedMotion, view]);
 
   useEffect(() => {
     const authClient = supabase;
@@ -210,105 +205,81 @@ export function AuthExperience({
     };
   }, [initialMfaRequired, nextPath, router, supabase]);
 
-  useEffect(() => {
-    if (transitionPhase === "idle") return;
-
-    const transitionTimer = window.setTimeout(
-      () => {
-        if (transitionPhase === "cover") {
-          const nextView = pendingViewRef.current;
-          if (!nextView) {
-            setTransitionPhase("idle");
-            return;
-          }
-          pendingViewRef.current = null;
-          setView(nextView);
-          setTransitionPhase("reveal");
-          return;
-        }
-
-        setTransitionPhase("idle");
-        setIsAccountSwap(false);
-      },
-      transitionPhase === "cover" ? 320 : 360,
-    );
-
-    return () => window.clearTimeout(transitionTimer);
-  }, [transitionPhase]);
-
-  useLayoutEffect(() => {
-    if (transitionPhase !== "idle") return;
-    if (focusAfterTransitionRef.current) {
-      focusAfterTransitionRef.current = false;
-      if (isCompactViewport && (view === "login" || view === "register")) {
-        formPanelRef.current
-          ?.querySelector<HTMLElement>(".auth-title")
-          ?.focus({ preventScroll: true });
-        return;
-      }
-      if (view === "mfa") codeInputRef.current?.focus({ preventScroll: true });
-      else if (view === "sent")
-        sentStatusRef.current?.focus({ preventScroll: true });
-      else firstFieldRef.current?.focus({ preventScroll: true });
-      const heading =
-        formPanelRef.current?.querySelector<HTMLElement>(".auth-form-head");
-      const headingTop = heading?.getBoundingClientRect().top;
-      if (
-        window.matchMedia("(max-width: 899px)").matches &&
-        headingTop !== undefined &&
-        (headingTop < 0 || headingTop > 160)
-      ) {
-        formPanelRef.current?.scrollIntoView({
-          block: "start",
-          behavior: reduceMotion ? "auto" : "smooth",
-        });
-      }
-      return;
-    }
-    if (view === "mfa" && !mfaVerified)
-      codeInputRef.current?.focus({ preventScroll: true });
-  }, [isCompactViewport, mfaVerified, reduceMotion, transitionPhase, view]);
-
-  function transitionTo(next: View, focusAfter = true) {
-    if (next === view) return;
+  function changeView(next: View) {
+    if (submitLockRef.current || busy) return;
     setError(null);
     setNotice(null);
-    setTransitionDirection(
-      view === "register" || view === "mfa" || view === "sent"
-        ? "backward"
-        : "forward",
-    );
-    setIsAccountSwap(
-      (view === "login" || view === "register") &&
-        (next === "login" || next === "register"),
-    );
-    pendingViewRef.current = next;
-    focusAfterTransitionRef.current = focusAfter;
-    if (reduceMotion) {
-      pendingViewRef.current = null;
-      setView(next);
-      setTransitionPhase("idle");
-      setIsAccountSwap(false);
-    } else {
-      setTransitionPhase("cover");
+    setPassword("");
+    setConfirmPassword("");
+    setShowPassword(false);
+    if (next === "login" || next === "register" || next === "recover") {
+      setStep("email");
+    }
+    setView(next);
+    if (next === "recover") {
+      window.setTimeout(
+        () => emailInputRef.current?.focus({ preventScroll: true }),
+        reducedMotion ? 120 : 230,
+      );
     }
   }
 
-  function changeView(next: View) {
-    if (submitLockRef.current || transitionPhase !== "idle") return;
-    transitionTo(next);
+  function continueWithEmail(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (
+      busy ||
+      submitLockRef.current ||
+      !(view === "login" || view === "register")
+    )
+      return;
+    setError(null);
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!isValidEmail(normalizedEmail)) {
+      setError("Digite um endereço de e-mail válido.");
+      return;
+    }
+    setEmail(normalizedEmail);
+    setStep("password");
   }
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  function returnToEmail() {
+    if (busy) return;
+    setError(null);
+    setPassword("");
+    setConfirmPassword("");
+    setStep("email");
+  }
+
+  async function submit(
+    event: FormEvent<HTMLFormElement>,
+    submittedView: View = view,
+  ) {
     event.preventDefault();
-    if (submitLockRef.current || transitionPhase !== "idle") return;
+    if (submitLockRef.current || busy) return;
     setError(null);
     setNotice(null);
     if (!isConfigured || !supabase) {
       setError("Não foi possível acessar sua conta agora. Tente novamente.");
       return;
     }
-    if (isRegister && password !== confirmPassword) {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (
+      (submittedView === "login" ||
+        submittedView === "register" ||
+        submittedView === "recover") &&
+      !isValidEmail(normalizedEmail)
+    ) {
+      setError("Digite um endereço de e-mail válido.");
+      return;
+    }
+    if (
+      submittedView === "login" ||
+      submittedView === "register" ||
+      submittedView === "recover"
+    ) {
+      setEmail(normalizedEmail);
+    }
+    if (submittedView === "register" && password !== confirmPassword) {
       setError("As senhas não coincidem.");
       return;
     }
@@ -316,15 +287,21 @@ export function AuthExperience({
     submitLockRef.current = true;
     setBusy(true);
     try {
-      if (isLogin) {
+      if (submittedView === "login") {
         const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
+          email: normalizedEmail,
           password,
         });
-        if (signInError)
-          throw new Error(
-            "Não foi possível entrar. Confira seus dados e tente novamente.",
+        if (signInError) {
+          setError(
+            friendlyAuthFailure(
+              signInError,
+              "Não foi possível entrar com esses dados. Confira e tente novamente.",
+            ),
           );
+          return;
+        }
+
         const [assuranceResult, factorsResult] = await Promise.all([
           supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
           supabase.auth.mfa.listFactors(),
@@ -337,12 +314,12 @@ export function AuthExperience({
         ) {
           await supabase.auth.signOut();
           throw new Error(
-            "Não foi possível confirmar o estado de segurança da conta. Tente entrar novamente.",
+            "Não foi possível confirmar a segurança da conta. Tente entrar novamente.",
           );
         }
-        const { data: assurance } = assuranceResult;
-        const { data: factors } = factorsResult;
-        const verifiedTotp = factors?.totp.find(
+
+        const assurance = assuranceResult.data;
+        const verifiedTotp = factorsResult.data.totp.find(
           (factor) => factor.status === "verified",
         );
         if (
@@ -357,14 +334,15 @@ export function AuthExperience({
           }
           const { data: challenge, error: challengeError } =
             await supabase.auth.mfa.challenge({ factorId: verifiedTotp.id });
-          if (challengeError || !challenge)
+          if (challengeError || !challenge) {
             throw new Error(
               "Não foi possível iniciar a verificação em duas etapas. Tente entrar novamente.",
             );
+          }
           setFactorId(verifiedTotp.id);
           setChallengeId(challenge.id);
           setPassword("");
-          transitionTo("mfa");
+          setView("mfa");
           return;
         }
         router.replace(nextPath);
@@ -372,47 +350,64 @@ export function AuthExperience({
         return;
       }
 
-      if (isRegister) {
-        if (password.length < 12)
-          throw new Error("Use uma senha com pelo menos 12 caracteres.");
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { full_name: name.trim() },
-            emailRedirectTo: `${window.location.origin}/auth/confirm?next=%2Fconta`,
-          },
-        });
-        if (signUpError)
-          throw new Error(
-            "Não foi possível iniciar o cadastro. Confira os dados e tente novamente.",
+      if (submittedView === "register") {
+        const confirmationUrl = new URL(
+          "/auth/confirm",
+          window.location.origin,
+        );
+        confirmationUrl.searchParams.set("next", nextPath);
+        const { data: signUpData, error: signUpError } =
+          await supabase.auth.signUp({
+            email: normalizedEmail,
+            password,
+            options: { emailRedirectTo: confirmationUrl.toString() },
+          });
+        if (signUpError) {
+          setError(
+            friendlyAuthFailure(
+              signUpError,
+              "Não foi possível iniciar o cadastro. Confira os dados e tente novamente.",
+              { weakPassword: true },
+            ),
           );
-        transitionTo("sent");
+          return;
+        }
+        if (signUpData.session) {
+          router.replace(nextPath);
+          router.refresh();
+          return;
+        }
         setNotice(
           "Se o cadastro puder ser concluído, enviaremos um link de confirmação para este e-mail.",
         );
+        setView("sent");
         return;
       }
 
-      if (isRecover) {
+      if (submittedView === "recover") {
+        const recoveryUrl = new URL("/auth/confirm", window.location.origin);
+        recoveryUrl.searchParams.set("next", "/conta/redefinir-senha");
         const { error: recoveryError } =
-          await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${window.location.origin}/auth/confirm?next=%2Fconta%2Fredefinir-senha`,
+          await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+            redirectTo: recoveryUrl.toString(),
           });
-        if (recoveryError)
-          throw new Error(
-            "Não foi possível solicitar a recuperação agora. Tente novamente mais tarde.",
+        if (recoveryError) {
+          setError(
+            friendlyAuthFailure(
+              recoveryError,
+              "Não foi possível solicitar a recuperação agora. Tente novamente mais tarde.",
+            ),
           );
-        transitionTo("sent");
+          return;
+        }
         setNotice(
           "Se houver uma conta para este e-mail, enviaremos instruções de recuperação.",
         );
+        setView("sent");
       }
     } catch (caught) {
       setError(
-        caught instanceof Error
-          ? caught.message
-          : "Ocorreu um erro. Tente novamente.",
+        friendlyAuthFailure(caught, "Ocorreu um erro. Tente novamente."),
       );
     } finally {
       submitLockRef.current = false;
@@ -420,9 +415,57 @@ export function AuthExperience({
     }
   }
 
+  async function startOAuth(provider: OAuthProvider) {
+    const enabled = provider === "google" ? googleEnabled : appleEnabled;
+    if (!enabled || busy || submitLockRef.current) return;
+    setError(null);
+    if (!isConfigured || !supabase) {
+      setError(
+        provider === "google"
+          ? "Não foi possível continuar com o Google agora. Tente novamente ou use seu e-mail."
+          : "Não foi possível continuar com a Apple agora. Tente novamente ou use seu e-mail.",
+      );
+      return;
+    }
+
+    submitLockRef.current = true;
+    setBusy(true);
+    setBusyProvider(provider);
+    try {
+      const callbackUrl = new URL("/auth/callback", window.location.origin);
+      callbackUrl.searchParams.set("next", nextPath);
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo: callbackUrl.toString() },
+      });
+      if (oauthError) {
+        setError(
+          friendlyAuthFailure(
+            oauthError,
+            provider === "google"
+              ? "Não foi possível continuar com o Google. Tente novamente ou use seu e-mail."
+              : "Não foi possível continuar com a Apple. Tente novamente ou use seu e-mail.",
+          ),
+        );
+        return;
+      }
+    } catch (caught) {
+      setError(
+        friendlyAuthFailure(
+          caught,
+          "Não foi possível concluir o acesso. Tente novamente.",
+        ),
+      );
+    } finally {
+      submitLockRef.current = false;
+      setBusy(false);
+      setBusyProvider(null);
+    }
+  }
+
   async function verifyCode(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (submitLockRef.current || transitionPhase !== "idle") return;
+    if (submitLockRef.current || busy) return;
     setError(null);
     if (!supabase || code.length !== 6) {
       setError("Digite os seis números do app autenticador.");
@@ -462,513 +505,347 @@ export function AuthExperience({
     router.refresh();
   }
 
-  const title = isLogin
-    ? "Que bom ter você de volta."
-    : isRegister
-      ? "Sua casa começa por aqui."
-      : isRecover
-        ? "Vamos recuperar seu acesso."
-        : isMfa
-          ? "Confirme que é você."
-          : "Confira sua caixa de entrada.";
-  const intro = isMfa
-    ? "Digite o código atual do app autenticador vinculado à sua conta."
-    : isRegister
-      ? "Acompanhe suas escolhas e tenha seus dados à mão, com cuidado e segurança."
-      : isRecover
-        ? "Informe o e-mail usado no cadastro. Enviaremos os próximos passos, se houver uma conta vinculada."
-        : isLogin
-          ? "Entre para acompanhar sua jornada com a Império Sofás."
-          : "Enviamos um link seguro para o endereço informado, quando aplicável.";
+  const isAccountMode = view === "login" || view === "register";
+  const accountMode: AccountMode = view === "register" ? "register" : "login";
 
   return (
-    <main className="auth-page">
-      <div className="auth-orb auth-orb--one" aria-hidden="true" />
-      <div className="auth-orb auth-orb--two" aria-hidden="true" />
-      <div className="auth-shell">
-        <div className="auth-mobile-brand">
-          <Brand />
-          <Link href="/loja/sofas" className="auth-back-link">
-            <ArrowLeft size={15} /> Loja
-          </Link>
-        </div>
-        <motion.div
-          aria-busy={busy || transitionPhase !== "idle"}
-          inert={transitionPhase !== "idle"}
-          className={`auth-card${isRegister ? " auth-card--register" : ""}${isMfa ? " auth-card--mfa" : ""}`}
+    <main className={styles.page}>
+      <div className={styles.orbit} aria-hidden="true" />
+      <div className={styles.shell}>
+        <Link
+          href="/"
+          className={styles.brand}
+          aria-label="Império Sofás — início"
         >
-          <motion.section
-            layout={!isCompactViewport || !isAccountSwap}
-            ref={formPanelRef}
-            data-auth-view={view}
-            className={`auth-form-panel${
-              isRegister ? " auth-form-panel--register" : ""
-            }`}
-          >
-            <div className="auth-form-head">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={view}
-                  initial={{ opacity: 0, y: reduceMotion ? 0 : 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: reduceMotion ? 0 : -4 }}
-                  transition={{
-                    duration: reduceMotion ? 0.12 : 0.2,
-                    ease: "easeOut",
-                  }}
-                >
-                  {!isLogin && !isRegister && (
-                    <p className="auth-overline">
-                      {isMfa
-                        ? "SEGURANÇA EM DUAS ETAPAS"
-                        : isRecover
-                          ? "ACESSO À CONTA"
-                          : "QUASE LÁ"}
-                    </p>
-                  )}
-                  <h1 className="auth-title" tabIndex={-1}>
-                    {title}
-                  </h1>
-                  <p className="auth-subtitle">{intro}</p>
-                </motion.div>
-              </AnimatePresence>
-            </div>
+          <Image
+            src="/imperio-sofas-logo-128.webp"
+            alt=""
+            width={48}
+            height={48}
+            className={styles.brandMark}
+            priority
+          />
+          <span className={styles.brandCopy}>
+            <span className={styles.brandName}>Império Sofás</span>
+            <span className={styles.brandLocation}>Vale do Paraíba</span>
+          </span>
+        </Link>
 
-            {initialError && (
-              <p className="auth-alert" role="alert">
-                {initialError === "confirmacao"
-                  ? "Não foi possível confirmar este link. Peça um novo e tente novamente."
-                  : initialError}
-              </p>
-            )}
-            <div className="auth-state-stage">
-              <AnimatePresence
-                mode={isCompactViewport && isAccountSwap ? "sync" : "wait"}
-                initial={false}
-                custom={transitionDirection === "forward" ? 1 : -1}
-              >
-                {view === "sent" ? (
-                  <motion.div
-                    key="sent"
-                    className="auth-sent"
-                    ref={sentStatusRef}
-                    tabIndex={-1}
-                    role="group"
-                    variants={formVariants}
-                    custom={transitionDirection === "forward" ? 1 : -1}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
+        <div
+          className={styles.authFrame}
+          data-auth-shell
+          data-auth-view={view}
+          data-auth-mode={accountMode}
+          data-auth-step={step}
+          aria-busy={busy || undefined}
+        >
+          {isAccountMode && (
+            <div
+              className={styles.modeSwitch}
+              role="group"
+              aria-label="Escolha entre entrar ou criar uma conta"
+            >
+              {(["login", "register"] as const).map((item) => {
+                const selected = item === accountMode;
+                const label = item === "login" ? "Entrar" : "Criar conta";
+                return (
+                  <button
+                    key={item}
+                    id={`auth-tab-${item}`}
+                    className={styles.modeTab}
+                    type="button"
+                    aria-pressed={selected}
+                    disabled={busy}
+                    onClick={() => changeView(item)}
                   >
-                    <span className="auth-success-icon">
-                      <ShieldCheck size={26} />
-                    </span>
-                    <p role="status">{notice}</p>
-                    <button
-                      type="button"
-                      onClick={() => changeView("login")}
-                      className="auth-secondary"
-                    >
-                      Voltar para entrar <ArrowRight size={16} />
-                    </button>
-                  </motion.div>
-                ) : isMfa ? (
-                  <motion.form
-                    key="mfa"
-                    className="auth-form"
-                    onSubmit={verifyCode}
-                    variants={formVariants}
-                    custom={transitionDirection === "forward" ? 1 : -1}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                  >
-                    {mfaVerified ? (
-                      <MfaSuccessSequence
-                        code={code}
-                        onComplete={finishMfaSuccess}
+                    {label}
+                    {selected && (
+                      <motion.span
+                        className={styles.modeIndicator}
+                        layoutId="auth-mode-indicator"
+                        transition={{
+                          duration: reducedMotion ? 0 : 0.27,
+                          ease: [0.22, 0.72, 0.22, 1],
+                        }}
                       />
-                    ) : (
-                      <>
-                        <motion.div
-                          className="auth-field"
-                          variants={fieldVariants}
-                        >
-                          <label className="auth-label" htmlFor="auth-code">
-                            Código do app autenticador
-                          </label>
-                          <OtpCodeInput
-                            id="auth-code"
-                            inputRef={codeInputRef}
-                            value={code}
-                            onChange={setCode}
-                            invalid={Boolean(error)}
-                            disabled={busy}
-                            describedBy={
-                              error ? "auth-error" : "auth-code-help"
-                            }
-                          />
-                          <p
-                            id="auth-code-help"
-                            className={
-                              busy
-                                ? "auth-helper auth-live-status"
-                                : "auth-helper"
-                            }
-                            role={busy ? "status" : undefined}
-                            aria-live={busy ? "polite" : undefined}
-                          >
-                            {busy
-                              ? "Confirmando seu código…"
-                              : "Digite ou cole os seis dígitos do app autenticador. Não é um código por SMS."}
-                          </p>
-                        </motion.div>
-                        {error && (
-                          <motion.p
-                            className="auth-alert"
-                            id="auth-error"
-                            role="alert"
-                            aria-live="assertive"
-                            variants={fieldVariants}
-                          >
-                            {error}
-                          </motion.p>
-                        )}
-                        <motion.button
-                          className="auth-submit"
-                          type="submit"
-                          disabled={busy || code.length !== 6}
-                          variants={fieldVariants}
-                        >
-                          {busy ? "Verificando…" : "Verificar e continuar"}
-                          <ArrowRight size={17} />
-                        </motion.button>
-                        <motion.button
-                          type="button"
-                          className="auth-text-button"
-                          disabled={busy}
-                          variants={fieldVariants}
-                          onClick={() => {
-                            void supabase?.auth.signOut();
-                            changeView("login");
-                          }}
-                        >
-                          Voltar ao login
-                        </motion.button>
-                      </>
                     )}
-                  </motion.form>
-                ) : (
-                  <motion.form
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          <motion.section
+            className={styles.surface}
+            aria-labelledby="auth-title"
+            aria-busy={busy || undefined}
+            layout={reducedMotion ? false : "size"}
+            transition={{
+              layout: {
+                duration: reducedMotion ? 0 : 0.22,
+                ease: [0.22, 0.72, 0.22, 1],
+              },
+            }}
+          >
+            <div className={styles.surfaceInner}>
+              <header className={styles.cardHeading}>
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div
                     key={view}
-                    className={`auth-form${
-                      isRegister ? " auth-form--register" : ""
-                    }`}
-                    onSubmit={submit}
-                    variants={
-                      isCompactViewport && isAccountSwap
-                        ? mobileFormVariants
-                        : formVariants
+                    initial={
+                      reducedMotion ? { opacity: 0 } : { opacity: 0, y: 7 }
                     }
-                    custom={transitionDirection === "forward" ? 1 : -1}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={
+                      reducedMotion ? { opacity: 0 } : { opacity: 0, y: -4 }
+                    }
+                    transition={{ duration: reducedMotion ? 0.1 : 0.2 }}
                   >
-                    {isRegister && (
-                      <motion.div
-                        className="auth-field"
-                        variants={fieldVariants}
-                      >
-                        <label className="auth-label" htmlFor="auth-name">
-                          Como podemos chamar você?
-                        </label>
-                        <input
-                          id="auth-name"
-                          ref={firstFieldRef}
-                          className="auth-input"
-                          type="text"
-                          autoComplete="name"
-                          enterKeyHint="next"
-                          maxLength={100}
-                          value={name}
-                          onChange={(event) => setName(event.target.value)}
-                          required
-                        />
-                      </motion.div>
-                    )}
-                    <motion.div className="auth-field" variants={fieldVariants}>
-                      <label className="auth-label" htmlFor="auth-email">
-                        E-mail
-                      </label>
-                      <input
-                        id="auth-email"
-                        ref={isRegister ? undefined : firstFieldRef}
-                        className="auth-input"
-                        type="email"
-                        autoComplete="email"
-                        autoCapitalize="none"
-                        enterKeyHint="next"
-                        spellCheck={false}
-                        value={email}
-                        aria-describedby={error ? "auth-form-error" : undefined}
-                        onChange={(event) => setEmail(event.target.value)}
-                        required
+                    <h1 id="auth-title" className={styles.title}>
+                      {getTitle(view)}
+                    </h1>
+                    <p className={styles.subtitle}>{getSubtitle(view)}</p>
+                  </motion.div>
+                </AnimatePresence>
+              </header>
+
+              <section
+                className={styles.content}
+                aria-label="Acesso à conta Império Sofás"
+              >
+                <AnimatePresence mode="wait" initial={false}>
+                  {isAccountMode ? (
+                    <motion.div
+                      key="account"
+                      initial={
+                        reducedMotion ? { opacity: 0 } : { opacity: 0, y: 4 }
+                      }
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={
+                        reducedMotion ? { opacity: 0 } : { opacity: 0, y: -3 }
+                      }
+                      transition={{ duration: reducedMotion ? 0.1 : 0.17 }}
+                    >
+                      <AuthAccountStage
+                        mode={accountMode}
+                        step={step}
+                        email={email}
+                        password={password}
+                        confirmPassword={confirmPassword}
+                        showPassword={showPassword}
+                        busy={busy}
+                        busyProvider={busyProvider}
+                        error={error}
+                        googleEnabled={googleEnabled}
+                        appleEnabled={appleEnabled}
+                        emailInputRef={emailInputRef}
+                        passwordInputRef={passwordInputRef}
+                        onModeChange={changeView}
+                        onStepChange={returnToEmail}
+                        onEmailChange={setEmail}
+                        onPasswordChange={setPassword}
+                        onConfirmPasswordChange={setConfirmPassword}
+                        onShowPasswordChange={() =>
+                          setShowPassword((visible) => !visible)
+                        }
+                        onContinueWithEmail={continueWithEmail}
+                        onSubmit={(event) => submit(event, view)}
+                        onRecover={() => changeView("recover")}
+                        onOAuth={startOAuth}
                       />
                     </motion.div>
-                    {!isRecover && (
-                      <motion.div
-                        className="auth-field"
-                        variants={fieldVariants}
+                  ) : view === "recover" ? (
+                    <motion.div
+                      key="recover"
+                      className={styles.statePanel}
+                      initial={
+                        reducedMotion ? { opacity: 0 } : { opacity: 0, y: 5 }
+                      }
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={
+                        reducedMotion ? { opacity: 0 } : { opacity: 0, y: -3 }
+                      }
+                      transition={{ duration: reducedMotion ? 0.1 : 0.18 }}
+                    >
+                      <form
+                        className={styles.stateForm}
+                        noValidate
+                        onSubmit={(event) => submit(event, "recover")}
                       >
-                        <div className="auth-label-row">
-                          <label className="auth-label" htmlFor="auth-password">
-                            Senha
-                          </label>
-                          {isLogin && (
-                            <button
-                              type="button"
-                              className="auth-inline-link"
-                              onClick={() => changeView("recover")}
-                            >
-                              Esqueceu?
-                            </button>
-                          )}
-                        </div>
-                        <div className="auth-password-wrap">
-                          <input
-                            id="auth-password"
-                            className="auth-input"
-                            type={showPassword ? "text" : "password"}
-                            autoComplete={
-                              isRegister ? "new-password" : "current-password"
-                            }
-                            enterKeyHint={isRegister ? "next" : "go"}
-                            minLength={isRegister ? 12 : undefined}
-                            value={password}
-                            aria-describedby={
-                              error ? "auth-form-error" : undefined
-                            }
-                            onChange={(event) =>
-                              setPassword(event.target.value)
-                            }
-                            required
-                          />
-                          <button
-                            type="button"
-                            className="auth-show-password"
-                            aria-label={
-                              showPassword ? "Ocultar senha" : "Mostrar senha"
-                            }
-                            onClick={() =>
-                              setShowPassword((visible) => !visible)
-                            }
-                          >
-                            {showPassword ? (
-                              <EyeOff size={18} />
-                            ) : (
-                              <Eye size={18} />
-                            )}
-                          </button>
-                        </div>
-                      </motion.div>
-                    )}
-                    {isRegister && (
-                      <motion.div
-                        className="auth-field"
-                        variants={fieldVariants}
-                      >
-                        <label
-                          className="auth-label"
-                          htmlFor="auth-confirm-password"
-                        >
-                          Confirme sua senha
-                        </label>
-                        <input
-                          id="auth-confirm-password"
-                          className="auth-input"
-                          type={showPassword ? "text" : "password"}
-                          autoComplete="new-password"
+                        <AuthField
+                          id="auth-recovery-email"
+                          name="email"
+                          label="Seu e-mail"
+                          type="email"
+                          inputMode="email"
+                          autoComplete="email"
+                          autoCapitalize="none"
+                          spellCheck={false}
                           enterKeyHint="go"
-                          minLength={12}
-                          value={confirmPassword}
-                          aria-describedby={
-                            error ? "auth-form-error" : undefined
-                          }
-                          onChange={(event) =>
-                            setConfirmPassword(event.target.value)
+                          value={email}
+                          onChange={setEmail}
+                          inputRef={emailInputRef}
+                          leadingIcon={
+                            <MailCheck size={19} aria-hidden="true" />
                           }
                           required
                         />
-                        <p className="auth-helper">
-                          Use pelo menos 12 caracteres.
-                        </p>
-                      </motion.div>
-                    )}
-                    {error && (
-                      <motion.p
-                        className="auth-alert"
-                        id="auth-form-error"
-                        role="alert"
-                        aria-live="assertive"
-                        variants={fieldVariants}
-                      >
-                        {error}
-                      </motion.p>
-                    )}
-                    <motion.button
-                      className="auth-submit"
-                      type="submit"
-                      disabled={busy || transitionPhase !== "idle"}
-                      variants={fieldVariants}
+                        {error && (
+                          <p className={styles.errorMessage} role="alert">
+                            {error}
+                          </p>
+                        )}
+                        <button
+                          className={styles.primaryButton}
+                          type="submit"
+                          disabled={busy}
+                        >
+                          <span>
+                            {busy ? "Enviando…" : "Enviar instruções"}
+                          </span>
+                          {busy ? (
+                            <span
+                              className={styles.buttonSpinner}
+                              aria-hidden="true"
+                            />
+                          ) : (
+                            <ArrowRight size={19} aria-hidden="true" />
+                          )}
+                        </button>
+                        <button
+                          className={styles.textButton}
+                          type="button"
+                          disabled={busy}
+                          onClick={() => changeView("login")}
+                        >
+                          <ArrowLeft size={16} aria-hidden="true" /> Voltar para
+                          entrar
+                        </button>
+                      </form>
+                    </motion.div>
+                  ) : view === "sent" ? (
+                    <motion.div
+                      key="sent"
+                      className={styles.statePanel}
+                      role="status"
+                      aria-live="polite"
+                      initial={
+                        reducedMotion ? { opacity: 0 } : { opacity: 0, y: 5 }
+                      }
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={
+                        reducedMotion ? { opacity: 0 } : { opacity: 0, y: -3 }
+                      }
+                      transition={{ duration: reducedMotion ? 0.1 : 0.18 }}
                     >
-                      {busy
-                        ? "Aguarde…"
-                        : isRegister
-                          ? "Criar minha conta"
-                          : isRecover
-                            ? "Enviar instruções"
-                            : "Entrar na minha conta"}
-                      {!busy && <ArrowRight size={17} />}
-                    </motion.button>
-                    <div className="auth-switch">
-                      <span>
-                        {isRegister
-                          ? "Já tem uma conta?"
-                          : isRecover
-                            ? "Lembrou sua senha?"
-                            : "Ainda não tem conta?"}
+                      <span className={styles.stateIcon} aria-hidden="true">
+                        <MailCheck size={24} strokeWidth={1.7} />
                       </span>
+                      <p className={styles.stateMessage}>{notice}</p>
                       <button
+                        className={styles.secondaryButton}
                         type="button"
-                        onClick={() => {
-                          changeView(
-                            isRegister || isRecover ? "login" : "register",
-                          );
-                        }}
+                        onClick={() => changeView("login")}
                       >
-                        {isRegister || isRecover ? "Entrar" : "Criar conta"}
+                        <ArrowLeft size={16} aria-hidden="true" /> Voltar para
+                        entrar
                       </button>
-                    </div>
-                  </motion.form>
-                )}
-              </AnimatePresence>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="mfa"
+                      className={styles.statePanel}
+                      initial={
+                        reducedMotion ? { opacity: 0 } : { opacity: 0, y: 5 }
+                      }
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={
+                        reducedMotion ? { opacity: 0 } : { opacity: 0, y: -3 }
+                      }
+                      transition={{ duration: reducedMotion ? 0.1 : 0.18 }}
+                    >
+                      {mfaVerified ? (
+                        <MfaSuccessSequence
+                          code={code}
+                          onComplete={finishMfaSuccess}
+                        />
+                      ) : (
+                        <form
+                          className={styles.stateForm}
+                          onSubmit={verifyCode}
+                        >
+                          <span className={styles.stateIcon} aria-hidden="true">
+                            <ShieldCheck size={24} strokeWidth={1.7} />
+                          </span>
+                          <div className={styles.field}>
+                            <label className={styles.label} htmlFor="auth-code">
+                              Código do app autenticador
+                            </label>
+                            <OtpCodeInput
+                              id="auth-code"
+                              inputRef={codeInputRef}
+                              value={code}
+                              onChange={setCode}
+                              invalid={Boolean(error)}
+                              disabled={busy}
+                              describedBy={
+                                error ? "auth-mfa-error" : "auth-code-help"
+                              }
+                            />
+                            <p id="auth-code-help" className={styles.mfaHelper}>
+                              {busy
+                                ? "Confirmando seu código…"
+                                : "Digite ou cole os seis dígitos do app autenticador. Não é um código por SMS."}
+                            </p>
+                          </div>
+                          {error && (
+                            <p
+                              id="auth-mfa-error"
+                              className={styles.errorMessage}
+                              role="alert"
+                              aria-live="assertive"
+                            >
+                              {error}
+                            </p>
+                          )}
+                          <button
+                            className={styles.primaryButton}
+                            type="submit"
+                            disabled={busy || code.length !== 6}
+                          >
+                            <span>
+                              {busy ? "Verificando…" : "Verificar e continuar"}
+                            </span>
+                            {busy ? (
+                              <span
+                                className={styles.buttonSpinner}
+                                aria-hidden="true"
+                              />
+                            ) : (
+                              <ArrowRight size={19} aria-hidden="true" />
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.textButton}
+                            disabled={busy}
+                            onClick={() => {
+                              void supabase?.auth.signOut();
+                              changeView("login");
+                            }}
+                          >
+                            <ArrowLeft size={16} aria-hidden="true" /> Voltar ao
+                            login
+                          </button>
+                        </form>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </section>
             </div>
           </motion.section>
-
-          <motion.aside
-            className="auth-visual"
-            aria-label={
-              isRegister
-                ? "Sala com sofá Maximo da Império Sofás"
-                : "Sala com sofá Berlim da Império Sofás"
-            }
-          >
-            <motion.div
-              className="auth-visual-photo"
-              aria-hidden="true"
-              initial={false}
-              animate={{
-                opacity: isRegister ? 0 : 1,
-                x: isCompactViewport && !reduceMotion && isRegister ? -14 : 0,
-                y: isCompactViewport && !reduceMotion && isRegister ? -10 : 0,
-                scale:
-                  isCompactViewport && !reduceMotion && isRegister ? 1.04 : 1,
-              }}
-              transition={{
-                duration: reduceMotion ? 0 : 0.55,
-                ease: "easeInOut",
-              }}
-            >
-              <Image
-                src={sofa}
-                alt=""
-                fill
-                sizes="(min-width: 900px) 50vw, 100vw"
-                priority
-                className="auth-visual-image"
-              />
-            </motion.div>
-            <motion.div
-              className="auth-visual-photo"
-              aria-hidden="true"
-              initial={false}
-              animate={{
-                opacity: isRegister ? 1 : 0,
-                x: isCompactViewport && !reduceMotion && !isRegister ? 14 : 0,
-                y: isCompactViewport && !reduceMotion && !isRegister ? 10 : 0,
-                scale:
-                  isCompactViewport && !reduceMotion && !isRegister ? 1.04 : 1,
-              }}
-              transition={{
-                duration: reduceMotion ? 0 : 0.55,
-                ease: "easeInOut",
-              }}
-            >
-              <Image
-                src={signupSofa}
-                alt=""
-                fill
-                sizes="(min-width: 900px) 50vw, 100vw"
-                loading="eager"
-                className="auth-visual-image auth-visual-image--register"
-              />
-            </motion.div>
-            <div className="auth-visual-shade" />
-            <div className="auth-visual-top">
-              <Brand className="auth-brand-light" />
-              <Link href="/loja/sofas" className="auth-back-link">
-                Voltar à loja <ArrowRight size={15} />
-              </Link>
-            </div>
-            <div className="auth-visual-copy">
-              <p className="auth-visual-title">
-                {isRegister ? (
-                  <>
-                    Uma casa
-                    <br />
-                    <em>mais sua.</em>
-                  </>
-                ) : (
-                  <>
-                    Um lugar seu.
-                    <br />
-                    <em>Do seu jeito.</em>
-                  </>
-                )}
-              </p>
-              <p className="auth-visual-description">
-                {isRegister
-                  ? "Comece a descobrir o conforto que combina com você."
-                  : "A casa muda quando a gente encontra o lugar certo para ficar."}
-              </p>
-            </div>
-          </motion.aside>
-          <motion.div
-            className={`auth-shutter auth-shutter--${transitionDirection}`}
-            aria-hidden="true"
-            initial={false}
-            animate={
-              isCompactViewport
-                ? { scaleY: transitionPhase === "cover" ? 1 : 0 }
-                : { scaleX: transitionPhase === "cover" ? 1 : 0 }
-            }
-            style={{
-              transformOrigin: isCompactViewport
-                ? `center ${transitionDirection === "forward" ? "top" : "bottom"}`
-                : `${transitionDirection === "forward" ? "left" : "right"} center`,
-            }}
-            transition={{
-              duration:
-                reduceMotion || transitionPhase === "idle"
-                  ? 0
-                  : transitionPhase === "cover"
-                    ? 0.3
-                    : 0.34,
-              ease: [0.72, 0, 0.28, 1] as const,
-            }}
-          />
-        </motion.div>
+        </div>
       </div>
     </main>
   );

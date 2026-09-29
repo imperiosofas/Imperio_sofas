@@ -24,6 +24,14 @@ Este arquivo lista dependências que impedem ativar venda real ou declarar o sis
 | ABERTO    | Observabilidade | Canal de alerta, retenção de logs e regras de redaction aprovadas                                                                                                   |
 | ABERTO    | Deploy          | Projeto Vercel, ambientes, proteção de staging, cron e procedimento de rollback                                                                                     |
 
+## Bloqueios de autenticação
+
+| Status    | Bloqueio                  | Evidência necessária                                                                                                                                               |
+| --------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| BLOQUEADO | Providers OAuth           | Google Cloud/Apple Developer e providers do Supabase não foram confirmados; flags de interface permanecem false. Validar callback URI e redirects por ambiente.    |
+| BLOQUEADO | E-mail e regras de Auth   | Confirmar policy de senha, rate limits nativos, CAPTCHA, templates, remetente e SMTP no Dashboard Supabase; esses settings não estavam expostos no MCP disponível. |
+| BLOQUEADO | Homologação de sessão/MFA | Testar login, signup, confirmação, reset, TOTP/AAL2, refresh e destino seguro com contas de teste controladas antes do go-live.                                    |
+
 ## Bloqueios de pagamento
 
 | Status    | Bloqueio               | Evidência necessária                                                                                 |

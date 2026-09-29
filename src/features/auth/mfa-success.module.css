@@ -1,0 +1,82 @@
+.sequence {
+  display: grid;
+  justify-items: center;
+  gap: 0.28rem;
+  padding: 0.2rem 0 0.8rem;
+  text-align: center;
+}
+
+.stage {
+  position: relative;
+  display: grid;
+  width: min(100%, 19rem);
+  height: 11.5rem;
+  place-items: center;
+  overflow: visible;
+  margin-bottom: 0.3rem;
+}
+
+.orbit {
+  position: absolute;
+  width: 9.7rem;
+  height: 9.7rem;
+  border: 1px solid rgb(164 122 39 / 28%);
+  border-radius: 50%;
+}
+
+.cell {
+  position: absolute;
+  display: grid;
+  width: 2.35rem;
+  height: 2.75rem;
+  place-items: center;
+  border: 1px solid #c8b78d;
+  border-radius: 0.62rem;
+  background: #fffefa;
+  color: #29251c;
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  box-shadow: 0 0.3rem 0.7rem rgb(41 37 28 / 8%);
+}
+
+.confirmation {
+  position: absolute;
+  display: grid;
+  width: 3.75rem;
+  height: 3.75rem;
+  place-items: center;
+  border: 1px solid #a47a27;
+  border-radius: 0.9rem;
+  background: #f6edda;
+  color: #73551d;
+}
+
+.title {
+  margin: 0;
+  color: #29251c;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  line-height: 1.1;
+}
+
+.helper {
+  margin: 0;
+  color: #625b4e;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 380px) {
+  .cell {
+    width: 2.15rem;
+    height: 2.55rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbit,
+  .cell {
+    display: none;
+  }
+}

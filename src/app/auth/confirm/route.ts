@@ -1,8 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "../../../lib/supabase/server";
-
-const allowedDestinations = new Set(["/conta", "/conta/redefinir-senha"]);
+import { getSafeAuthReturnTo } from "../../../lib/auth-return-to";
 
 function redirectNoStore(url: URL) {
   const response = NextResponse.redirect(url);
@@ -14,8 +13,9 @@ function redirectNoStore(url: URL) {
 export async function GET(request: NextRequest) {
   const tokenHash = request.nextUrl.searchParams.get("token_hash");
   const requestedType = request.nextUrl.searchParams.get("type");
-  const next = request.nextUrl.searchParams.get("next") ?? "/conta";
-  const destination = allowedDestinations.has(next) ? next : "/conta";
+  const destination = getSafeAuthReturnTo(
+    request.nextUrl.searchParams.get("next"),
+  );
   const supabase = await createSupabaseServerClient();
   const type: EmailOtpType | null =
     requestedType === "email" || requestedType === "recovery"

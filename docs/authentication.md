@@ -3,14 +3,18 @@
 ## Fluxos implementados
 
 - `/conta`: login, cadastro somente de cliente, confirmação por e-mail, recuperação de acesso e desafio TOTP quando a conta já possui fator verificado.
+- `/conta`: login/cadastro visualmente progressivos; o e-mail é informado antes da senha. OAuth Google/Apple usa `signInWithOAuth` e permanece oculto até a configuração explícita do provedor.
+- `/conta`: composição mobile-first marinho/marfim/dourado, marca centralizada, seletor Entrar/Criar conta com indicador compartilhado e cartão único. A etapa de e-mail não consulta se a conta existe; normaliza e valida localmente antes de avançar. Login, cadastro, recuperação, redefinição e MFA compartilham os mesmos tokens e campos.
 - `/conta/redefinir-senha`: atualização da senha após a confirmação server-side do token hash de recuperação.
 - `/conta/seguranca`: adesão opcional a TOTP por QR ou chave manual, verificação antes de ativar e novo código exigido antes de desativar.
-- `/auth/confirm`: verifica no servidor os `token_hash` de confirmação e recuperação do e-mail; aceita apenas os destinos `/conta` e `/conta/redefinir-senha`.
-- `/auth/callback`: fallback para troca de código PKCE por sessão em cookies; permite somente destino relativo interno.
+- `/auth/confirm`: verifica no servidor os `token_hash` de confirmação e recuperação do e-mail; restringe destinos ao allowlist interno compartilhado com os callbacks OAuth.
+- `/auth/callback`: troca de código OAuth PKCE por sessão em cookies SSR e redirect sem cache; permite somente destinos internos allowlisted por `getSafeAuthReturnTo`.
 - `proxy.ts`: atualiza cookies/sessão em cada requisição quando o Supabase está configurado. A autorização continua sendo verificada nas rotas de servidor; Proxy não é a barreira de permissão.
 - `/conta`, `/conta/seguranca` e `/conta/redefinir-senha` validam claims assinadas com `getClaims()` e, no servidor, exigem AAL2 quando o projeto sinaliza `nextLevel=aal2`. Sessões em AAL1 são mantidas na tela de desafio TOTP; falha ao consultar claims/AAL resulta em negação (fail closed).
 
-Não existe cadastro público, papel ou painel de administrador nesta etapa. O cadastro grava apenas `full_name` em metadados de perfil, nunca papel de acesso. Nenhum dado do usuário ou fator é usado como autorização administrativa. O bootstrap de admin continua seguindo D-009 e depende de provisionamento operacional e políticas RLS próprias.
+Não existe cadastro público, papel ou painel de administrador nesta etapa. O cadastro não pede nem grava nome: `full_name` era apenas metadata sem consumidor no produto. Nenhum dado do usuário ou fator é usado como autorização administrativa. O bootstrap de admin continua seguindo D-009 e depende de provisionamento operacional e políticas RLS próprias.
+
+O estado das credenciais e passos de habilitação do OAuth social está em [`auth-provider-setup.md`](./auth-provider-setup.md). Até a confirmação do Google Cloud/Apple Developer e dos providers no Supabase, os estados são `GOOGLE_OAUTH_STATUS = WAITING_FOR_PROVIDER_CONFIGURATION` e `APPLE_OAUTH_STATUS = WAITING_FOR_APPLE_DEVELOPER_CONFIGURATION`.
 
 ## Ativação local e do projeto Supabase
 
@@ -24,7 +28,7 @@ Não existe cadastro público, papel ou painel de administrador nesta etapa. O c
 
    Os links acima são exemplos de template; personalize o texto e preserve esses parâmetros. O callback valida o tipo e o destino permitido antes de criar a sessão.
 
-5. Defina a política de comprimento mínimo de senha do projeto com pelo menos 12 caracteres, consistente com o formulário. A política do provedor é a fonte de validação, pois regras apenas no browser podem ser contornadas.
+5. Confira a política efetiva de senha em Auth > Settings antes de documentar requisitos numéricos. A interface não impõe comprimento mínimo inventado; o Supabase valida a política configurada e devolve um erro genérico de senha fraca. A configuração remota não pôde ser inspecionada nesta sessão.
 6. Confirme TOTP como fator permitido no Supabase. A adesão de clientes é voluntária; uma conta com TOTP verificado deve completar AAL2 no login antes de seguir. Não existe envio nem reenvio de código SMS.
 7. Reinicie `npm run dev` e valide `/conta`, confirmação, recuperação, inscrição/desinscrição TOTP e entrada com fator habilitado usando uma conta de teste.
 

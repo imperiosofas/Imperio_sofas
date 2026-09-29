@@ -1,14 +1,27 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, ShoppingBag } from "lucide-react";
+import { getAccountAccess } from "../../../lib/supabase/account-access";
+import { createSupabaseServerClient } from "../../../lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "Sacola",
-  description: "Acompanhe em breve os produtos escolhidos na Império Sofás.",
+  title: "Carrinho",
+  description: "Acompanhe sua seleção na Império Sofás.",
   robots: { index: false, follow: false },
 };
 
-export default function CartPage() {
+export const dynamic = "force-dynamic";
+
+export default async function CartPage() {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) redirect("/conta?next=%2Fcarrinho");
+
+  const access = await getAccountAccess(supabase);
+  if (access.status === "mfa_required")
+    redirect("/conta?mfa=required&next=%2Fcarrinho");
+  if (access.status !== "authenticated") redirect("/conta?next=%2Fcarrinho");
+
   return (
     <main className="relative isolate grid min-h-[calc(100svh-76px)] overflow-hidden bg-ink px-4 py-16 text-ivory lg:min-h-[calc(100svh-88px)]">
       <div
