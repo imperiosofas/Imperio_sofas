@@ -1,28 +1,43 @@
 import { expect, test } from "@playwright/test";
 
-test("PLP mantém filtros na URL, categoria e PDP local", async ({ page }) => {
-  await page.goto("/loja");
+test("@local PLP local vazio mantém estado vazio e filtros na URL", async ({
+  page,
+}) => {
+  await page.goto("/loja", { waitUntil: "domcontentloaded" });
   await expect(
     page.getByRole("heading", { name: "Loja", exact: true }),
   ).toBeVisible();
-  await expect(page.getByText("1 modelo")).toBeVisible();
-  await page.goto("/loja?max=500");
+  await expect(page.getByText("0 modelos")).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      name: "Nenhum modelo disponível no momento.",
+    }),
+  ).toBeVisible();
+  await page.goto("/loja?max=500", { waitUntil: "domcontentloaded" });
   await expect(
     page.getByRole("heading", { name: "Nenhum modelo encontrado." }),
   ).toBeVisible();
-  await page.reload();
+  await page.reload({ waitUntil: "domcontentloaded" });
   await expect(
     page.getByRole("heading", { name: "Nenhum modelo encontrado." }),
   ).toBeVisible();
-  await page.screenshot({ path: test.info().outputPath("plp-empty.png") });
-  await page.getByRole("link", { name: "Sofás", exact: true }).click();
-  await expect(page).toHaveURL(/\/loja\/sofas$/);
-  await expect(page.getByRole("link", { name: /Sofá Berlim/ })).toBeVisible();
-  await page.getByRole("link", { name: /Sofá Berlim/ }).click();
-  await expect(page).toHaveURL(/\/produto\/sofa-berlim$/);
+  await expect(
+    page.getByRole("link", { name: "Sofás", exact: true }),
+  ).toHaveAttribute("href", "/loja/sofas");
+  await page.goto("/loja/sofas", { waitUntil: "domcontentloaded" });
+  await expect(
+    page.getByRole("heading", { name: "Sofás", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      name: "Nenhum modelo disponível no momento.",
+    }),
+  ).toBeVisible();
 });
 
-test("drawer mobile filtra e remove um chip", async ({ page }) => {
+test("@local drawer mobile filtra e remove um chip sem catálogo remoto", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/loja");
   await page.getByRole("button", { name: "Filtrar", exact: true }).click();
@@ -32,19 +47,14 @@ test("drawer mobile filtra e remove um chip", async ({ page }) => {
   await page.screenshot({
     path: test.info().outputPath("plp-mobile-drawer.png"),
   });
-  await page
-    .getByRole("dialog", { name: "Filtrar produtos" })
-    .getByText("Largura")
-    .click();
-  await page
-    .getByRole("dialog", { name: "Filtrar produtos" })
-    .getByRole("checkbox")
-    .check();
-  await page.getByRole("button", { name: "Ver produtos" }).click();
-  await expect(page).toHaveURL(/largura=10000/);
+  const filterDialog = page.getByRole("dialog", { name: "Filtrar produtos" });
+  await filterDialog.getByText("Preço", { exact: true }).click();
+  await filterDialog.getByLabel("Até (R$)").fill("500");
+  await filterDialog.getByRole("button", { name: "Ver produtos" }).click();
+  await expect(page).toHaveURL(/max=500/);
   await page
     .locator('[aria-label="Filtros aplicados"]')
-    .getByRole("link", { name: /10,00 m/ })
+    .getByRole("link", { name: /Até R\$ 500/ })
     .click();
   await expect(page).toHaveURL(/\/loja$/);
   await page.getByRole("button", { name: "Ordenar" }).click();
@@ -56,7 +66,10 @@ test("drawer mobile filtra e remove um chip", async ({ page }) => {
   await page.screenshot({ path: test.info().outputPath("plp-mobile.png") });
 });
 
-test("PLP não cria overflow nas larguras solicitadas", async ({ page }) => {
+test("@local PLP não cria overflow nas larguras solicitadas", async ({
+  page,
+}) => {
+  await page.goto("/loja");
   for (const [width, height] of [
     [360, 800],
     [375, 812],
@@ -69,7 +82,6 @@ test("PLP não cria overflow nas larguras solicitadas", async ({ page }) => {
     [1920, 1080],
   ]) {
     await page.setViewportSize({ width, height });
-    await page.goto("/loja");
     await expect(
       page.getByRole("heading", { name: "Loja", exact: true }),
     ).toBeVisible();
@@ -87,18 +99,22 @@ test("PLP não cria overflow nas larguras solicitadas", async ({ page }) => {
   }
 });
 
-test("touch mobile mantém produtos acima da bottom nav", async ({
+test("@local touch mobile mantém o estado vazio acima da bottom nav", async ({
   browser,
 }) => {
   const context = await browser.newContext({
-    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3100",
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3114",
     viewport: { width: 390, height: 844 },
     hasTouch: true,
     isMobile: true,
   });
   const page = await context.newPage();
   await page.goto("/loja");
-  await expect(page.getByRole("link", { name: /Sofá Berlim/ })).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      name: "Nenhum modelo disponível no momento.",
+    }),
+  ).toBeVisible();
   await expect(page.locator(".site-header__desktop-nav")).toBeHidden();
   await expect(page.locator('[class*="dockRoot"]')).toBeVisible();
   const overflow = await page.evaluate(
