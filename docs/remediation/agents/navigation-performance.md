@@ -122,3 +122,56 @@ failure. A harmless sentinel and caller cwd were checked after successful
 sentinel was not printed. `-FormatOnly` passed the project format gate and
 read-only checks for all changed/new supported source/config/test/report
 files. No build or E2E rerun was needed for this PowerShell-only follow-up.
+
+### NAV-001 follow-up — tablet product loading overflow
+
+The product-route skeleton's two-column grid can leave its information column
+about 290px wide at a 768px viewport. Its shared title and description widths
+were previously based on desktop-sized viewport clamps, so those decorative
+blocks extended past that column. Scoped the product skeleton title and
+description widths to `min(100%, their existing maximum)` and set
+`min-width: 0` on the grid child. No loaded PDP styles, route behavior, or
+existing E2E tests were changed.
+
+**Browser check:** built a fresh production output at
+`.next-nav-overflow-fix` and served that same output locally. In Chromium at
+768px, mounted the `ProductLoading` element structure from `RouteLoading.tsx`
+with its compiled CSS module; document overflow was 0px, and both title and
+description measured 289.83px within the 289.83px info column. Repeated at
+701, 700, 430, 390, 360, and 320px: all reported 0px horizontal overflow.
+This directly checks the loading-skeleton layout, but is not a natural delayed
+Next route-transition E2E: the local PLP has no published Berlin link.
+
+**Gates:** typecheck PASS; lint PASS (2 existing `<img>` warnings); project
+format check PASS; dedicated Prettier check for the CSS PASS; production build
+PASS. Build emitted the existing generated CSS/Tailwind optimization warnings.
+Generated `next-env.d.ts` and `tsconfig.json` references were restored.
+Existing `.next-*` artifacts were preserved; the new isolated build output was
+also preserved. No tests, Supabase data, migrations, or deployment were
+changed; no commit was created.
+
+### NAV-001 follow-up — direct tablet loading-skeleton E2E
+
+Added the disjoint Playwright case
+`tests/e2e/navigation-loading-overflow.spec.ts`; no existing E2E test was
+edited. It performs a direct browser navigation to
+`/produto/sofa-berlim` at 768×1024 and observes the document from before page
+scripts run. It requires the product route's natural `[aria-busy="true"]`
+loading fallback to appear, samples its bounds while present, and checks every
+sample plus the final document against the 768px viewport. It does not mount
+synthetic markup or delay/replace application responses.
+
+The dedicated Playwright config and isolated runner are pinned to the existing
+production output `.next-nav-overflow-fix`; the config fails fast if the runner
+selects a different output. No build was run or artifact overwritten. The
+runner continues to pass a narrow sanitized environment to Playwright/server
+and workers, restricts browser traffic to loopback, and restores its temporary
+parent-process sentinel and caller working directory on completion.
+
+**Targeted E2E:** `node
+scripts/run-isolated-navigation-playwright.mjs --config
+playwright.navigation.config.ts tests/e2e/navigation-loading-overflow.spec.ts`
+— **1 passed** against the existing `.next-nav-overflow-fix` output. The
+natural loading fallback was observed during the direct request; all sampled
+skeleton/document widths stayed within the viewport. No Supabase call/write,
+commit, or deployment occurred.

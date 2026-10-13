@@ -105,7 +105,16 @@
   display: grid;
   justify-items: start;
   gap: 1.25rem;
+  min-width: 0;
   padding-top: 1rem;
+}
+
+.productInfo .title {
+  width: min(100%, 23rem);
+}
+
+.productInfo .description {
+  width: min(100%, 34rem);
 }
 
 .price {
