@@ -54,6 +54,11 @@ const destinations = [
   },
 ] as const;
 
+type CartSummaryRequest = {
+  generation: number;
+  promise: Promise<void>;
+};
+
 const clamp = (value: number) => Math.max(0, Math.min(1, value));
 const smooth = (value: number) => value * value * (3 - 2 * value);
 
@@ -164,47 +169,86 @@ function CarriedIcon({
 export function BottomNavigation() {
   const pathname = usePathname();
   const [cartCount, setCartCount] = useState(0);
+  const [navWidth, setNavWidth] = useState(0);
+  const cartRequest = useRef<CartSummaryRequest | null>(null);
+  const authGeneration = useRef(0);
+  const requestVersion = useRef(0);
+  const mounted = useRef(false);
   useEffect(() => {
+    mounted.current = true;
     const client = createSupabaseBrowserClient();
-    if (!client) return;
-    let alive = true;
-    const refresh = async () => {
-      try {
-        const response = await fetch("/api/cart/summary", {
-          cache: "no-store",
-          credentials: "same-origin",
-        });
-        const summary = (await response.json()) as {
-          authenticated?: boolean;
-          count?: number | null;
-        };
-        if (alive) {
-          setCartCount(
-            response.ok &&
-              summary.authenticated &&
-              typeof summary.count === "number"
-              ? summary.count
-              : 0,
-          );
+    if (!client)
+      return () => {
+        mounted.current = false;
+      };
+
+    const refresh = (force = false) => {
+      const generation = authGeneration.current;
+      const pending = cartRequest.current;
+      if (!force && pending?.generation === generation) return pending.promise;
+
+      const version = ++requestVersion.current;
+      const request = (async () => {
+        try {
+          const response = await fetch("/api/cart/summary", {
+            cache: "no-store",
+            credentials: "same-origin",
+          });
+          const summary = (await response.json()) as {
+            authenticated?: boolean;
+            count?: number | null;
+          };
+          if (
+            mounted.current &&
+            generation === authGeneration.current &&
+            version === requestVersion.current
+          ) {
+            setCartCount(
+              response.ok &&
+                summary.authenticated &&
+                typeof summary.count === "number"
+                ? summary.count
+                : 0,
+            );
+          }
+        } catch {
+          if (
+            mounted.current &&
+            generation === authGeneration.current &&
+            version === requestVersion.current
+          ) {
+            setCartCount(0);
+          }
         }
-      } catch {
-        if (alive) setCartCount(0);
-      }
+      })().finally(() => {
+        if (cartRequest.current?.promise === request)
+          cartRequest.current = null;
+      });
+      cartRequest.current = { generation, promise: request };
+      return request;
     };
+
+    const onCartChanged = () => void refresh(true);
     void refresh();
-    window.addEventListener("cart:changed", refresh);
+    window.addEventListener("cart:changed", onCartChanged);
     const { data: listener } = client.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_OUT" && alive) setCartCount(0);
-      setTimeout(() => {
-        void refresh();
-      }, 0);
+      if (event === "SIGNED_OUT") {
+        authGeneration.current += 1;
+        requestVersion.current += 1;
+        cartRequest.current = null;
+        if (mounted.current) setCartCount(0);
+      } else if (event === "SIGNED_IN") {
+        authGeneration.current += 1;
+        cartRequest.current = null;
+        setTimeout(() => void refresh(true), 0);
+      }
     });
     return () => {
-      alive = false;
-      window.removeEventListener("cart:changed", refresh);
+      mounted.current = false;
+      window.removeEventListener("cart:changed", onCartChanged);
       listener.subscription.unsubscribe();
     };
-  }, [pathname]);
+  }, []);
   const activeIndex = destinations.findIndex(({ isActive }) =>
     isActive(pathname),
   );
@@ -218,10 +262,10 @@ export function BottomNavigation() {
   const departure = useMotionValue(
     destinations.map((_, index) => Number(index === activeIndex)),
   );
-  const width = useMotionValue(0);
-  const plateOpacity = useTransform(width, (value) => Number(value > 0));
+  const plateOpacity = Number(navWidth > 0);
   const beadX = useTransform(
-    () => ((position.get() + 0.5) * width.get()) / destinations.length,
+    position,
+    (value) => ((value + 0.5) * navWidth) / destinations.length,
   );
   const velocity = useVelocity(position);
   const liftTarget = useTransform(velocity, (speed) =>
@@ -246,13 +290,9 @@ export function BottomNavigation() {
       );
   });
   const notchedPath = useTransform(() =>
-    platePath(width.get(), beadX.get(), beadY.get(), destination.get() >= 0),
+    platePath(navWidth, beadX.get(), beadY.get(), destination.get() >= 0),
   );
-  const beadOpacity = useTransform(() => {
-    const measuredWidth = width.get();
-    const target = destination.get();
-    return Number(measuredWidth > 0 && target >= 0);
-  });
+  const beadOpacity = Number(navWidth > 0 && destination.get() >= 0);
 
   const moveTo = useCallback(
     (index: number) => {
@@ -284,20 +324,24 @@ export function BottomNavigation() {
   useLayoutEffect(() => {
     const nav = navRef.current;
     if (!nav) return;
-    const measure = () => width.set(nav.getBoundingClientRect().width);
-    // Defer the first measurement until Motion's subscriptions are attached.
-    // A synchronous layout-effect write can be missed during hydration.
-    let frame = requestAnimationFrame(measure);
-    const observer = new ResizeObserver(() => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(measure);
-    });
+    const measure = () => {
+      const measuredWidth = nav.getBoundingClientRect().width;
+      setNavWidth((currentWidth) =>
+        Math.abs(currentWidth - measuredWidth) < 0.5
+          ? currentWidth
+          : measuredWidth,
+      );
+    };
+    // Use React state for layout geometry: a MotionValue write made during the
+    // initial layout effect can happen before Motion's DOM subscriptions attach
+    // and then remain stale at zero throughout hydration.
+    measure();
+    const observer = new ResizeObserver(measure);
     observer.observe(nav);
     return () => {
-      cancelAnimationFrame(frame);
       observer.disconnect();
     };
-  }, [width]);
+  }, []);
 
   // Pathname is authoritative on redirects and back/forward. A normal Link
   // navigation starts below, before its route has committed or loaded.

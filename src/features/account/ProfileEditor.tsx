@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { Check, Mail, Save } from "lucide-react";
+import Link from "next/link";
 import { AuthField } from "../auth/AuthField";
 import { saveCustomerProfile } from "./actions";
 import styles from "./account.module.css";
@@ -79,7 +80,7 @@ export function ProfileEditor({
             <small>E-MAIL DA CONTA</small>
             <strong>{email}</strong>
           </span>
-          <a href="/conta/seguranca#email">Alterar</a>
+          <Link href="/conta/seguranca#email">Alterar</Link>
         </div>
         {status ? (
           <p

@@ -299,3 +299,12 @@ Até que essas evidências existam, o projeto deve ser descrito como uma aplica�
 - Os outros 50 produtos foram importados. Segunda execução: todos idempotentes e verificados; nenhum duplicado.
 - Estado remoto: 7 categorias, 51 rascunhos, 0 publicados, 71 variantes/estoques, 107 mídias/objetos privados, sem órfãos ou duplicidades.
 - `typecheck`, `lint`, `format:check` e `build` passaram. Apenas 2 avisos existentes de `<img>`. Vercel/deploy, MFA e carrinho continuam intocados; sem commit/push.
+
+## Workstream navegação e feedback de conta — 13/10/2026
+
+- Adicionados `loading.tsx` específicos para categoria, PDP e editor admin de produto. O fallback é skeleton acessível e responsivo; no admin permanece dentro do `AdminShell`, sem contornar nem substituir os guards existentes.
+- `BottomNavigation` agora consulta o resumo do carrinho na montagem, em login e em `cart:changed`, não em cada mudança de rota. Requisições concorrentes/obsoletas não sobrescrevem contagem mais nova; logout zera a contagem. O link de alteração de e-mail em `ProfileEditor` usa `next/link` e mantém o fragmento `#email`.
+- Navegação touch 390×844 com resposta da API interceptada localmente: uma consulta inicial; zero consultas adicionais em Loja, filtro `?sort=price_asc`, Conta e Voltar; contagem do badge preservada. Evento `cart:changed` provocou exatamente uma consulta e atualizou o badge. Nenhuma chamada remota ou escrita foi feita.
+- Métrica de desenvolvimento sem ganho alegado: baseline aquecido feedback/content 101/416 ms; após a mudança duas amostras 153/870 e 203/935 ms. A variância e o overhead/compilação do servidor de desenvolvimento impedem concluir melhoria de latência; comparação e harness estão em `docs/remediation/agents/navigation-performance.md`.
+- `npm ci` não bloqueia: Next 16.3.8 instalado e validado por `npm ls next --depth=0`; nenhuma instalação continua ativa. Testes `tests/e2e/**` não foram editados nem executados (workstream TEST-001).
+- Typecheck, lint, `format:check` e build completos passaram; lint mantém dois avisos preexistentes de `<img>`. Sem migration, comércio, `CatalogProductGrid.tsx`, commit, push, merge, deploy ou agente adicional.

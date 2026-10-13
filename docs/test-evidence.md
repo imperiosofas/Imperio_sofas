@@ -470,3 +470,12 @@ O aviso de hidratação observado no Brave aponta exclusivamente para `cz-shortc
 - Validação local após os ajustes: `npm run typecheck`, `npm run lint`, `npm run format:check` e `npm run build` passaram. Lint mantém 2 avisos antigos de `<img>`.
 - Storefront local após o lote: `/loja` e `/loja/sofas` retornam 200 com estado vazio; PDPs do Berlim e de Sofá Máximo retornam 404. Rascunhos não vazam para o catálogo público.
 - Sem Vercel/deploy, MFA, carrinho, commit ou push.
+
+## Navegação RSC e feedback de conta — 13/10/2026
+
+- Ambiente de navegador local em `127.0.0.1:3121`, viewport touch 390×844, configuração Supabase propositalmente inválida/local. As rotas dinâmicas carregaram sem credenciais reais; nenhuma sessão ou dado remoto foi usado.
+- Harness repetido antes/depois para Início → Loja: início do feedback medido pela primeira mudança >1 px do bead; conteúdo pelo commit de `/loja` com `main h1=Loja`; rede pelo número de `GET /api/cart/summary` durante a transição. Baseline aquecido 101 ms / 416 ms / 2 requests. Após: 153 ms / 870 ms em uma amostra e 203 ms / 935 ms na repetição / 0 requests. O tempo de desenvolvimento variou e foi pior após; não afirmamos ganho de latência. A redução comprovada é de 2 para 0 consultas de resumo disparadas pela navegação.
+- Teste de comportamento com resposta JSON local interceptada: uma consulta inicial define badge `Carrinho, 4 itens`; Loja, mudança para `?sort=price_asc`, Conta e browser Back preservam badge e query sem nova consulta. `cart:changed` dispara exatamente uma nova consulta e atualiza o badge para o valor retornado.
+- O segmento `/loja/sofas` retornou HTTP 200 e título `Sofás`; fallback não foi observado visualmente na navegação porque o Next pré-carregou a rota. Presença das boundaries por segmento será também validada pelo build. Acesso autenticado a admin não foi tentado; o fallback admin é conteúdo genérico sob o `AdminShell` e seus guards intactos.
+- `npm ci` não bloqueia; dependências instaladas e `next@16.3.8` listado. `npm run typecheck`: PASS. `npm run lint`: PASS, zero erros e dois avisos `<img>` preexistentes. `npm run format:check`: PASS. `npm run build`: PASS; as três rotas com fallback dinâmico aparecem como renderização sob demanda.
+- Nenhum arquivo `tests/e2e/**` foi modificado; E2E completo não executado por pertencer ao TEST-001.
