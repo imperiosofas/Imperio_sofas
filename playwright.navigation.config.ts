@@ -1,14 +1,23 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = "http://127.0.0.1:3112";
+const expectedDistDir = ".next-nav-overflow-fix";
 
 if (process.env.NAV_ISOLATION_SENTINEL !== undefined) {
   throw new Error("Playwright runner received an inherited environment value");
 }
+if (process.env.NEXT_DIST_DIR !== expectedDistDir) {
+  throw new Error(
+    "Playwright server is not using the verified production build",
+  );
+}
 
 export default defineConfig({
   testDir: "./tests/e2e",
-  testMatch: "navigation-initial-indicator.spec.ts",
+  testMatch: [
+    "navigation-initial-indicator.spec.ts",
+    "navigation-loading-overflow.spec.ts",
+  ],
   fullyParallel: false,
   reporter: "list",
   use: {

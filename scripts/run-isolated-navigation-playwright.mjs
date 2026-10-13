@@ -5,7 +5,10 @@ import { fileURLToPath } from "node:url";
 
 const projectRoot = fileURLToPath(new URL("../", import.meta.url));
 const baseURL = "http://127.0.0.1:3112";
+const distDir = ".next-nav-overflow-fix";
 const sentinelName = "NAV_ISOLATION_SENTINEL";
+const callerCwd = process.cwd();
+const callerSentinel = process.env[sentinelName];
 
 // Seed a throwaway inherited value so the runner and worker assertions prove
 // that arbitrary parent-only variables do not cross the process boundary.
@@ -49,7 +52,7 @@ Object.assign(isolatedEnv, {
   APP_URL: baseURL,
   CATALOG_SOURCE: "local",
   NODE_ENV: "production",
-  NEXT_DIST_DIR: ".next-nav-security-review",
+  NEXT_DIST_DIR: distDir,
   NEXT_TELEMETRY_DISABLED: "1",
   NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:9",
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "",
@@ -72,9 +75,27 @@ const child = spawn(
   },
 );
 
+const restoreCallerState = () => {
+  if (callerSentinel === undefined) {
+    delete process.env[sentinelName];
+  } else {
+    process.env[sentinelName] = callerSentinel;
+  }
+};
+
 child.on("error", () => {
+  restoreCallerState();
   process.exitCode = 1;
 });
 child.on("exit", (code, signal) => {
+  restoreCallerState();
+  if (process.cwd() !== callerCwd) {
+    process.exitCode = 1;
+    return;
+  }
+  if (process.env[sentinelName] !== callerSentinel) {
+    process.exitCode = 1;
+    return;
+  }
   process.exitCode = code ?? (signal ? 1 : 0);
 });
