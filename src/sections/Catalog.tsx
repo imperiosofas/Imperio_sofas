@@ -1,176 +1,120 @@
-"use client";
-
-import { EffectCoverflow, Navigation, Pagination } from "swiper/modules";
-import { Swiper, SwiperSlide } from "swiper/react";
 import { ArrowLeft, ArrowRight, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
-import Link from "next/link";
+import { useRef } from "react";
 import { useEnhancedMotion } from "../lib/useEnhancedMotion";
-import "swiper/css";
-import "swiper/css/effect-coverflow";
-import "swiper/css/pagination";
-import "swiper/css/navigation";
 import { products } from "../data/products";
 import { SectionHeading } from "../components/SectionHeading";
 import { WhatsAppLink } from "../components/WhatsAppLink";
 import { StorePhoto } from "../components/StorePhoto";
+import { FULL_CATALOG_URL } from "../lib/links";
+import styles from "./landing-motion.module.css";
 
-export function Catalog({ integrated = false }: { integrated?: boolean }) {
+export function Catalog() {
   const enhanced = useEnhancedMotion();
+  const viewportRef = useRef<HTMLDivElement>(null);
+
+  const moveCatalog = (direction: -1 | 1) => {
+    const viewport = viewportRef.current;
+    const track = viewport?.firstElementChild;
+    const card = track?.querySelector<HTMLElement>("[data-collection-card]");
+    if (!viewport || !track || !card) return;
+
+    const gap = Number.parseFloat(getComputedStyle(track).columnGap) || 0;
+    const behavior = window.matchMedia("(prefers-reduced-motion: reduce)")
+      .matches
+      ? "auto"
+      : "smooth";
+    viewport.scrollBy({
+      left: direction * (card.getBoundingClientRect().width + gap),
+      behavior,
+    });
+  };
+
   return (
-    <section
-      id="catalogo"
-      aria-label="Coleção em destaque"
-      className={
-        integrated
-          ? "overflow-hidden bg-ink pb-16 sm:pb-24"
-          : "section-pad overflow-hidden bg-ink"
-      }
-    >
-      {!integrated && (
-        <>
-          <div className="shell">
-            <div className="flex items-end justify-between gap-8">
-              <SectionHeading
-                eyebrow="Coleção em destaque"
-                title="Um sofá para cada jeito de viver."
-                copy="Explore alguns estilos e chame no WhatsApp para conferir medidas, tecidos e disponibilidade."
-              />
-              <Link
-                href="/loja"
-                className="hidden shrink-0 items-center gap-2 rounded-full border border-gold/45 px-5 py-3 text-sm font-semibold text-gold transition hover:bg-gold hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold lg:inline-flex"
-              >
-                Ver todos os produtos{" "}
-                <ArrowRight size={17} aria-hidden="true" />
-              </Link>
-              <div className="hidden gap-3 md:flex">
-                <button
-                  className="catalog-prev grid size-12 place-items-center rounded-full border border-white/12 text-ivory transition hover:border-gold/50 hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
-                  aria-label="Produto anterior"
-                >
-                  <ArrowLeft size={20} />
-                </button>
-                <button
-                  className="catalog-next grid size-12 place-items-center rounded-full border border-white/12 text-ivory transition hover:border-gold/50 hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
-                  aria-label="Próximo produto"
-                >
-                  <ArrowRight size={20} />
-                </button>
-              </div>
-            </div>
-          </div>
-          <div className="shell mt-5 lg:hidden">
-            <Link
-              href="/loja"
-              className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-gold underline decoration-gold/40 underline-offset-4"
-            >
-              Ver todos os produtos <ArrowRight size={17} aria-hidden="true" />
-            </Link>
-          </div>
-        </>
-      )}
-      {integrated && (
-        <div className="shell mb-6 flex items-center justify-between gap-4">
-          <Link
-            href="/loja"
-            className="inline-flex min-h-12 items-center gap-2 text-sm font-semibold text-gold focus-visible:outline-2 focus-visible:outline-gold"
-          >
-            Ver todos os produtos <ArrowRight size={17} aria-hidden="true" />
-          </Link>
-          <div className="flex gap-2">
+    <section id="catalogo" className="section-pad bg-ink">
+      <div className="shell">
+        <div className="flex items-end justify-between gap-8">
+          <SectionHeading
+            eyebrow="Coleção em destaque"
+            title="Um sofá para cada jeito de viver."
+            copy="Explore alguns estilos e chame no WhatsApp para conferir medidas, tecidos e disponibilidade."
+          />
+          <div className="hidden gap-3 md:flex lg:hidden">
             <button
-              className="catalog-prev grid size-12 place-items-center rounded-full border border-white/20 text-ivory focus-visible:outline-2 focus-visible:outline-gold"
+              className="catalog-prev grid size-12 place-items-center rounded-full border border-white/12 text-ivory transition hover:border-gold/50 hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
               aria-label="Produto anterior"
+              onClick={() => moveCatalog(-1)}
             >
-              <ArrowLeft size={20} aria-hidden="true" />
+              <ArrowLeft size={20} />
             </button>
             <button
-              className="catalog-next grid size-12 place-items-center rounded-full border border-white/20 text-ivory focus-visible:outline-2 focus-visible:outline-gold"
+              className="catalog-next grid size-12 place-items-center rounded-full border border-white/12 text-ivory transition hover:border-gold/50 hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
               aria-label="Próximo produto"
+              onClick={() => moveCatalog(1)}
             >
-              <ArrowRight size={20} aria-hidden="true" />
+              <ArrowRight size={20} />
             </button>
           </div>
         </div>
-      )}
-      <div className={integrated ? "pt-2" : "mt-10 lg:mt-14"}>
-        <Swiper
-          key={enhanced ? "desktop" : "mobile"}
-          modules={
-            enhanced
-              ? [EffectCoverflow, Pagination, Navigation]
-              : [Pagination, Navigation]
-          }
-          effect={enhanced ? "coverflow" : "slide"}
-          speed={enhanced ? 350 : 180}
-          centeredSlides
-          grabCursor
-          loop={enhanced}
-          slidesPerView={1.12}
-          spaceBetween={16}
-          coverflowEffect={{
-            rotate: 0,
-            stretch: 0,
-            depth: 120,
-            modifier: 1.35,
-            slideShadows: false,
-          }}
-          pagination={{ clickable: true }}
-          navigation={{ prevEl: ".catalog-prev", nextEl: ".catalog-next" }}
-          breakpoints={{
-            640: { slidesPerView: 1.55, spaceBetween: 22 },
-            900: { slidesPerView: 2.15, spaceBetween: 28 },
-            1280: { slidesPerView: 2.75, spaceBetween: 34 },
-          }}
-          className="catalog-swiper !overflow-visible !pb-14"
-        >
+      </div>
+      <div
+        ref={viewportRef}
+        className={`${styles.collectionViewport} mt-10 lg:mt-14`}
+        data-collection-viewport
+        data-mobile-card-group
+        role="region"
+        aria-label="Modelos de sofá em destaque"
+      >
+        <div className={styles.collectionTrack} data-collection-track>
           {products.map((product) => (
-            <SwiperSlide key={product.name} className="!h-auto">
-              <motion.article
-                whileHover={enhanced ? { y: -6 } : undefined}
-                transition={{ duration: 0.25 }}
-                className="h-full overflow-hidden rounded-[1.5rem] border border-white/9 bg-card shadow-2xl shadow-black/30"
-              >
-                <div className="relative aspect-[11/10] overflow-hidden bg-card">
-                  <img
-                    src={product.image}
-                    srcSet={product.srcSet}
-                    sizes="(max-width: 639px) calc(100vw - 56px), (max-width: 899px) 65vw, (max-width: 1279px) 47vw, 37vw"
-                    width="1100"
-                    height="1000"
-                    loading="lazy"
-                    decoding="async"
-                    alt={product.alt}
-                    style={{ objectPosition: product.objectPosition }}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <div className="p-5 sm:p-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-sm font-semibold uppercase tracking-[.12em] text-gold">
-                        {product.size}
-                      </p>
-                      <h3 className="mt-2 font-display text-3xl font-semibold text-ivory">
-                        {product.name}
-                      </h3>
-                    </div>
-                  </div>
-                  <div className="mt-7 flex items-center justify-between gap-3 border-t border-white/8 pt-5">
-                    <p className="font-semibold text-ivory">{product.price}</p>
-                    <WhatsAppLink
-                      message={`Olá! Quero saber mais sobre o ${product.name} de ${product.size}, anunciado por ${product.price}.`}
-                      aria-label={`Consultar ${product.name} no WhatsApp`}
-                      className="grid size-11 shrink-0 place-items-center rounded-full bg-gold text-ink transition hover:scale-105 hover:bg-gold-light focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
-                    >
-                      <MessageCircle size={19} aria-hidden="true" />
-                    </WhatsAppLink>
+            <motion.article
+              key={product.name}
+              data-collection-card
+              data-mobile-motion-card
+              whileHover={enhanced ? { y: -6 } : undefined}
+              whileTap={enhanced ? undefined : { scale: 0.99 }}
+              transition={{ duration: 0.22 }}
+              className={`${styles.collectionCard} overflow-hidden rounded-[1.5rem] border border-white/9 bg-card shadow-2xl shadow-black/30`}
+            >
+              <div className="relative aspect-[11/10] overflow-hidden bg-card">
+                <img
+                  src={product.image}
+                  srcSet={product.srcSet}
+                  sizes="(max-width: 639px) calc(100vw - 56px), (max-width: 899px) 65vw, (max-width: 1279px) 47vw, 37vw"
+                  width="1100"
+                  height="1000"
+                  loading="lazy"
+                  decoding="async"
+                  alt={product.alt}
+                  style={{ objectPosition: product.objectPosition }}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="p-5 sm:p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[.12em] text-gold">
+                      {product.size}
+                    </p>
+                    <h3 className="mt-2 font-display text-3xl font-semibold text-ivory">
+                      {product.name}
+                    </h3>
                   </div>
                 </div>
-              </motion.article>
-            </SwiperSlide>
+                <div className="mt-7 flex items-center justify-between gap-3 border-t border-white/8 pt-5">
+                  <p className="font-semibold text-ivory">{product.price}</p>
+                  <WhatsAppLink
+                    message={`Olá! Quero saber mais sobre o ${product.name} de ${product.size}, anunciado por ${product.price}.`}
+                    aria-label={`Consultar ${product.name} no WhatsApp`}
+                    className="grid size-11 shrink-0 place-items-center rounded-full bg-gold text-ink transition hover:scale-105 hover:bg-gold-light focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
+                  >
+                    <MessageCircle size={19} aria-hidden="true" />
+                  </WhatsAppLink>
+                </div>
+              </div>
+            </motion.article>
           ))}
-        </Swiper>
+        </div>
       </div>
       <p className="shell mt-2 text-center text-xs leading-5 text-muted/80">
         Consulte disponibilidade, opções de tecido e condições de pagamento pelo
@@ -178,17 +122,19 @@ export function Catalog({ integrated = false }: { integrated?: boolean }) {
       </p>
       <div className="shell mt-8 text-center sm:mt-10">
         <h3 className="font-display text-3xl font-semibold leading-tight text-ivory sm:text-4xl">
-          O próximo passo pode ser sentir de perto.
+          Gostou? Tem mais no nosso catálogo.
         </h3>
         <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-muted sm:text-base">
-          Veja a loja em Taubaté e imagine cada modelo fazendo parte da sua
+          Explore o catálogo completo e encontre o sofá que combina com a sua
           casa.
         </p>
         <a
-          href="#localizacao"
-          className="mx-auto mt-6 inline-flex min-h-12 items-center justify-center gap-3 rounded-full bg-gold px-6 py-4 text-sm font-bold text-ink transition-colors hover:bg-gold-light focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
+          href={FULL_CATALOG_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mx-auto mt-6 flex min-h-12 w-full max-w-sm items-center justify-center gap-3 rounded-full bg-gold px-5 py-4 text-sm font-bold text-ink transition-colors hover:bg-gold-light focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold sm:w-fit sm:max-w-none sm:px-8 sm:text-base"
         >
-          Conheça a loja{" "}
+          Ver catálogo completo{" "}
           <ArrowRight size={20} className="shrink-0" aria-hidden="true" />
         </a>
       </div>

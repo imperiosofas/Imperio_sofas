@@ -1,32 +1,60 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { motion, useMotionValue, useSpring } from "framer-motion";
 import { MessageCircle } from "lucide-react";
 import { WhatsAppLink } from "../components/WhatsAppLink";
+import { useEnhancedMotion } from "../lib/useEnhancedMotion";
+import styles from "./floating-contact.module.css";
 
 export function FloatingContact() {
-  const [visible, setVisible] = useState(false);
+  const enhanced = useEnhancedMotion();
+  const rawX = useMotionValue(0);
+  const rawY = useMotionValue(0);
+  const x = useSpring(rawX, { stiffness: 260, damping: 24, mass: 0.35 });
+  const y = useSpring(rawY, { stiffness: 260, damping: 24, mass: 0.35 });
 
-  useEffect(() => {
-    const story = document.getElementById("historia");
-    if (!story) return;
-
-    const observer = new IntersectionObserver(([entry]) => {
-      setVisible(!entry.isIntersecting && entry.boundingClientRect.bottom <= 0);
-    });
-    observer.observe(story);
-    return () => observer.disconnect();
-  }, []);
-
-  if (!visible) return null;
+  const resetPosition = () => {
+    rawX.set(0);
+    rawY.set(0);
+  };
 
   return (
-    <WhatsAppLink
-      message="Olá! Vim pelo site da Império Sofás e quero conhecer os modelos disponíveis."
-      aria-label="Falar com a Império Sofás pelo WhatsApp"
-      className="fixed bottom-7 right-7 z-50 hidden size-12 place-items-center rounded-full border border-gold/65 bg-ink text-gold shadow-[0_10px_28px_rgba(0,0,0,.3)] transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold xl:grid"
+    <motion.div
+      className="landing-contact fixed z-50"
+      style={{ x, y }}
+      onPointerMove={(event) => {
+        if (!enhanced || event.pointerType !== "mouse") return;
+        const bounds = event.currentTarget.getBoundingClientRect();
+        rawX.set(
+          Math.max(
+            -5,
+            Math.min(
+              5,
+              (event.clientX - bounds.left - bounds.width / 2) * 0.16,
+            ),
+          ),
+        );
+        rawY.set(
+          Math.max(
+            -5,
+            Math.min(
+              5,
+              (event.clientY - bounds.top - bounds.height / 2) * 0.16,
+            ),
+          ),
+        );
+      }}
+      onPointerLeave={resetPosition}
     >
-      <MessageCircle aria-hidden="true" size={23} strokeWidth={2} />
-    </WhatsAppLink>
+      <motion.div whileTap={{ scale: 0.94 }}>
+        <WhatsAppLink
+          message="Olá! Vim pelo site da Império Sofás e quero conhecer os modelos disponíveis."
+          aria-label="Falar com a Império Sofás pelo WhatsApp"
+          className={`${styles.contactLink} grid size-14 place-items-center rounded-full bg-[#25D366] text-white shadow-[0_12px_40px_rgba(37,211,102,.35)] transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold`}
+        >
+          <MessageCircle aria-hidden="true" size={27} strokeWidth={2.2} />
+        </WhatsAppLink>
+      </motion.div>
+    </motion.div>
   );
 }

@@ -15,8 +15,6 @@ export default async function PasswordResetPage() {
   const supabase = await createSupabaseServerClient();
   if (!supabase) redirect("/conta");
   const access = await getAccountAccess(supabase);
-  if (access.status === "mfa_required")
-    redirect("/conta?mfa=required&next=%2Fconta%2Fredefinir-senha");
   if (access.status !== "authenticated") redirect("/conta");
   return <PasswordReset />;
 }

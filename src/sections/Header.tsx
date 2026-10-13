@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { ShoppingBag } from "lucide-react";
 import { Brand } from "../components/Brand";
 import { cn } from "../lib/utils";
 
@@ -14,6 +13,11 @@ const navigationItems = [
     href: "/loja",
     isActive: (path: string) =>
       path.startsWith("/loja") || path.startsWith("/produto/"),
+  },
+  {
+    label: "Carrinho",
+    href: "/carrinho",
+    isActive: (path: string) => path.startsWith("/carrinho"),
   },
   {
     label: "Conta",
@@ -51,11 +55,13 @@ export function Header() {
     };
   }, []);
 
+  if (pathname.startsWith("/admin")) return null;
+
   return (
     <header
       className={cn(
         "site-header inset-x-0 top-0 z-50 border-b transition-colors duration-200",
-        isHome ? "fixed" : "sticky",
+        isHome ? "fixed site-header--home" : "sticky",
         isAccountRoute && "site-header--account",
         !isHome || scrolled
           ? "border-white/8 bg-ink shadow-lg shadow-black/10"
@@ -86,19 +92,6 @@ export function Header() {
             );
           })}
         </nav>
-
-        <Link
-          href="/carrinho"
-          aria-label="Sacola; compras online em preparação"
-          title="Sacola — compras online em preparação"
-          className="inline-flex size-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-ivory transition-colors hover:border-gold/50 hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold sm:w-auto sm:gap-2 sm:px-3"
-        >
-          <ShoppingBag size={19} aria-hidden="true" />
-          <span className="sr-only sm:not-sr-only sm:text-sm">Sacola</span>
-          <span className="hidden text-[.62rem] uppercase tracking-[.12em] text-gold/80 lg:inline">
-            Em breve
-          </span>
-        </Link>
       </div>
     </header>
   );

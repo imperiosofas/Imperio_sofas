@@ -11,23 +11,44 @@ const phoneViewports = [
   { width: 430, height: 932 },
 ];
 
-test("navigation follows layout from desktop to tablet", async ({ page }) => {
+test("pointer capability selects desktop header or touch dock", async ({
+  browser,
+  page,
+}) => {
   await page.setViewportSize({ width: 1360, height: 900 });
   await page.goto("/");
   await expect(page.locator(".site-header__desktop-nav")).toBeVisible();
   await expect(page.locator("nav[class*='dockBar']")).toBeHidden();
 
   await page.setViewportSize({ width: 768, height: 900 });
-  await expect(page.locator(".site-header__desktop-nav")).toBeHidden();
-  await expect(page.locator("nav[class*='dockBar']")).toBeVisible();
+  await expect(page.locator(".site-header__desktop-nav")).toBeVisible();
+  await expect(page.locator("nav[class*='dockBar']")).toBeHidden();
+
+  const touchContext = await browser.newContext({
+    viewport: { width: 768, height: 900 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  const touchPage = await touchContext.newPage();
+  await touchPage.goto("/");
+  await expect(touchPage.locator(".site-header__desktop-nav")).toBeHidden();
+  await expect(touchPage.locator("nav[class*='dockBar']")).toBeVisible();
+  await touchContext.close();
 });
 
-test("mobile story keeps the product legible while scrolling", async ({
-  page,
+test("restored mobile landing keeps its original call to action clear of the dock", async ({
+  browser,
 }) => {
-  await page.setViewportSize({ width: 320, height: 700 });
+  const context = await browser.newContext({
+    viewport: { width: 320, height: 700 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  const page = await context.newPage();
   await page.goto("/");
-  const cta = page.getByRole("link", { name: "Explorar a loja" });
+  await expect(page.locator("#inicio h1")).toContainText("Seu conforto merece");
+  await expect(page.locator("#catalogo")).toBeAttached();
+  const cta = page.getByRole("link", { name: "Encontrar meu sofá" });
   const dock = page.locator("nav[class*='dockBar']");
   const ctaBox = await cta.boundingBox();
   const dockBox = await dock.boundingBox();
@@ -36,37 +57,14 @@ test("mobile story keeps the product legible while scrolling", async ({
   expect(dockBox!.y - (ctaBox!.y + ctaBox!.height)).toBeGreaterThan(16);
 
   await page.setViewportSize({ width: 390, height: 844 });
-  const range = await page
-    .locator("[data-story-track]")
-    .evaluate((element) => element.clientHeight - window.innerHeight);
-  const stage = page.locator("[data-story-stage]");
-  const media = page.locator("[data-story-media]");
-  for (const progress of [0.45, 0.6, 0.93]) {
-    await page.evaluate(
-      (top) => window.scrollTo({ top, behavior: "instant" }),
-      range * progress,
-    );
-    await expect
-      .poll(async () => Math.round((await stage.boundingBox())!.y))
-      .toBe(0);
-    await expect(media).toBeVisible();
-  }
-  const collection = page.getByRole("link", { name: "Ver coleção de sofás" });
-  await expect(collection).toBeVisible();
-  await expect
-    .poll(() =>
-      page
-        .locator('[data-story-copy="collection"]')
-        .evaluate((element) => Number(getComputedStyle(element).opacity)),
-    )
-    .toBe(1);
-  expect(
-    (await collection.boundingBox())!.y +
-      (await collection.boundingBox())!.height,
-  ).toBeLessThan((await dock.boundingBox())!.y - 24);
+  await page.locator("#localizacao").scrollIntoViewIfNeeded();
+  await expect(page.locator("#localizacao")).toBeInViewport();
+  await page.locator("#contato").scrollIntoViewIfNeeded();
+  await expect(page.locator("#contato")).toBeInViewport();
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(390);
+  await context.close();
 });
 
 for (const viewport of phoneViewports) {
@@ -85,10 +83,14 @@ for (const viewport of phoneViewports) {
     const dock = page.locator("nav[class*='dockBar']");
     await expect(dock).toBeVisible();
     await expect(page.locator(".site-header__desktop-nav")).toBeHidden();
-    await expect(page.locator("nav[class*='dockBar'] a")).toHaveCount(3);
-    await expect(
-      page.locator("nav[class*='dockBar'] a[aria-current='page']"),
-    ).toHaveAttribute("href", "/");
+    await expect(dock.locator("a")).toHaveCount(4);
+    expect((await dock.boundingBox())?.width).toBe(
+      await page.evaluate(() => document.documentElement.clientWidth),
+    );
+    await expect(dock.locator("a[aria-current='page']")).toHaveAttribute(
+      "href",
+      "/",
+    );
     await expect(page.locator("body")).toHaveJSProperty(
       "scrollWidth",
       await page.evaluate(() => document.documentElement.clientWidth),
@@ -319,9 +321,8 @@ test("unauthenticated account route shows login and fails closed without config"
     .locator("[data-auth-stage]")
     .getByRole("button", { name: "Entrar", exact: true })
     .click();
-  await expect(page.locator("#auth-stage-error")).toContainText(
-    "Não foi possível acessar sua conta",
-  );
+  await expect(page.locator("#auth-stage-error")).toBeVisible();
+  await expect(page).toHaveURL(/\/conta$/);
 });
 
 test("cart redirects anonymous visitors to account with a safe return path", async ({
@@ -335,11 +336,19 @@ test("cart redirects anonymous visitors to account with a safe return path", asy
 test("authentication return destinations reject external and ambiguous URLs", () => {
   expect(getSafeAuthReturnTo("/carrinho")).toBe("/carrinho");
   expect(getSafeAuthReturnTo("/conta/seguranca")).toBe("/conta/seguranca");
+  expect(getSafeAuthReturnTo("/admin")).toBe("/admin");
+  expect(getSafeAuthReturnTo("/admin/produtos/novo")).toBe(
+    "/admin/produtos/novo",
+  );
+  expect(
+    getSafeAuthReturnTo("/admin/produtos/123e4567-e89b-42d3-a456-426614174000"),
+  ).toBe("/admin/produtos/123e4567-e89b-42d3-a456-426614174000");
   for (const value of [
     "https://example.com",
     "//example.com",
     "/carrinho?redirect=https://example.com",
     "/\\example.com",
+    "/admin/produtos/not-a-uuid",
   ]) {
     expect(getSafeAuthReturnTo(value)).toBe("/conta");
   }

@@ -2,9 +2,17 @@
 
 ## Status e escopo
 
-Este documento registra a arquitetura incremental proposta para o e-commerce. O baseline histórico do repositório é uma landing page estática em Vite, React e TypeScript. O app Next.js 16 já serve a landing page e as rotas do catálogo. Migration, seed e adapter Supabase estão implementados; a execução local do banco ainda depende de Docker, que não está instalado neste ambiente.
+Este documento registra a arquitetura incremental proposta para o e-commerce. O baseline histórico do repositório é uma landing page estática em Vite, React e TypeScript. O app Next.js 16 serve a landing page, catálogo, autenticação e o primeiro painel de catálogo. O schema e as migrations Supabase estão aplicados ao projeto remoto; o banco local ainda depende de Docker, que não está instalado neste ambiente.
 
-Não há credenciais externas homologadas neste momento. Portanto, este documento não considera Mercado Pago, Bling, Supabase, Resend ou domínio de produção como integrações ativas.
+Supabase Auth e persistência do catálogo estão conectados ao projeto remoto, mas ainda não homologados ponta a ponta. Mercado Pago, Bling, Resend para Auth e domínio de produção não são considerados integrações comerciais homologadas.
+
+### Estado verificado em 02/10/2026
+
+- Projeto Supabase `imperiosofas` ativo; nove migrations locais coincidem com o histórico remoto.
+- Uma categoria ativa, nenhuma linha em produto/variante/estoque/mídia e uma membership administrativa. `catalog-images` é privado.
+- `/loja`, `/loja/[categoria]` e `/produto/[slug]` leem apenas a projeção publicada. `/carrinho` exige sessão no servidor, mas continua informativo e sem persistência.
+- Estado atualizado em 02/10/2026: MFA/AAL2 administrativo foi temporariamente desativado por decisão do proprietário. Acesso continua limitado a sessão autenticada + membership em `public.catalog_admins`, no guard e no RLS; as migrations `20261002175919_disable_mandatory_admin_mfa` e `20261002181355_disable_email_mfa_rpc` retiram os gates/RPCs de MFA por e-mail sem apagar factors, memberships ou dados de auditoria. A Edge Function de código por e-mail responde `410 email_mfa_disabled`; a gestão TOTP continua opcional.
+- Fotos originais, nomes, larguras e parcelas textuais estão no projeto, mas não confirmam preço final por variante, SKU, estoque inicial nem condições de parcelamento. Nenhum produto foi publicado nem houve dados comerciais inventados.
 
 ## Baseline atual
 
@@ -18,9 +26,9 @@ O repositório contém:
 - Vite, React, TypeScript, Tailwind, Framer Motion, Lenis, Swiper e Lucide;
 - scripts de otimização de imagens.
 
-No baseline original não havia rotas comerciais, banco, migrations, autenticação, carrinho, pedidos, estoque operacional, pagamentos, webhooks, jobs, painel administrativo, testes automatizados ou CI. O estado atual acrescenta rotas de catálogo read-only e o primeiro slice de persistência versionado. Ainda não há autenticação, carrinho, pedidos, reserva operacional, pagamentos, webhooks, jobs ou painel administrativo funcionais.
+No baseline original não havia rotas comerciais, banco, migrations, autenticação, carrinho, pedidos, estoque operacional, pagamentos, webhooks, jobs, painel administrativo, testes automatizados ou CI. O estado atual já inclui rotas de catálogo, autenticação de clientes e o primeiro slice operacional do admin de produtos; não há carrinho persistente, pedidos, reserva operacional, pagamentos, webhooks ou jobs.
 
-O app contém `src/app`, Next.js 16 App Router, validação de ambiente, rotas `/loja` e `/produto/[slug]`, contratos de catálogo, adapters local/Supabase e arquivos SQL em `supabase/`. O seed contém cinco modelos em estado de rascunho, sem preço ou estoque vendável.
+O app contém `src/app`, Next.js 16 App Router, validação de ambiente, rotas `/loja` e `/produto/[slug]`, contratos de catálogo, adapters local/Supabase e arquivos SQL em `supabase/`. Há cinco modelos e fotos em dados de apresentação, mas eles não foram inseridos no Supabase; o catálogo remoto segue sem produtos ou estoque vendável.
 
 O array de produtos é conteúdo de apresentação e não deve ser promovido diretamente a fonte de verdade de preço, SKU ou estoque.
 

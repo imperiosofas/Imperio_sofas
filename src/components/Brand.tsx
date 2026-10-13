@@ -1,5 +1,6 @@
 import { cn } from "../lib/utils";
 import Link from "next/link";
+import Image from "next/image";
 
 export function Brand({ className }: { className?: string }) {
   return (
@@ -11,11 +12,11 @@ export function Brand({ className }: { className?: string }) {
       )}
       aria-label="Império Sofás — voltar ao início"
     >
-      <img
+      <Image
         src="/imperio-sofas-logo-128.webp"
         alt="Logo oficial da Império Sofás"
-        width="128"
-        height="128"
+        width={128}
+        height={128}
         className="size-12 shrink-0 [clip-path:circle(46%)] sm:size-14"
       />
       <span className="leading-none">

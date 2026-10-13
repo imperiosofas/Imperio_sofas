@@ -54,7 +54,7 @@ O pagamento aprovado não implica emissão automática incondicional de NF-e. A 
 
 **Status:** decidido para a arquitetura alvo.
 
-Admin não será criado por cadastro público. O acesso deve exigir role provisionada operacionalmente, e-mail verificado e TOTP/AAL2 para operações sensíveis. Não haverá bypass por e-mail ou reconhecimento de dispositivo no MVP.
+Admin não será criado por cadastro público. O acesso exige sessão autenticada e membership provisionada operacionalmente; MFA/AAL2 fica temporariamente desativado por decisão explícita do proprietário e só poderá ser reativado por novo pedido. Código MFA por e-mail permanece desligado; gestão TOTP é opcional e não bloqueia o login.
 
 ## D-010 — Modos de integração
 

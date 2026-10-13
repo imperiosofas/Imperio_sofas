@@ -4,6 +4,8 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type {
   CatalogCategory,
+  CatalogListing,
+  CatalogListingFilters,
   CatalogProduct,
   CatalogRepository,
 } from "./types";
@@ -20,7 +22,7 @@ const productSchema = z.object({
   name: z.string().min(1),
   category_slug: z.string().min(1),
   description: z.string(),
-  width_mm: z.number().int().positive(),
+  width_mm: z.number().int().positive().nullable(),
   price_cents: z.number().int().positive(),
   sellable_units: z.number().int().positive(),
   media: z.array(
@@ -32,6 +34,22 @@ const productSchema = z.object({
 });
 
 type ProductRow = z.infer<typeof productSchema>;
+
+const listingProductSchema = productSchema.extend({
+  widths_mm: z.array(z.number().int().positive()),
+  price_count: z.number().int().positive(),
+  max_price_cents: z.number().int().positive(),
+});
+const listingSchema = z.object({
+  total: z.number().int().nonnegative(),
+  widths: z.array(
+    z.object({
+      width_mm: z.number().int().positive(),
+      count: z.number().int().nonnegative(),
+    }),
+  ),
+  products: z.array(listingProductSchema),
+});
 
 let supabaseClient: SupabaseClient | undefined;
 
@@ -80,6 +98,53 @@ async function toCatalogProduct(row: ProductRow): Promise<CatalogProduct> {
   };
 }
 
+async function toListing(
+  data: z.infer<typeof listingSchema>,
+): Promise<CatalogListing> {
+  const paths = [
+    ...new Set(
+      data.products.flatMap((product) =>
+        product.media.map((item) => item.storage_path),
+      ),
+    ),
+  ];
+  const signed = new Map<string, string>();
+  if (paths.length) {
+    const { data: urls, error } = await getSupabaseClient()
+      .storage.from("catalog-images")
+      .createSignedUrls(paths, 15 * 60);
+    if (error || !urls || urls.some((item) => item.error || !item.signedUrl)) {
+      throw new Error("Não foi possível carregar as imagens dos produtos.");
+    }
+    urls.forEach((item, index) => signed.set(paths[index], item.signedUrl!));
+  }
+  return {
+    total: data.total,
+    widths: data.widths.map((item) => ({
+      widthMm: item.width_mm,
+      count: item.count,
+    })),
+    products: data.products.map((row) => ({
+      id: row.id,
+      slug: row.slug,
+      name: row.name,
+      categorySlug: row.category_slug,
+      description: row.description,
+      widthMm: row.width_mm,
+      widthsMm: row.widths_mm,
+      priceCount: row.price_count,
+      maxPriceCents: row.max_price_cents,
+      status: "active" as const,
+      priceCents: row.price_cents,
+      sellableUnits: row.sellable_units,
+      media: row.media.map((item) => ({
+        src: signed.get(item.storage_path)!,
+        alt: item.alt,
+      })),
+    })),
+  };
+}
+
 export const supabaseCatalogRepository: CatalogRepository = {
   async listCategories(): Promise<CatalogCategory[]> {
     const { data, error } = await getSupabaseClient().rpc(
@@ -101,6 +166,24 @@ export const supabaseCatalogRepository: CatalogRepository = {
     return Promise.all(
       z.array(productSchema).parse(data).map(toCatalogProduct),
     );
+  },
+
+  async listListing(filters: CatalogListingFilters): Promise<CatalogListing> {
+    const { data, error } = await getSupabaseClient().rpc(
+      "get_catalog_listing",
+      {
+        p_category_slug: filters.categorySlug ?? null,
+        p_query: filters.query ?? null,
+        p_min_price_cents: filters.minPriceCents ?? null,
+        p_max_price_cents: filters.maxPriceCents ?? null,
+        p_widths_mm: filters.widthsMm.length ? filters.widthsMm : null,
+        p_sort: filters.sort,
+        p_page: filters.page,
+        p_page_size: 12,
+      },
+    );
+    if (error) throw new Error("Não foi possível carregar a loja.");
+    return toListing(listingSchema.parse(data));
   },
 
   async getProductBySlug(slug: string): Promise<CatalogProduct | null> {

@@ -194,6 +194,7 @@
 .cardHeading {
   min-height: 6.25rem;
   margin: 0 0 1.15rem;
+  background-color: transparent;
   text-align: center;
 }
 

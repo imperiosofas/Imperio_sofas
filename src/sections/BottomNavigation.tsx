@@ -10,10 +10,17 @@ import {
   useVelocity,
   type MotionValue,
 } from "framer-motion";
-import { House, Store, UserRound } from "lucide-react";
+import { House, ShoppingBag, Store, UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useLayoutEffect, useRef } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import { createSupabaseBrowserClient } from "../lib/supabase/client";
 import styles from "./bottom-navigation.module.css";
 
 const BAR_HEIGHT = 70;
@@ -31,6 +38,12 @@ const destinations = [
     Icon: Store,
     isActive: (path: string) =>
       path.startsWith("/loja") || path.startsWith("/produto/"),
+  },
+  {
+    label: "Carrinho",
+    href: "/carrinho",
+    Icon: ShoppingBag,
+    isActive: (path: string) => path.startsWith("/carrinho"),
   },
   {
     label: "Conta",
@@ -76,11 +89,13 @@ function DockTab({
   active,
   travel,
   onNavigate,
+  cartCount,
 }: {
   index: number;
   active: boolean;
   travel: DockMotion;
   onNavigate: () => void;
+  cartCount: number;
 }) {
   const { label, href, Icon } = destinations[index];
   const proximity = useTransform(() => {
@@ -98,7 +113,11 @@ function DockTab({
   return (
     <Link
       href={href}
-      aria-label={label}
+      aria-label={
+        label === "Carrinho" && cartCount > 0
+          ? `Carrinho, ${cartCount} itens`
+          : label
+      }
       aria-current={active ? "page" : undefined}
       className={styles.dockLink}
       onNavigate={onNavigate}
@@ -110,6 +129,11 @@ function DockTab({
       >
         <Icon size={21} strokeWidth={1.8} />
       </motion.span>
+      {label === "Carrinho" && cartCount > 0 && (
+        <span className={styles.cartBadge} aria-hidden="true">
+          {cartCount > 99 ? "99+" : cartCount}
+        </span>
+      )}
       <motion.span
         className={styles.dockLabel}
         style={{ opacity: proximity, y: labelY }}
@@ -139,6 +163,48 @@ function CarriedIcon({
 
 export function BottomNavigation() {
   const pathname = usePathname();
+  const [cartCount, setCartCount] = useState(0);
+  useEffect(() => {
+    const client = createSupabaseBrowserClient();
+    if (!client) return;
+    let alive = true;
+    const refresh = async () => {
+      try {
+        const response = await fetch("/api/cart/summary", {
+          cache: "no-store",
+          credentials: "same-origin",
+        });
+        const summary = (await response.json()) as {
+          authenticated?: boolean;
+          count?: number | null;
+        };
+        if (alive) {
+          setCartCount(
+            response.ok &&
+              summary.authenticated &&
+              typeof summary.count === "number"
+              ? summary.count
+              : 0,
+          );
+        }
+      } catch {
+        if (alive) setCartCount(0);
+      }
+    };
+    void refresh();
+    window.addEventListener("cart:changed", refresh);
+    const { data: listener } = client.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT" && alive) setCartCount(0);
+      setTimeout(() => {
+        void refresh();
+      }, 0);
+    });
+    return () => {
+      alive = false;
+      window.removeEventListener("cart:changed", refresh);
+      listener.subscription.unsubscribe();
+    };
+  }, [pathname]);
   const activeIndex = destinations.findIndex(({ isActive }) =>
     isActive(pathname),
   );
@@ -240,6 +306,8 @@ export function BottomNavigation() {
   }, [pathname, activeIndex, moveTo]);
   useLayoutEffect(() => () => movement.current?.stop(), []);
 
+  if (pathname.startsWith("/admin")) return null;
+
   return (
     <div className={styles.dockRoot}>
       <nav
@@ -271,6 +339,7 @@ export function BottomNavigation() {
             active={index === activeIndex}
             travel={{ position, destination, departure }}
             onNavigate={() => moveTo(index)}
+            cartCount={cartCount}
           />
         ))}
       </nav>

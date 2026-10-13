@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useMemo, useRef, useState, type FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowLeft, ArrowRight, MailCheck, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight, MailCheck } from "lucide-react";
 import { createSupabaseBrowserClient } from "../../lib/supabase/client";
-import { MfaSuccessSequence } from "./MfaSuccessSequence";
-import { OtpCodeInput } from "./OtpCodeInput";
 import {
   AuthAccountStage,
   type AccountMode,
@@ -18,7 +16,7 @@ import {
 import { AuthField } from "./AuthField";
 import styles from "./auth-experience.module.css";
 
-type View = AccountMode | "recover" | "mfa" | "sent";
+type View = AccountMode | "recover" | "sent";
 
 function friendlyInitialError(value: string | null) {
   if (value === "confirmacao") {
@@ -38,8 +36,6 @@ function getTitle(view: View) {
       return "Crie sua conta.";
     case "recover":
       return "Vamos recuperar seu acesso.";
-    case "mfa":
-      return "Confirme que é você.";
     case "sent":
       return "Confira sua caixa de entrada.";
   }
@@ -53,8 +49,6 @@ function getSubtitle(view: View) {
       return "Guarde suas escolhas e tenha uma experiência completa com a Império Sofás.";
     case "recover":
       return "Informe seu e-mail para receber as instruções, se houver uma conta vinculada.";
-    case "mfa":
-      return "Digite o código atual do app autenticador vinculado à sua conta.";
     case "sent":
       return "Enviamos uma mensagem segura para o endereço informado, quando aplicável.";
   }
@@ -88,122 +82,34 @@ export function AuthExperience({
   isConfigured,
   nextPath,
   initialError,
-  initialMfaRequired = false,
 }: {
   isConfigured: boolean;
   nextPath: string;
   initialError: string | null;
-  initialMfaRequired?: boolean;
 }) {
   const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const reducedMotion = Boolean(useReducedMotion());
   const emailInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
-  const codeInputRef = useRef<HTMLInputElement>(null);
   const submitLockRef = useRef(false);
-  const successRedirectRef = useRef(false);
-  const [view, setView] = useState<View>(initialMfaRequired ? "mfa" : "login");
+  const [view, setView] = useState<View>("login");
   const [step, setStep] = useState<AuthStep>("email");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [code, setCode] = useState("");
-  const [factorId, setFactorId] = useState("");
-  const [challengeId, setChallengeId] = useState("");
   const [busy, setBusy] = useState(false);
   const [busyProvider, setBusyProvider] = useState<OAuthProvider | null>(null);
   const [error, setError] = useState<string | null>(() =>
     friendlyInitialError(initialError),
   );
   const [notice, setNotice] = useState<string | null>(null);
-  const [mfaVerified, setMfaVerified] = useState(false);
 
   const googleEnabled =
     isConfigured && process.env.NEXT_PUBLIC_AUTH_GOOGLE_ENABLED === "true";
   const appleEnabled =
     isConfigured && process.env.NEXT_PUBLIC_AUTH_APPLE_ENABLED === "true";
-
-  useEffect(() => {
-    if (view !== "mfa" || mfaVerified) return;
-    const focusDelay = initialMfaRequired ? 0 : reducedMotion ? 120 : 230;
-    const timeout = window.setTimeout(
-      () => codeInputRef.current?.focus({ preventScroll: true }),
-      focusDelay,
-    );
-    return () => window.clearTimeout(timeout);
-  }, [initialMfaRequired, mfaVerified, reducedMotion, view]);
-
-  useEffect(() => {
-    const authClient = supabase;
-    if (!initialMfaRequired || !authClient) return;
-    let active = true;
-
-    async function startPendingMfaChallenge(
-      client: NonNullable<typeof supabase>,
-    ) {
-      setBusy(true);
-      setError(null);
-      try {
-        const [assuranceResult, factorsResult] = await Promise.all([
-          client.auth.mfa.getAuthenticatorAssuranceLevel(),
-          client.auth.mfa.listFactors(),
-        ]);
-        if (
-          assuranceResult.error ||
-          factorsResult.error ||
-          !assuranceResult.data ||
-          !factorsResult.data
-        ) {
-          throw new Error(
-            "Não foi possível iniciar a verificação em duas etapas. Tente novamente.",
-          );
-        }
-
-        if (assuranceResult.data.currentLevel === "aal2") {
-          router.replace(nextPath);
-          router.refresh();
-          return;
-        }
-
-        const verifiedTotp = factorsResult.data.totp.find(
-          (factor) => factor.status === "verified",
-        );
-        if (!verifiedTotp) {
-          throw new Error(
-            "Esta sessão exige uma verificação adicional não disponível nesta tela. Saia e entre novamente ou fale com o atendimento.",
-          );
-        }
-
-        const { data: challenge, error: challengeError } =
-          await client.auth.mfa.challenge({ factorId: verifiedTotp.id });
-        if (challengeError || !challenge) {
-          throw new Error(
-            "Não foi possível iniciar a verificação em duas etapas. Tente novamente.",
-          );
-        }
-        if (!active) return;
-        setFactorId(verifiedTotp.id);
-        setChallengeId(challenge.id);
-      } catch (caught) {
-        if (active) {
-          setError(
-            caught instanceof Error
-              ? caught.message
-              : "Não foi possível iniciar a verificação em duas etapas. Tente novamente.",
-          );
-        }
-      } finally {
-        if (active) setBusy(false);
-      }
-    }
-
-    void startPendingMfaChallenge(authClient);
-    return () => {
-      active = false;
-    };
-  }, [initialMfaRequired, nextPath, router, supabase]);
 
   function changeView(next: View) {
     if (submitLockRef.current || busy) return;
@@ -302,51 +208,10 @@ export function AuthExperience({
           return;
         }
 
-        const [assuranceResult, factorsResult] = await Promise.all([
-          supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
-          supabase.auth.mfa.listFactors(),
-        ]);
-        if (
-          assuranceResult.error ||
-          factorsResult.error ||
-          !assuranceResult.data ||
-          !factorsResult.data
-        ) {
-          await supabase.auth.signOut();
-          throw new Error(
-            "Não foi possível confirmar a segurança da conta. Tente entrar novamente.",
-          );
-        }
-
-        const assurance = assuranceResult.data;
-        const verifiedTotp = factorsResult.data.totp.find(
-          (factor) => factor.status === "verified",
-        );
-        if (
-          assurance.nextLevel === "aal2" &&
-          assurance.currentLevel !== "aal2"
-        ) {
-          if (!verifiedTotp) {
-            await supabase.auth.signOut();
-            throw new Error(
-              "Esta conta exige um método de verificação ainda não compatível com este acesso. Fale com o atendimento.",
-            );
-          }
-          const { data: challenge, error: challengeError } =
-            await supabase.auth.mfa.challenge({ factorId: verifiedTotp.id });
-          if (challengeError || !challenge) {
-            throw new Error(
-              "Não foi possível iniciar a verificação em duas etapas. Tente entrar novamente.",
-            );
-          }
-          setFactorId(verifiedTotp.id);
-          setChallengeId(challenge.id);
-          setPassword("");
-          setView("mfa");
-          return;
-        }
-        router.replace(nextPath);
-        router.refresh();
+        setPassword("");
+        // Start a fresh server request with the cookie written by Supabase.
+        // This keeps server-gated routes and the client session in sync.
+        window.location.replace(nextPath);
         return;
       }
 
@@ -461,48 +326,6 @@ export function AuthExperience({
       setBusy(false);
       setBusyProvider(null);
     }
-  }
-
-  async function verifyCode(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (submitLockRef.current || busy) return;
-    setError(null);
-    if (!supabase || code.length !== 6) {
-      setError("Digite os seis números do app autenticador.");
-      return;
-    }
-    submitLockRef.current = true;
-    setBusy(true);
-    try {
-      const { error: verifyError } = await supabase.auth.mfa.verify({
-        factorId,
-        challengeId,
-        code,
-      });
-      if (verifyError) {
-        setError(
-          (verifyError.status ?? 0) >= 500
-            ? "Não foi possível verificar agora. Confira sua conexão e tente de novo."
-            : "Código inválido ou expirado. Confira o app autenticador e tente de novo.",
-        );
-        return;
-      }
-      setMfaVerified(true);
-    } catch {
-      setError(
-        "Não foi possível verificar agora. Confira sua conexão e tente de novo.",
-      );
-    } finally {
-      submitLockRef.current = false;
-      setBusy(false);
-    }
-  }
-
-  function finishMfaSuccess() {
-    if (successRedirectRef.current) return;
-    successRedirectRef.current = true;
-    router.replace(nextPath);
-    router.refresh();
   }
 
   const isAccountMode = view === "login" || view === "register";
@@ -751,96 +574,7 @@ export function AuthExperience({
                         entrar
                       </button>
                     </motion.div>
-                  ) : (
-                    <motion.div
-                      key="mfa"
-                      className={styles.statePanel}
-                      initial={
-                        reducedMotion ? { opacity: 0 } : { opacity: 0, y: 5 }
-                      }
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={
-                        reducedMotion ? { opacity: 0 } : { opacity: 0, y: -3 }
-                      }
-                      transition={{ duration: reducedMotion ? 0.1 : 0.18 }}
-                    >
-                      {mfaVerified ? (
-                        <MfaSuccessSequence
-                          code={code}
-                          onComplete={finishMfaSuccess}
-                        />
-                      ) : (
-                        <form
-                          className={styles.stateForm}
-                          onSubmit={verifyCode}
-                        >
-                          <span className={styles.stateIcon} aria-hidden="true">
-                            <ShieldCheck size={24} strokeWidth={1.7} />
-                          </span>
-                          <div className={styles.field}>
-                            <label className={styles.label} htmlFor="auth-code">
-                              Código do app autenticador
-                            </label>
-                            <OtpCodeInput
-                              id="auth-code"
-                              inputRef={codeInputRef}
-                              value={code}
-                              onChange={setCode}
-                              invalid={Boolean(error)}
-                              disabled={busy}
-                              describedBy={
-                                error ? "auth-mfa-error" : "auth-code-help"
-                              }
-                            />
-                            <p id="auth-code-help" className={styles.mfaHelper}>
-                              {busy
-                                ? "Confirmando seu código…"
-                                : "Digite ou cole os seis dígitos do app autenticador. Não é um código por SMS."}
-                            </p>
-                          </div>
-                          {error && (
-                            <p
-                              id="auth-mfa-error"
-                              className={styles.errorMessage}
-                              role="alert"
-                              aria-live="assertive"
-                            >
-                              {error}
-                            </p>
-                          )}
-                          <button
-                            className={styles.primaryButton}
-                            type="submit"
-                            disabled={busy || code.length !== 6}
-                          >
-                            <span>
-                              {busy ? "Verificando…" : "Verificar e continuar"}
-                            </span>
-                            {busy ? (
-                              <span
-                                className={styles.buttonSpinner}
-                                aria-hidden="true"
-                              />
-                            ) : (
-                              <ArrowRight size={19} aria-hidden="true" />
-                            )}
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.textButton}
-                            disabled={busy}
-                            onClick={() => {
-                              void supabase?.auth.signOut();
-                              changeView("login");
-                            }}
-                          >
-                            <ArrowLeft size={16} aria-hidden="true" /> Voltar ao
-                            login
-                          </button>
-                        </form>
-                      )}
-                    </motion.div>
-                  )}
+                  ) : null}
                 </AnimatePresence>
               </section>
             </div>

@@ -42,6 +42,9 @@ export const localCatalogRepository: CatalogRepository = {
   async listProducts() {
     return products;
   },
+  async listListing() {
+    return { products: [], total: 0, widths: [] };
+  },
   async getProductBySlug(slug) {
     return products.find((product) => product.slug === slug) ?? null;
   },

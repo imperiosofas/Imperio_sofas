@@ -1,7 +1,22 @@
 import type { Metadata, Viewport } from "next";
+import { Cormorant_Garamond, Inter } from "next/font/google";
 import "../index.css";
 import { Header } from "../sections/Header";
 import { BottomNavigation } from "../sections/BottomNavigation";
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const cormorantGaramond = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-cormorant-garamond",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
@@ -11,6 +26,7 @@ export const metadata: Metadata = {
   },
   description:
     "Descubra sofás para viver a casa do seu jeito e conte com atendimento próximo em Taubaté e no Vale do Paraíba.",
+  icons: { icon: "/favicon.png" },
   robots:
     process.env.APP_ENV === "production"
       ? undefined
@@ -28,7 +44,10 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pt-BR">
+    <html
+      lang="pt-BR"
+      className={`${inter.variable} ${cormorantGaramond.variable}`}
+    >
       <body>
         <Header />
         {children}

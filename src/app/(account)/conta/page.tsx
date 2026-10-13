@@ -6,6 +6,7 @@ import { isSupabaseAuthConfigured } from "../../../lib/supabase/config";
 import { getAccountAccess } from "../../../lib/supabase/account-access";
 import { getSafeAuthReturnTo } from "../../../lib/auth-return-to";
 import { redirect } from "next/navigation";
+import { getAccountSnapshot } from "../../../features/account/data";
 
 export const metadata: Metadata = {
   title: "Minha conta",
@@ -28,17 +29,10 @@ export default async function AccountPage({
     const access = await getAccountAccess(supabase);
     if (access.status === "authenticated" && nextPath !== "/conta")
       redirect(nextPath);
-    if (access.status === "authenticated")
-      return <AccountHome email={access.email} />;
-    if (access.status === "mfa_required")
-      return (
-        <AuthExperience
-          isConfigured={isSupabaseAuthConfigured()}
-          nextPath={nextPath}
-          initialError={null}
-          initialMfaRequired
-        />
-      );
+    if (access.status === "authenticated") {
+      const snapshot = await getAccountSnapshot(access.userId);
+      return <AccountHome email={access.email} snapshot={snapshot} />;
+    }
     if (access.status === "unavailable")
       return (
         <AuthExperience

@@ -2,6 +2,7 @@ import { getCatalogRepository } from "./repository";
 import type {
   CatalogCategory,
   CatalogProduct,
+  CatalogListingFilters,
   PublishedCatalogProduct,
 } from "./types";
 
@@ -24,6 +25,9 @@ export async function getPublishedProducts(
     .filter(
       (product) => !categorySlug || product.categorySlug === categorySlug,
     );
+}
+export async function getCatalogListing(filters: CatalogListingFilters) {
+  return getCatalogRepository().listListing(filters);
 }
 export async function getPublishedProductBySlug(
   slug: string,

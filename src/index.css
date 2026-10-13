@@ -3,6 +3,7 @@
 @theme {
   --color-ink: #070707;
   --color-ink-soft: #0d0d0d;
+  --color-navy: #00091b;
   --color-card: #111111;
   --color-ivory: #f4efe4;
   --color-muted: #a8a297;
@@ -20,6 +21,36 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.landing-fonts {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-cormorant-garamond), Georgia, serif;
+  font-family: var(--font-sans);
+}
+
+.site-header--home {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-cormorant-garamond), Georgia, serif;
+}
+
+.landing-contact {
+  bottom: calc(1.25rem + env(safe-area-inset-bottom));
+  right: 1.25rem;
+}
+
+@media (min-width: 1024px) {
+  .landing-contact {
+    bottom: 1.75rem;
+    right: 1.75rem;
+  }
+}
+
+@media (max-width: 1199px) and (hover: none) and (pointer: coarse) {
+  .landing-contact {
+    bottom: calc(94px + env(safe-area-inset-bottom));
+    right: 1.25rem;
+  }
 }
 
 html {
@@ -62,46 +93,21 @@ img {
   text-transform: uppercase;
 }
 
+.grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 220 220' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.12'/%3E%3C/svg%3E");
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+}
+
 .shadow-gold {
   box-shadow: 0 14px 40px rgba(215, 170, 66, 0.2);
-}
-
-.catalog-swiper .swiper-slide {
-  transform: scale(0.95);
-  transition: transform 0.35s ease;
-}
-
-.catalog-swiper .swiper-slide-active {
-  transform: scale(1);
-}
-
-.catalog-swiper .swiper-pagination-bullet {
-  width: 8px;
-  height: 8px;
-  background: #6f6a61;
-  opacity: 0.6;
-}
-
-.catalog-swiper .swiper-pagination-bullet-active {
-  width: 26px;
-  border-radius: 999px;
-  background: #d7aa42;
-  opacity: 1;
-}
-
-.catalog-swiper .swiper-pagination {
-  bottom: 4px !important;
 }
 
 @media (max-width: 1023px),
   (pointer: coarse),
   (prefers-reduced-motion: reduce) {
-  .catalog-swiper .swiper-slide {
-    opacity: 1;
-    transform: none;
-  }
-  .catalog-swiper article {
-    box-shadow: none;
+  .grain {
+    display: none;
   }
   header {
     background-color: #0d0d0d;
@@ -220,12 +226,6 @@ img {
   border-radius: 1.4rem;
   background: var(--color-ivory);
   box-shadow: 0 2rem 6rem rgb(0 0 0 / 38%);
-}
-
-.auth-visual-photo {
-  position: absolute;
-  z-index: 0;
-  inset: 0;
 }
 
 .auth-shutter {
@@ -566,91 +566,13 @@ img {
   order: 1;
   min-height: 9rem;
   overflow: hidden;
-  background: #332b21;
+  background:
+    radial-gradient(circle at 72% 22%, rgb(215 170 66 / 19%), transparent 36%),
+    linear-gradient(145deg, #17342c, #091b17 76%);
   color: var(--color-ivory);
 }
 
-.auth-mfa-success {
-  display: grid;
-  justify-items: center;
-  gap: 0.28rem;
-  padding: 0.2rem 0 0.8rem;
-  text-align: center;
-}
-
-.auth-otp-success-stage {
-  position: relative;
-  display: grid;
-  width: 8.25rem;
-  height: 8.25rem;
-  place-items: center;
-  margin-bottom: 0.55rem;
-}
-
-.auth-otp-success-ring {
-  position: absolute;
-  border: 1px solid rgb(164 122 39 / 28%);
-  border-radius: 50%;
-}
-
-.auth-otp-success-ring--outer {
-  inset: 0.35rem;
-}
-
-.auth-otp-success-ring--inner {
-  inset: 1.1rem;
-  border-color: rgb(164 122 39 / 16%);
-}
-
-.auth-otp-success-digit,
-.auth-otp-success-mark {
-  position: absolute;
-  display: grid;
-  width: 2rem;
-  height: 2rem;
-  place-items: center;
-  color: #73551d;
-  font-variant-numeric: tabular-nums;
-  font-weight: 750;
-}
-
-.auth-otp-success-mark {
-  width: 3.35rem;
-  height: 3.35rem;
-  border: 1px solid rgb(164 122 39 / 32%);
-  border-radius: 50%;
-  background: #f6edda;
-  color: #815f1e;
-}
-
-.auth-otp-success-title {
-  color: #29251c;
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  line-height: 1.1;
-}
-
-.auth-visual-image {
-  object-fit: cover;
-  object-position: center 56%;
-}
-
-.auth-visual-image--register {
-  object-position: center 52%;
-}
-
-.auth-visual-shade {
-  position: absolute;
-  z-index: 1;
-  inset: 0;
-  background:
-    linear-gradient(95deg, rgb(7 7 7 / 58%), rgb(7 7 7 / 8%) 84%),
-    linear-gradient(0deg, rgb(7 7 7 / 42%), transparent 76%);
-}
-
-.auth-visual-top,
-.auth-visual-footer,
-.auth-edition {
+.auth-visual-top {
   display: none;
 }
 
@@ -675,10 +597,6 @@ img {
 .auth-visual-title em {
   color: #e4bf63;
   font-weight: 500;
-}
-
-.auth-visual-description {
-  display: none;
 }
 
 .auth-back-link {
@@ -1044,10 +962,6 @@ img {
     padding: 3rem 2rem;
   }
 
-  .auth-mobile-brand {
-    display: none;
-  }
-
   .auth-card {
     display: grid;
     grid-template-areas: "form visual";
@@ -1111,21 +1025,6 @@ img {
     min-height: 100%;
   }
 
-  .auth-visual-image {
-    object-position: center;
-  }
-
-  .auth-visual-shade {
-    background:
-      linear-gradient(
-        180deg,
-        rgb(7 7 7 / 28%),
-        transparent 35%,
-        rgb(7 7 7 / 66%)
-      ),
-      linear-gradient(90deg, rgb(7 7 7 / 20%), transparent 80%);
-  }
-
   .auth-visual-top {
     position: absolute;
     z-index: 2;
@@ -1149,15 +1048,6 @@ img {
 
   .auth-visual-title {
     font-size: clamp(3.2rem, 4.5vw, 4.9rem);
-  }
-
-  .auth-visual-description {
-    display: block;
-    max-width: 21rem;
-    margin-top: 1rem;
-    color: rgb(244 239 228 / 76%);
-    font-size: 0.83rem;
-    line-height: 1.6;
   }
 
   .auth-reset-shell {
@@ -1198,6 +1088,12 @@ img {
 
   .security-qr {
     margin-inline: 0;
+  }
+}
+
+@media (min-width: 900px) and (hover: hover) and (pointer: fine) {
+  .auth-mobile-brand {
+    display: none;
   }
 }
 
@@ -1359,24 +1255,25 @@ img {
   }
 }
 
-/* Compact layouts use the dock; desktop keeps the top navigation. */
+/* Touch layouts use the edge-to-edge dock; mouse/trackpad keeps top navigation. */
 .site-header__desktop-nav {
   display: none;
 }
 
-@media (min-width: 1200px) {
+@media (hover: hover) and (pointer: fine) {
   .site-header__desktop-nav {
     display: flex;
+    gap: clamp(0.3rem, 1.6vw, 2rem);
+  }
+
+  .site-header__desktop-nav a {
+    font-size: clamp(0.72rem, 0.95vw, 0.875rem);
   }
 }
 
-@media (max-width: 1199px) {
+@media (max-width: 1199px) and (hover: none) and (pointer: coarse) {
   .site-header--account {
     display: none;
-  }
-
-  .auth-page {
-    padding-bottom: calc(6rem + max(1rem, env(safe-area-inset-bottom)));
   }
 }
 

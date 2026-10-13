@@ -1,0 +1,75 @@
+.heroWordMask {
+  display: inline-block;
+  overflow: hidden;
+  padding-block: 0.08em;
+  margin-block: -0.08em;
+  vertical-align: bottom;
+}
+
+.collectionViewport {
+  width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  touch-action: pan-x pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+.collectionViewport::-webkit-scrollbar {
+  display: none;
+}
+
+.collectionTrack {
+  display: flex;
+  width: max-content;
+  align-items: stretch;
+  gap: 1rem;
+  padding-inline: 1rem;
+}
+
+.collectionCard {
+  flex: 0 0 min(84vw, 26rem);
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+}
+
+@media (min-width: 640px) {
+  .collectionTrack {
+    gap: 1.375rem;
+    padding-inline: max(2rem, calc((100vw - 42rem) / 2));
+  }
+
+  .collectionCard {
+    flex-basis: min(68vw, 32rem);
+  }
+}
+
+@media (min-width: 900px) {
+  .collectionCard {
+    flex-basis: min(42vw, 27.5rem);
+  }
+}
+
+@media (min-width: 1024px) and (min-height: 760px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .collectionViewport {
+    overflow: hidden;
+    scroll-snap-type: none;
+    touch-action: auto;
+  }
+
+  .collectionTrack {
+    gap: 2rem;
+    padding-inline: clamp(2rem, calc((100vw - 78rem) / 2), 10rem);
+  }
+
+  .collectionCard {
+    flex-basis: min(36vw, 27.5rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collectionViewport {
+    scroll-behavior: auto;
+  }
+}

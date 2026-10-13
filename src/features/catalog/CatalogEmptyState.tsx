@@ -28,7 +28,7 @@ export function CatalogEmptyState({ categoryName }: { categoryName?: string }) {
           Ver os modelos em destaque
         </Link>
       </div>
-      <p className="mt-8 text-xs uppercase tracking-[.16em] text-muted/70">
+      <p className="mt-8 text-xs uppercase tracking-[.16em] text-muted">
         Novos modelos chegam em breve · compra segura, informação confirmada
       </p>
     </div>

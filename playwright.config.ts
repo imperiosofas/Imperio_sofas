@@ -7,7 +7,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "list" : "list",
   use: {
-    baseURL: "http://127.0.0.1:3100",
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3100",
     reducedMotion: "no-preference",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
@@ -20,8 +20,8 @@ export default defineConfig({
   ],
   webServer: {
     command: "npm run dev -- --hostname 127.0.0.1 --port 3100",
-    url: "http://127.0.0.1:3100",
-    reuseExistingServer: false,
+    url: process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3100",
+    reuseExistingServer: !process.env.CI,
     env: { NEXT_DIST_DIR: ".next-e2e" },
     timeout: 120_000,
   },

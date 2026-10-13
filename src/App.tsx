@@ -1,29 +1,33 @@
 "use client";
 
-import { SofaStory } from "./sections/SofaStory";
-import { Differentials } from "./sections/Differentials";
+import { MotionConfig } from "framer-motion";
+import { LandingScrollMotion } from "./components/LandingScrollMotion";
 import { Catalog } from "./sections/Catalog";
-import { Reviews } from "./sections/Reviews";
-import { Location } from "./sections/Location";
+import { Differentials } from "./sections/Differentials";
 import { FinalCta } from "./sections/FinalCta";
 import { Footer } from "./sections/Footer";
+import { Hero } from "./sections/Hero";
+import { Location } from "./sections/Location";
+import { Reviews } from "./sections/Reviews";
 import { FloatingContact } from "./sections/FloatingContact";
 
 function App() {
   return (
-    <div className="min-h-screen overflow-x-clip bg-ink text-ivory selection:bg-gold selection:text-ink">
-      <main>
-        <SofaStory>
-          <Catalog integrated />
-        </SofaStory>
-        <Differentials />
-        <Reviews />
-        <Location />
-        <FinalCta />
-      </main>
-      <Footer />
-      <FloatingContact />
-    </div>
+    <MotionConfig reducedMotion="user">
+      <div className="landing-fonts min-h-screen overflow-x-clip bg-ink text-ivory selection:bg-gold selection:text-ink">
+        <LandingScrollMotion />
+        <main>
+          <Hero />
+          <Differentials />
+          <Catalog />
+          <Reviews />
+          <Location />
+          <FinalCta />
+        </main>
+        <Footer />
+        <FloatingContact />
+      </div>
+    </MotionConfig>
   );
 }
 

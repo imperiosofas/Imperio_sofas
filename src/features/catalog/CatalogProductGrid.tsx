@@ -1,57 +1,86 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { PublishedCatalogProduct } from "./types";
 import { formatBrlFromCents } from "../../lib/money";
+import styles from "./catalog-listing.module.css";
+import type { ReviewSummary } from "../commerce/data";
+import { FavoriteButton } from "../commerce/FavoriteButton";
 
 export function CatalogProductGrid({
   products,
+  summaries,
+  favorites,
 }: {
   products: PublishedCatalogProduct[];
+  summaries: Map<string, ReviewSummary>;
+  favorites: Set<string>;
 }) {
   return (
-    <ul className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-      {products.map((product) => {
+    <ul className={styles.productGrid}>
+      {products.map((product, index) => {
         const image = product.media[0];
+        const second = product.media[1];
+        const widths =
+          product.widthsMm ?? (product.widthMm ? [product.widthMm] : []);
+        const summary = summaries.get(product.id);
         return (
           <li key={product.id}>
-            <Link
-              href={`/produto/${product.slug}`}
-              className="group block h-full overflow-hidden rounded-[1.5rem] border border-white/10 bg-card transition hover:-translate-y-1 hover:border-gold/40 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
-            >
-              <div className="relative aspect-[11/10] overflow-hidden bg-ink-soft">
+            <Link className={styles.card} href={`/produto/${product.slug}`}>
+              <div className={styles.cardImage}>
                 {image ? (
-                  // Signed Supabase URLs are short lived, so Next's remote image optimizer is not used.
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={image.src}
-                    alt={image.alt}
-                    loading="lazy"
-                    decoding="async"
-                    className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-                  />
+                  <>
+                    <Image
+                      src={image.src}
+                      alt={image.alt}
+                      fill
+                      unoptimized
+                      sizes="(max-width: 600px) 46vw, (max-width: 1050px) 45vw, (max-width: 1600px) 29vw, 22vw"
+                      priority={index < 2}
+                      className={styles.primaryImage}
+                    />
+                    {second && (
+                      <Image
+                        src={second.src}
+                        alt=""
+                        fill
+                        unoptimized
+                        sizes="(max-width: 600px) 46vw, (max-width: 1050px) 45vw, (max-width: 1600px) 29vw, 22vw"
+                        className={styles.secondaryImage}
+                      />
+                    )}
+                  </>
                 ) : (
-                  <div className="grid h-full place-items-center bg-[radial-gradient(circle_at_50%_40%,rgba(215,170,66,.14),transparent_46%)] px-8 text-center">
-                    <span className="font-display text-3xl text-gold/80">
-                      Império Sofás
-                    </span>
-                  </div>
+                  <span className={styles.imageFallback}>Império Sofás</span>
                 )}
               </div>
-              <div className="p-5 sm:p-6">
-                <p className="eyebrow">Conforto com identidade</p>
-                <h2 className="mt-2 font-display text-3xl font-semibold text-ivory">
-                  {product.name}
-                </h2>
-                <p className="mt-5 border-t border-white/10 pt-4 text-sm text-muted">
-                  A partir de{" "}
-                  <span className="font-semibold text-ivory">
-                    {formatBrlFromCents(product.priceCents)}
-                  </span>
+              <div className={styles.cardInfo}>
+                <h2>{product.name}</h2>
+                {summary && (
+                  <p className={styles.cardRating}>
+                    ★ {summary.average_rating.toFixed(1).replace(".", ",")}{" "}
+                    <span>({summary.review_count})</span>
+                  </p>
+                )}
+                {widths.length > 0 && (
+                  <p className={styles.measure}>
+                    {widths.length === 1
+                      ? `${(widths[0] / 1000).toFixed(2).replace(".", ",")} m`
+                      : `${widths.length} medidas disponíveis`}
+                  </p>
+                )}
+                <p className={styles.price}>
+                  {product.maxPriceCents &&
+                  product.maxPriceCents !== product.priceCents
+                    ? `${formatBrlFromCents(product.priceCents)} – ${formatBrlFromCents(product.maxPriceCents)}`
+                    : formatBrlFromCents(product.priceCents)}
                 </p>
-                <span className="mt-4 inline-flex min-h-11 items-center rounded-full border border-gold/40 px-5 text-sm font-semibold text-gold transition group-hover:bg-gold group-hover:text-ink">
-                  Ver detalhes
-                </span>
               </div>
             </Link>
+            <FavoriteButton
+              productId={product.id}
+              initial={favorites.has(product.id)}
+              returnTo={`/produto/${product.slug}`}
+            />
           </li>
         );
       })}

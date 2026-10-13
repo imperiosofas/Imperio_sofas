@@ -1,0 +1,21 @@
+.contactLink {
+  animation: none;
+}
+
+@media (max-width: 1199px) and (hover: none) and (pointer: coarse) and (prefers-reduced-motion: no-preference) {
+  .contactLink {
+    animation: contactBreath 7s ease-in-out infinite;
+  }
+}
+
+@keyframes contactBreath {
+  0%,
+  90%,
+  100% {
+    box-shadow: 0 12px 40px rgba(37, 211, 102, 0.35);
+  }
+
+  94% {
+    box-shadow: 0 14px 44px rgba(37, 211, 102, 0.46);
+  }
+}
