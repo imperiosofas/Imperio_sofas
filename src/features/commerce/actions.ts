@@ -129,20 +129,24 @@ export async function addCartItem(variantId: string, quantity: number) {
     };
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99)
     return { ok: false, requiresLogin: false, message: "Quantidade inválida." };
-  const { data, error } = await auth.client.rpc("get_my_cart");
-  if (error || !Array.isArray(data))
+  const { error } = await auth.client.rpc("add_cart_item", {
+    p_variant_id: variantId,
+    p_quantity: quantity,
+  });
+  if (error)
     return {
       ok: false,
       requiresLogin: false,
-      message: "Não foi possível consultar o carrinho.",
+      message:
+        error.message === "quantity limit reached"
+          ? "Limite de quantidade atingido."
+          : "Item indisponível ou quantidade acima do estoque.",
     };
-  const current = data.find((item) => item.variant_id === variantId)?.quantity;
-  const next = quantity + (typeof current === "number" ? current : 0);
-  if (next > 99)
-    return {
-      ok: false,
-      requiresLogin: false,
-      message: "Limite de quantidade atingido.",
-    };
-  return setCartItem(variantId, next);
+  revalidatePath("/carrinho");
+  revalidatePath("/", "layout");
+  return {
+    ok: true,
+    requiresLogin: false,
+    message: "Adicionado ao carrinho.",
+  };
 }
