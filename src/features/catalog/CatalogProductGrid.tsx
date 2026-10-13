@@ -5,6 +5,7 @@ import { formatBrlFromCents } from "../../lib/money";
 import styles from "./catalog-listing.module.css";
 import type { ReviewSummary } from "../commerce/data";
 import { FavoriteButton } from "../commerce/FavoriteButton";
+import { HoverProductImage } from "./HoverProductImage";
 
 export function CatalogProductGrid({
   products,
@@ -39,11 +40,8 @@ export function CatalogProductGrid({
                       className={styles.primaryImage}
                     />
                     {second && (
-                      <Image
+                      <HoverProductImage
                         src={second.src}
-                        alt=""
-                        fill
-                        unoptimized
                         sizes="(max-width: 600px) 46vw, (max-width: 1050px) 45vw, (max-width: 1600px) 29vw, 22vw"
                         className={styles.secondaryImage}
                       />
