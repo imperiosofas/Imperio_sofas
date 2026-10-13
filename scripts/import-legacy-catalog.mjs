@@ -1,20 +1,69 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import sharp from "sharp";
-import { createClient } from "@supabase/supabase-js";
+import { pathToFileURL } from "node:url";
 
-const args = new Map(
-  process.argv.slice(2).map((arg) => {
-    const [key, ...parts] = arg.replace(/^--/, "").split("=");
-    return [key, parts.length ? parts.join("=") : true];
-  }),
-);
-const phase = args.get("phase") ?? "berlin";
-const applyMode = args.has("apply-berlin") || args.has("apply-all");
-const applyBerlin = args.has("apply-berlin");
-const applyAll = args.has("apply-all");
-const manifestDir = args.get("manifest-dir");
+const NativeMap = Map;
+const safeReflectApply = Reflect.apply;
+const safeReflectGet = Reflect.get;
+const safeObjectHasOwn = Object.hasOwn;
+const safeObjectCreate = Object.create;
+const SafeProxy = Proxy;
+const safeMapGet = NativeMap.prototype.get;
+const safeMapHas = NativeMap.prototype.has;
+const safeMapSet = NativeMap.prototype.set;
+const safeRegExpExec = RegExp.prototype.exec;
+const cliArgumentPattern = /^--([a-z][a-z0-9-]*)(?:=(.*))?$/;
+const safeMapSize = Object.getOwnPropertyDescriptor(
+  NativeMap.prototype,
+  "size",
+).get;
+const cliArgumentNames = Object.freeze([
+  "apply-all",
+  "apply-berlin",
+  "confirm-berlin-gate",
+  "manifest-dir",
+  "phase",
+]);
+
+function isKnownCliArgument(name) {
+  for (let index = 0; index < cliArgumentNames.length; index += 1) {
+    if (cliArgumentNames[index] === name) return true;
+  }
+  return false;
+}
+
+export function parseArgs(argv) {
+  const args = new NativeMap();
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    const match = safeReflectApply(safeRegExpExec, cliArgumentPattern, [arg]);
+    if (!match) {
+      throw new Error(`Argumento inválido; esperava uma opção --nome: ${arg}`);
+    }
+    const key = match[1];
+    const value = match[2];
+    if (!isKnownCliArgument(key)) {
+      throw new Error(`Opção desconhecida: --${key}.`);
+    }
+    if (key === "apply-berlin" || key === "apply-all") {
+      if (safeReflectApply(safeMapHas, args, [key])) {
+        throw new Error(`--${key} não pode ser informado mais de uma vez.`);
+      }
+      if (value !== undefined) {
+        throw new Error(
+          `--${key} não aceita valor explícito; use a flag sem '=...' ou remova-a.`,
+        );
+      }
+    }
+    safeReflectApply(safeMapSet, args, [
+      key,
+      value === undefined ? true : value,
+    ]);
+  }
+  return args;
+}
+
 const expectedBerlin = {
   sourceId: "ca706444-d0fc-4960-985c-07b7a394705b",
   productId: "26b943bd-45f8-49c2-989c-0f1ddcbea356",
@@ -46,6 +95,23 @@ const uuidNamespace = Buffer.from("efc8df24461b5bc1b70a63de4c6cb4f8", "hex");
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
+}
+
+function snapshotCliArguments(input) {
+  const snapshot = safeObjectCreate(null);
+  let recognizedCount = 0;
+  for (let index = 0; index < cliArgumentNames.length; index += 1) {
+    const key = cliArgumentNames[index];
+    if (!safeReflectApply(safeMapHas, input, [key])) continue;
+    snapshot[key] = safeReflectApply(safeMapGet, input, [key]);
+    recognizedCount += 1;
+  }
+  const inputSize = safeReflectApply(safeMapSize, input, []);
+  assert(
+    inputSize === recognizedCount,
+    "Argumento desconhecido ou mapa de argumentos inválido.",
+  );
+  return snapshot;
 }
 
 function slugify(value) {
@@ -240,7 +306,7 @@ function makeProduct(category, sourceProduct) {
   };
 }
 
-async function loadManifest() {
+export async function loadManifest(manifestDir) {
   assert(
     manifestDir,
     "Informe --manifest-dir com o diretório dos manifests auditados.",
@@ -362,9 +428,9 @@ async function loadManifest() {
   };
 }
 
-function makeSupabaseClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SECRET_KEY;
+async function makeSupabaseClient(env = process.env) {
+  const url = env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = env.SUPABASE_SECRET_KEY;
   assert(
     url && key,
     "NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SECRET_KEY precisam estar no ambiente local.",
@@ -377,6 +443,7 @@ function makeSupabaseClient() {
     key.startsWith("sb_secret_"),
     "A chave privilegiada não tem o formato secret esperado.",
   );
+  const { createClient } = await import("@supabase/supabase-js");
   return createClient(url, key, {
     auth: {
       persistSession: false,
@@ -558,6 +625,7 @@ async function readSourceImage(image) {
     input.byteLength > 0 && input.byteLength <= 10 * 1024 * 1024,
     "Imagem fonte vazia ou maior que 10 MB.",
   );
+  const { default: sharp } = await import("sharp");
   const output = await sharp(input, { limitInputPixels: 100_000_000 })
     .rotate()
     .resize({
@@ -815,7 +883,165 @@ async function workerPool(items, concurrency, worker) {
   return results;
 }
 
-async function main() {
+const queryReadMethods = Object.freeze([
+  "containedBy",
+  "contains",
+  "eq",
+  "filter",
+  "gt",
+  "gte",
+  "ilike",
+  "in",
+  "is",
+  "like",
+  "limit",
+  "lt",
+  "lte",
+  "match",
+  "maybeSingle",
+  "neq",
+  "not",
+  "or",
+  "order",
+  "overlaps",
+  "range",
+  "select",
+  "single",
+]);
+const storageReadMethods = Object.freeze([
+  "createSignedUrl",
+  "createSignedUrls",
+  "download",
+  "exists",
+  "getPublicUrl",
+  "info",
+  "list",
+]);
+function readOnlyCapabilityFacade(label, capabilities) {
+  const emptyTarget = safeObjectCreate(null);
+  const immutable = (operation, property) => {
+    throw new Error(
+      `${operation}${property === undefined ? "" : ` da propriedade ${String(property)}`} bloqueada durante dry-run na facade ${label}.`,
+    );
+  };
+  return new SafeProxy(emptyTarget, {
+    get(_target, property) {
+      if (typeof property === "symbol") return undefined;
+      if (!safeObjectHasOwn(capabilities, property)) {
+        throw new Error(
+          `${label}.${property} bloqueado: não é uma capacidade de leitura permitida no dry-run.`,
+        );
+      }
+      return capabilities[property];
+    },
+    set(_target, property) {
+      return immutable("Atribuição", property);
+    },
+    defineProperty(_target, property) {
+      return immutable("Definição", property);
+    },
+    deleteProperty(_target, property) {
+      return immutable("Remoção", property);
+    },
+    setPrototypeOf() {
+      return immutable("Alteração do protótipo");
+    },
+    preventExtensions() {
+      return immutable("Alteração de extensibilidade");
+    },
+  });
+}
+
+function readOnlyQueryFacade(builder) {
+  const capabilities = safeObjectCreate(null);
+  for (let index = 0; index < queryReadMethods.length; index += 1) {
+    const method = queryReadMethods[index];
+    capabilities[method] = (...args) => {
+      const operation = safeReflectGet(builder, method, builder);
+      if (typeof operation !== "function") {
+        throw new Error(`Query builder não oferece leitura ${method}.`);
+      }
+      const result = safeReflectApply(operation, builder, args);
+      return result === builder || (result && typeof result === "object")
+        ? readOnlyQueryFacade(result)
+        : result;
+    };
+  }
+  capabilities.then = (resolve, reject) => {
+    const then = safeReflectGet(builder, "then", builder);
+    if (typeof then !== "function") {
+      throw new Error("Query builder read-only não é awaitable.");
+    }
+    return safeReflectApply(then, builder, [resolve, reject]);
+  };
+  return readOnlyCapabilityFacade("query builder", capabilities);
+}
+
+function readOnlyStorageFacade(storage) {
+  const capabilities = safeObjectCreate(null);
+  capabilities.from = (bucketName) => {
+    const bucket = safeReflectApply(storage.from, storage, [bucketName]);
+    const bucketCapabilities = safeObjectCreate(null);
+    for (let index = 0; index < storageReadMethods.length; index += 1) {
+      const method = storageReadMethods[index];
+      bucketCapabilities[method] = (...args) => {
+        const operation = safeReflectGet(bucket, method, bucket);
+        if (typeof operation !== "function") {
+          throw new Error(`Storage bucket não oferece leitura ${method}.`);
+        }
+        return safeReflectApply(operation, bucket, args);
+      };
+    }
+    return readOnlyCapabilityFacade("Storage bucket", bucketCapabilities);
+  };
+  return readOnlyCapabilityFacade("Storage", capabilities);
+}
+
+function readOnlyDatabaseFacade(client) {
+  const capabilities = safeObjectCreate(null);
+  capabilities.from = (table) =>
+    readOnlyQueryFacade(safeReflectApply(client.from, client, [table]));
+  capabilities.schema = (schemaName) =>
+    readOnlyDatabaseFacade(
+      safeReflectApply(client.schema, client, [schemaName]),
+    );
+  return readOnlyCapabilityFacade("Supabase database", capabilities);
+}
+
+export function guardReadOnlySupabase(supabase) {
+  const capabilities = safeObjectCreate(null);
+  capabilities.from = (table) =>
+    readOnlyQueryFacade(safeReflectApply(supabase.from, supabase, [table]));
+  capabilities.schema = (schemaName) =>
+    readOnlyDatabaseFacade(
+      safeReflectApply(supabase.schema, supabase, [schemaName]),
+    );
+  capabilities.storage = readOnlyStorageFacade(supabase.storage);
+  return readOnlyCapabilityFacade("Supabase client", capabilities);
+}
+
+export async function runImport({
+  args = parseArgs(process.argv.slice(2)),
+  env = process.env,
+  manifest: suppliedManifest,
+  manifestLoader = loadManifest,
+  supabase: suppliedSupabase,
+  stdout = (value) => process.stdout.write(value),
+} = {}) {
+  const safeArgs = snapshotCliArguments(args);
+  const phase = safeArgs.phase ?? "berlin";
+  const applyFlags = ["apply-berlin", "apply-all"];
+  for (let index = 0; index < applyFlags.length; index += 1) {
+    const flag = applyFlags[index];
+    assert(
+      !safeObjectHasOwn(safeArgs, flag) || safeArgs[flag] === true,
+      `--${flag} não aceita valor explícito; use a flag sem '=...' ou remova-a.`,
+    );
+  }
+  const applyBerlin = safeArgs["apply-berlin"] === true;
+  const applyAll = safeArgs["apply-all"] === true;
+  const applyMode = applyBerlin || applyAll;
+
   assert(
     phase === "berlin" || phase === "all",
     "Use --phase=berlin ou --phase=all.",
@@ -831,11 +1057,12 @@ async function main() {
   assert(!applyAll || phase === "all", "--apply-all exige --phase=all.");
   if (phase === "all")
     assert(
-      args.get("confirm-berlin-gate") === "ADMIN_VISIBLE",
+      safeArgs["confirm-berlin-gate"] === "ADMIN_VISIBLE",
       "A fase dos outros produtos exige --confirm-berlin-gate=ADMIN_VISIBLE após validar todos os critérios do Berlim.",
     );
 
-  const manifest = await loadManifest();
+  const manifest =
+    suppliedManifest ?? (await manifestLoader(safeArgs["manifest-dir"]));
   const berlinProducts = manifest.products.filter(
     (product) => product.sourceId === expectedBerlin.sourceId,
   );
@@ -851,7 +1078,10 @@ async function main() {
       : manifest.products.filter(
           (product) => product.sourceId !== expectedBerlin.sourceId,
         );
-  const supabase = makeSupabaseClient();
+  const unguardedSupabase = suppliedSupabase ?? (await makeSupabaseClient(env));
+  const supabase = applyMode
+    ? unguardedSupabase
+    : guardReadOnlySupabase(unguardedSupabase);
   const phaseCategories =
     phase === "berlin"
       ? manifest.categories.filter(
@@ -866,27 +1096,26 @@ async function main() {
   if (phase === "all") {
     const berlinCategory = categoryMap.get("sofas");
     assert(berlinCategory, "A categoria Sofás do Berlim não está disponível.");
-    const idempotentResult = await callImport(
-      supabase,
-      berlinCategory.id,
-      berlin,
-    );
-    assert(
-      idempotentResult.already_imported,
-      "O gate de idempotência do Berlim não passou.",
-    );
-    if (applyMode)
+    if (applyMode) {
+      const idempotentResult = await callImport(
+        supabase,
+        berlinCategory.id,
+        berlin,
+      );
+      assert(
+        idempotentResult.already_imported,
+        "O gate de idempotência do Berlim não passou.",
+      );
       await cleanupFixtureObjects(
         supabase,
         berlin.sourceId,
         idempotentResult.cleanup_storage_paths,
       );
-    else
-      assert(
-        idempotentResult.cleanup_storage_paths.length === 0,
-        "Há limpeza pendente do fixture; conclua a limpeza antes de iniciar o lote.",
-      );
-    await verifyProduct(supabase, berlin, berlinCategory.id);
+      await verifyProduct(supabase, berlin, berlinCategory.id);
+    } else {
+      await checkExistingProducts(supabase, [berlin], true);
+      await checkExistingSkus(supabase, [berlin]);
+    }
   }
   const existingProducts = await checkExistingProducts(
     supabase,
@@ -898,7 +1127,7 @@ async function main() {
     (category) => !categoryMap.has(slugify(category.slug)),
   ).length;
 
-  process.stdout.write(
+  stdout(
     `${JSON.stringify({
       MODE: applyMode ? "APPLY" : "DRY_RUN",
       PHASE: phase.toUpperCase(),
@@ -932,6 +1161,11 @@ async function main() {
         0,
       ),
       PRODUCTS_ALREADY_IN_DATABASE: existingProducts.length,
+      BERLIN_IDEMPOTENCY_CHECK: applyMode
+        ? "APPLY_RPC_CONFIRMED"
+        : phase === "all"
+          ? "SKIPPED_READ_ONLY"
+          : "NOT_APPLICABLE",
       PUBLICATION:
         "all imported products remain DRAFT; new categories are inactive",
       PRESERVED_EXISTING_CUSTOMER_REFERENCES:
@@ -969,7 +1203,7 @@ async function main() {
       );
       await verifyProduct(supabase, product, category.id);
       completed += 1;
-      process.stdout.write(
+      stdout(
         `${JSON.stringify({ PRODUCT: product.slug, RESULT: result.already_imported ? "IDEMPOTENT" : "IMPORTED", VERIFIED: "PASS", COMPLETED: completed })}\n`,
       );
       return result;
@@ -1007,15 +1241,21 @@ async function main() {
       berlin,
       liveCategories.get(berlin.categorySlug).id,
     );
-    process.stdout.write(
+    stdout(
       `${JSON.stringify({ SECOND_RUN_IDEMPOTENT: "PASS", BERLIN_GATE_DATABASE: "PASS" })}\n`,
     );
   }
 }
 
-main().catch((error) => {
-  process.stderr.write(
-    `IMPORT_STOPPED: ${error instanceof Error ? error.message : "erro inesperado"}\n`,
-  );
-  process.exitCode = 1;
-});
+const isDirectExecution =
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
+
+if (isDirectExecution) {
+  runImport().catch((error) => {
+    process.stderr.write(
+      `IMPORT_STOPPED: ${error instanceof Error ? error.message : "erro inesperado"}\n`,
+    );
+    process.exitCode = 1;
+  });
+}
