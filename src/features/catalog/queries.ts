@@ -11,7 +11,7 @@ const isPubliclySellable = (
 ): product is PublishedCatalogProduct =>
   product.status === "active" &&
   product.priceCents !== null &&
-  product.sellableUnits > 0;
+  product.stockStatus !== "unavailable";
 
 export async function getCatalogCategories(): Promise<CatalogCategory[]> {
   return getCatalogRepository().listCategories();

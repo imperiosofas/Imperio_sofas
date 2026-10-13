@@ -12,7 +12,7 @@ const variant = z.object({
   fabric: z.string().nullable(),
   color: z.string().nullable(),
   price_cents: z.number().int().positive(),
-  available: z.number().int().positive(),
+  stock_status: z.enum(["available", "low_stock", "unavailable"]),
 });
 const detail = z.object({
   id: z.string().uuid(),
@@ -49,7 +49,7 @@ const cartItem = z.object({
   name: z.string(),
   width_mm: z.number().int().positive().nullable(),
   price_cents: z.number().int().positive(),
-  available: z.number().int().nonnegative(),
+  stock_status: z.enum(["available", "low_stock", "unavailable"]),
   storage_path: z.string().nullable(),
 });
 const favoriteProduct = z.object({
@@ -60,7 +60,7 @@ const favoriteProduct = z.object({
   description: z.string(),
   width_mm: z.number().int().positive().nullable(),
   price_cents: z.number().int().positive(),
-  sellable_units: z.number().int().positive(),
+  stock_status: z.enum(["available", "low_stock", "unavailable"]),
   media: z.array(z.object({ storage_path: z.string(), alt: z.string() })),
 });
 export type ProductDetail = z.infer<typeof detail> & {
@@ -140,7 +140,7 @@ export async function getFavoriteProducts(): Promise<
     widthMm: row.width_mm,
     status: "active" as const,
     priceCents: row.price_cents,
-    sellableUnits: row.sellable_units,
+    stockStatus: row.stock_status,
     media: row.media.map((item) => ({
       src: signed.get(item.storage_path)!,
       alt: item.alt,
@@ -212,7 +212,6 @@ export async function getMyCart(): Promise<CartItem[]> {
   const paths = [
     ...new Set(
       rows
-        .filter((row) => row.available > 0)
         .map((row) => row.storage_path)
         .filter((path): path is string => !!path),
     ),

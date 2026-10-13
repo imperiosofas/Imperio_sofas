@@ -1,4 +1,5 @@
 export type CatalogStatus = "draft" | "active" | "archived";
+export type StockStatus = "available" | "low_stock" | "unavailable";
 
 export type CatalogCategory = {
   slug: string;
@@ -15,14 +16,14 @@ export type CatalogProduct = {
   widthMm: number | null;
   status: CatalogStatus;
   priceCents: number | null;
-  sellableUnits: number;
+  stockStatus: StockStatus;
   media: { src: string; alt: string }[];
 };
 
 export type PublishedCatalogProduct = CatalogProduct & {
   status: "active";
   priceCents: number;
-  sellableUnits: number;
+  stockStatus: StockStatus;
   widthsMm?: number[];
   priceCount?: number;
   maxPriceCents?: number;

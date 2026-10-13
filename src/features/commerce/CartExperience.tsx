@@ -16,7 +16,9 @@ export function CartExperience({ items }: { items: CartItem[] }) {
   const total = items.reduce(
     (sum, item) =>
       sum +
-      (item.available >= item.quantity ? item.price_cents * item.quantity : 0),
+      (item.stock_status !== "unavailable"
+        ? item.price_cents * item.quantity
+        : 0),
     0,
   );
   function change(item: CartItem, quantity: number) {
@@ -73,9 +75,16 @@ export function CartExperience({ items }: { items: CartItem[] }) {
                         : ""}
                     </p>
                     <p>
-                      {item.available >= item.quantity
+                      {item.stock_status !== "unavailable"
                         ? formatBrlFromCents(item.price_cents)
-                        : "Quantidade indisponível no momento"}
+                        : "Indisponível no momento"}
+                    </p>
+                    <p>
+                      {item.stock_status === "low_stock"
+                        ? "Estoque baixo"
+                        : item.stock_status === "unavailable"
+                          ? "Indisponível"
+                          : "Disponível"}
                     </p>
                     <div className={styles.controls}>
                       <button
@@ -91,7 +100,8 @@ export function CartExperience({ items }: { items: CartItem[] }) {
                         type="button"
                         disabled={
                           pending ||
-                          item.quantity >= Math.min(item.available, 99)
+                          item.quantity >= 99 ||
+                          item.stock_status === "unavailable"
                         }
                         onClick={() => change(item, item.quantity + 1)}
                         aria-label={`Aumentar quantidade de ${item.name}`}
@@ -109,7 +119,7 @@ export function CartExperience({ items }: { items: CartItem[] }) {
                     </div>
                   </div>
                   <strong>
-                    {item.available >= item.quantity
+                    {item.stock_status !== "unavailable"
                       ? formatBrlFromCents(item.price_cents * item.quantity)
                       : "Indisponível"}
                   </strong>

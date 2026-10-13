@@ -159,13 +159,25 @@ export function ProductExperience({
                       {item.width_mm && <span>{meters(item.width_mm)}</span>}
                       {item.fabric && <small>{item.fabric}</small>}
                       {item.color && <small>{item.color}</small>}
+                      <small>
+                        {item.stock_status === "unavailable"
+                          ? "Indisponível"
+                          : item.stock_status === "low_stock"
+                            ? "Estoque baixo"
+                            : "Disponível"}
+                      </small>
                     </button>
                   ))}
                 </div>
               </fieldset>
             )}
             <p className={styles.availability}>
-              <Check size={16} /> Disponível
+              {variant.stock_status === "available" && <Check size={16} />}
+              {variant.stock_status === "unavailable"
+                ? "Indisponível"
+                : variant.stock_status === "low_stock"
+                  ? "Estoque baixo"
+                  : "Disponível"}
             </p>
             <p className={styles.priceLabel}>
               {product.variants.length > 1 &&
@@ -189,11 +201,9 @@ export function ProductExperience({
                 <output>{quantity}</output>
                 <button
                   type="button"
-                  onClick={() =>
-                    setQuantity(Math.min(variant.available, 99, quantity + 1))
-                  }
+                  onClick={() => setQuantity(Math.min(99, quantity + 1))}
                   aria-label="Aumentar quantidade"
-                  disabled={quantity >= Math.min(variant.available, 99)}
+                  disabled={quantity >= 99}
                 >
                   <Plus size={18} />
                 </button>
@@ -201,7 +211,7 @@ export function ProductExperience({
               <button
                 type="button"
                 className={styles.addButton}
-                disabled={pending}
+                disabled={pending || variant.stock_status === "unavailable"}
                 onClick={() =>
                   startTransition(async () => {
                     const result = await addCartItem(selected, quantity);

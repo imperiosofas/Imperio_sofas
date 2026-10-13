@@ -55,6 +55,13 @@ export function CatalogProductGrid({
               </div>
               <div className={styles.cardInfo}>
                 <h2>{product.name}</h2>
+                <p className={styles.stockStatus}>
+                  {product.stockStatus === "low_stock"
+                    ? "Estoque baixo"
+                    : product.stockStatus === "unavailable"
+                      ? "Indisponível"
+                      : "Disponível"}
+                </p>
                 {summary && (
                   <p className={styles.cardRating}>
                     ★ {summary.average_rating.toFixed(1).replace(".", ",")}{" "}

@@ -30,7 +30,7 @@ const products: CatalogProduct[] = draftProducts.map(
     widthMm: Number(widthMm),
     status: "draft",
     priceCents: null,
-    sellableUnits: 0,
+    stockStatus: "unavailable",
     media: [],
   }),
 );

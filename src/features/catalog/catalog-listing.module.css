@@ -302,6 +302,11 @@
   font-size: clamp(19px, 1.7vw, 25px);
   line-height: 1.15;
 }
+.stockStatus {
+  color: #a6a3a0;
+  font-size: 12px;
+  margin-top: 7px;
+}
 .measure {
   color: #a6a3a0;
   font-size: 13px;

@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(27);
+select plan(46);
 
 insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
 values
@@ -15,9 +15,11 @@ from public.categories where slug = 'sofas';
 insert into public.product_variants (id, product_id, sku, width_mm, price_cents, is_active)
 values
   ('e5555555-5555-4555-8555-555555555555', 'c3333333-3333-4333-8333-333333333333', 'TEST-COMMERCE-A', 2200, 349000, true),
+  ('e5555555-5555-4555-8555-555555555556', 'c3333333-3333-4333-8333-333333333333', 'TEST-COMMERCE-B', 2400, 369000, true),
   ('f6666666-6666-4666-8666-666666666666', 'd4444444-4444-4444-8444-444444444444', 'TEST-COMMERCE-D', 2400, 400000, true);
 insert into public.inventory (variant_id, on_hand) values
   ('e5555555-5555-4555-8555-555555555555', 4),
+  ('e5555555-5555-4555-8555-555555555556', 2),
   ('f6666666-6666-4666-8666-666666666666', 4);
 insert into public.product_media (product_id, storage_path, alt_text)
 values ('c3333333-3333-4333-8333-333333333333', 'test/commerce.webp', 'TEST Sofa');
@@ -25,6 +27,17 @@ update public.products set status = 'active' where slug = 'test-commerce-sofa';
 
 set local role anon;
 select ok(public.get_catalog_product_detail('test-commerce-sofa') is not null, 'published detail is visible');
+select is(public.get_catalog_product_detail('test-commerce-sofa') #>> '{variants,0,stock_status}',
+  'available', 'zero threshold does not claim low stock');
+select is(public.get_catalog_product_detail('test-commerce-sofa') #>> '{variants,1,stock_status}',
+  'available', 'zero threshold on another sellable option remains available');
+select is((select stock_status from public.get_catalog_products(null, 'test-commerce-sofa')),
+  'available', 'zero-threshold sellable option prevents an aggregate low-stock claim');
+select ok(not ((public.get_catalog_product_detail('test-commerce-sofa') #> '{variants,0}') ? 'available'),
+  'product detail never returns exact available inventory');
+select ok(not (select to_jsonb(product) ? 'sellable_units'
+  from public.get_catalog_products(null, 'test-commerce-sofa') product limit 1),
+  'catalog products never return exact sellable inventory');
 select is(public.get_catalog_product_detail('test-commerce-draft'), null::jsonb, 'draft detail is hidden');
 select throws_ok($$select * from public.product_favorites$$, '42501', null, 'anon cannot read favorites');
 select throws_ok($$select public.get_my_cart()$$, '42501', null, 'anon cannot read a cart');
@@ -44,10 +57,48 @@ select public.save_product_review('c3333333-3333-4333-8333-333333333333', 5, nul
 select public.set_cart_item('e5555555-5555-4555-8555-555555555555', 2);
 select is((public.get_my_cart() #>> '{0,quantity}')::integer, 2, 'cart quantity persists');
 select is((public.get_my_cart() #>> '{0,price_cents}')::integer, 349000, 'cart price comes from variant');
+select ok(not ((public.get_my_cart() #> '{0}') ? 'available'),
+  'cart never returns exact available inventory');
+select ok(not ((public.get_my_favorite_products() #> '{0}') ? 'sellable_units'),
+  'favorite listing never returns exact sellable inventory');
 select throws_ok($$select public.set_cart_item('f6666666-6666-4666-8666-666666666666', 1)$$,
   'P0001', 'item unavailable', 'draft variant cannot be added');
 select throws_ok($$select public.set_cart_item('e5555555-5555-4555-8555-555555555555', 5)$$,
   'P0001', 'item unavailable', 'quantity cannot exceed stock');
+update public.inventory set low_stock_threshold = 4
+where variant_id = 'e5555555-5555-4555-8555-555555555555';
+select is(public.get_catalog_product_detail('test-commerce-sofa') #>> '{variants,0,stock_status}',
+  'low_stock', 'positive threshold labels a qualifying variant as low stock');
+select is(public.get_my_cart() #>> '{0,stock_status}', 'low_stock',
+  'cart uses the actual positive variant threshold');
+select is((select stock_status from public.get_catalog_products(null, 'test-commerce-sofa')),
+  'available', 'aggregate stays available while another sellable option has zero threshold');
+update public.inventory set low_stock_threshold = 1
+where variant_id = 'e5555555-5555-4555-8555-555555555556';
+select is(public.get_catalog_product_detail('test-commerce-sofa') #>> '{variants,1,stock_status}',
+  'available', 'positive threshold above available stock labels a variant available');
+select is((select stock_status from public.get_catalog_products(null, 'test-commerce-sofa')),
+  'available', 'aggregate stays available when any sellable option is not low stock');
+update public.inventory set low_stock_threshold = 2
+where variant_id = 'e5555555-5555-4555-8555-555555555556';
+select is((select stock_status from public.get_catalog_products(null, 'test-commerce-sofa')),
+  'low_stock', 'multi-option product is low stock when every sellable option meets its threshold');
+select is(public.get_my_favorite_products() #>> '{0,stock_status}', 'low_stock',
+  'favorite card uses the conservative aggregate low-stock state');
+update public.inventory set on_hand = 0
+where variant_id = 'e5555555-5555-4555-8555-555555555555';
+select is(public.get_catalog_product_detail('test-commerce-sofa') #>> '{variants,0,stock_status}',
+  'unavailable', 'zero stock remains visible on the product detail as unavailable');
+select is((select stock_status from public.get_catalog_products(null, 'test-commerce-sofa')),
+  'low_stock', 'a remaining low-stock sellable option determines the aggregate state');
+update public.inventory set on_hand = 0
+where variant_id = 'e5555555-5555-4555-8555-555555555556';
+select is((select stock_status from public.get_catalog_products(null, 'test-commerce-sofa')),
+  'unavailable', 'zero stock remains visible in catalog projections as unavailable');
+select is(public.get_my_favorite_products() #>> '{0,stock_status}', 'unavailable',
+  'saved zero-stock products remain visible in favorites as unavailable');
+select is(public.get_my_cart() #>> '{0,stock_status}', 'unavailable',
+  'zero stock in an existing cart is shown as unavailable');
 reset role;
 select is((select reserved from public.inventory where variant_id = 'e5555555-5555-4555-8555-555555555555'), 0,
   'cart does not reserve inventory');

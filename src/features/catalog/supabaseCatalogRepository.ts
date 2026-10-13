@@ -24,7 +24,7 @@ const productSchema = z.object({
   description: z.string(),
   width_mm: z.number().int().positive().nullable(),
   price_cents: z.number().int().positive(),
-  sellable_units: z.number().int().positive(),
+  stock_status: z.enum(["available", "low_stock", "unavailable"]),
   media: z.array(
     z.object({
       storage_path: z.string().min(1),
@@ -93,7 +93,7 @@ async function toCatalogProduct(row: ProductRow): Promise<CatalogProduct> {
     widthMm: row.width_mm,
     status: "active",
     priceCents: row.price_cents,
-    sellableUnits: row.sellable_units,
+    stockStatus: row.stock_status,
     media,
   };
 }
@@ -136,7 +136,7 @@ async function toListing(
       maxPriceCents: row.max_price_cents,
       status: "active" as const,
       priceCents: row.price_cents,
-      sellableUnits: row.sellable_units,
+      stockStatus: row.stock_status,
       media: row.media.map((item) => ({
         src: signed.get(item.storage_path)!,
         alt: item.alt,

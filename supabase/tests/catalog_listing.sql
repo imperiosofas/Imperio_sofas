@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(13);
+select plan(16);
 
 insert into public.products (id, category_id, name, slug, created_at)
 select 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', id, 'TEST PLP Alpha',
@@ -21,13 +21,21 @@ values
   ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', 'TEST-PLP-A1', 2000, 200000, true, 'TEST-Veludo'),
   ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb4', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', 'TEST-PLP-A2', 2400, 250000, true, null),
   ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', 'TEST-PLP-B', 2200, 300000, true, null),
+  ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb5', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', 'TEST-PLP-B2', 2600, 310000, true, null),
   ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb3', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', 'TEST-PLP-D', 2600, 400000, true, null);
 insert into public.inventory (variant_id, on_hand)
 values
   ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', 5),
   ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb4', 5),
   ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2', 5),
+  ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb5', 5),
   ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb3', 5);
+update public.inventory set low_stock_threshold = 5
+where variant_id in (
+  'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1',
+  'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb4',
+  'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2'
+);
 insert into public.product_media (product_id, storage_path, alt_text)
 values
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', 'test/plp-alpha.webp', 'TEST Alpha'),
@@ -60,6 +68,12 @@ select is(public.get_catalog_listing(null, 'TEST PLP', null, null, null, 'price_
   #>> '{products,0,slug}', 'test-plp-beta', 'pagination follows global sort');
 select is((public.get_catalog_listing(null, 'TEST PLP') #>> '{products,1,price_count}')::integer,
   2, 'card can distinguish multiple real sellable prices');
+select ok(not ((public.get_catalog_listing(null, 'TEST PLP') #> '{products,0}') ? 'sellable_units'),
+  'listing never returns exact sellable inventory');
+select is(public.get_catalog_listing(null, 'TEST PLP') #>> '{products,0,stock_status}',
+  'available', 'mixed low-stock and zero-threshold variants remain qualitatively available');
+select is(public.get_catalog_listing(null, 'TEST PLP') #>> '{products,1,stock_status}',
+  'low_stock', 'card reports low stock only when every sellable option is below its positive threshold');
 select is((public.get_catalog_listing(null, 'veludo')->>'total')::integer,
   1, 'search includes public fabric of a sellable variant');
 
