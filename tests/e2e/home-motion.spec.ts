@@ -1,4 +1,27 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
+
+async function expectBeadCenteredOnActiveRoute(
+  page: Page,
+  bead: Locator,
+  href: string,
+) {
+  const activeLink = page.locator(
+    'nav[class*="dockBar"] a[aria-current="page"]',
+  );
+  await expect(activeLink).toHaveAttribute("href", href);
+  await expect
+    .poll(async () => {
+      const [beadBox, linkBox] = await Promise.all([
+        bead.boundingBox(),
+        activeLink.boundingBox(),
+      ]);
+      if (!beadBox || !linkBox) return Number.POSITIVE_INFINITY;
+      return Math.abs(
+        beadBox.x + beadBox.width / 2 - (linkBox.x + linkBox.width / 2),
+      );
+    })
+    .toBeLessThan(2);
+}
 
 async function revealAndLoadFullPage(page: Page) {
   const targets = [
@@ -41,18 +64,21 @@ test("the same dock bead travels between routes and follows browser back", async
     viewport: { width: 390, height: 844 },
     isMobile: true,
     hasTouch: true,
+    reducedMotion: "no-preference",
   });
   const page = await context.newPage();
   await page.goto("/");
+  const dock = page.locator('nav[class*="dockBar"]');
+  await expect(dock).toBeVisible();
+  await expect
+    .poll(async () => (await dock.boundingBox())?.width ?? 0)
+    .toBeGreaterThan(0);
   const bead = page.locator('[class*="goldBead"]');
-  await expect(bead).toHaveCSS("opacity", "1");
+  await expectBeadCenteredOnActiveRoute(page, bead, "/");
   const original = await bead.elementHandle();
-  const start = (await bead.boundingBox())!.x;
   await page.locator('nav[class*="dockBar"] a[href="/loja"]').click();
   await expect(page).toHaveURL(/\/loja$/);
-  await expect
-    .poll(async () => (await bead.boundingBox())!.x)
-    .toBeGreaterThan(start + 80);
+  await expectBeadCenteredOnActiveRoute(page, bead, "/loja");
   expect(
     await original!.evaluate(
       (element) => element === document.querySelector('[class*="goldBead"]'),
@@ -60,12 +86,20 @@ test("the same dock bead travels between routes and follows browser back", async
   ).toBe(true);
   await page.locator('nav[class*="dockBar"] a[href="/conta"]').click();
   await expect(page).toHaveURL(/\/conta$/);
+  await expectBeadCenteredOnActiveRoute(page, bead, "/conta");
   expect(
     await original!.evaluate(
       (element) => element === document.querySelector('[class*="goldBead"]'),
     ),
   ).toBe(true);
   await page.goBack();
+  await expect(page).toHaveURL(/\/loja$/);
+  await expectBeadCenteredOnActiveRoute(page, bead, "/loja");
+  expect(
+    await original!.evaluate(
+      (element) => element === document.querySelector('[class*="goldBead"]'),
+    ),
+  ).toBe(true);
   await expect(
     page.locator('nav[class*="dockBar"] a[aria-current="page"]'),
   ).toHaveAttribute("href", "/loja");
