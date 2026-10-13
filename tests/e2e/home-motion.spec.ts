@@ -72,7 +72,7 @@ test("the same dock bead travels between routes and follows browser back", async
   await context.close();
 });
 
-test("reduced motion keeps the landing readable and the collection native", async ({
+test("@local reduced motion keeps the landing readable and the collection native", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -97,7 +97,7 @@ test("reduced motion keeps the landing readable and the collection native", asyn
   );
 });
 
-test("restored landing fits the reference viewports and keeps the touch dock", async ({
+test("@local restored landing fits the reference viewports and keeps the touch dock", async ({
   browser,
 }, testInfo) => {
   test.setTimeout(90_000);
