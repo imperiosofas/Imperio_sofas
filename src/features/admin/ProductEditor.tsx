@@ -35,6 +35,8 @@ function errorMessage(error?: string) {
     return "Não foi possível salvar. Verifique se o SKU ou endereço já está em uso.";
   if (error === "lastImage")
     return "Um produto publicado precisa manter ao menos uma imagem. Adicione outra imagem ou tire o produto da loja antes de remover esta.";
+  if (error === "imageCleanupPending")
+    return "A imagem saiu do cadastro, mas o Storage não confirmou a remoção. A tarefa ficou registrada para nova tentativa.";
   return undefined;
 }
 
@@ -121,9 +123,14 @@ export function ProductEditor({
         )}
       </div>
       {message && (
-        <p className={styles.alert} role="alert">
-          {message}
-        </p>
+        <div className={styles.alert} role="alert">
+          <p>{message}</p>
+          {error === "imageCleanupPending" && (
+            <Link href="/admin/produtos/limpeza-storage">
+              Abrir tarefas de limpeza e tentar novamente
+            </Link>
+          )}
+        </div>
       )}
       {saved && (
         <p className={styles.success} role="status">

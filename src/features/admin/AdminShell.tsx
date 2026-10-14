@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Package2, Star } from "lucide-react";
+import { Package2, RotateCcw, Star } from "lucide-react";
 import styles from "./admin.module.css";
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
@@ -23,6 +23,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         <Link href="/admin/avaliacoes" className={styles.navLink}>
           <Star size={18} strokeWidth={1.8} />
           <span>Avaliações</span>
+        </Link>
+        <Link href="/admin/produtos/limpeza-storage" className={styles.navLink}>
+          <RotateCcw size={18} strokeWidth={1.8} />
+          <span>Limpeza de imagens</span>
         </Link>
         <div className={styles.sidebarFoot}>
           <span className={styles.secureDot} />

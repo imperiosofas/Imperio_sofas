@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import sharp from "sharp";
 import { requireCatalogAdmin } from "../../lib/supabase/admin-access";
+import { runCatalogStorageCleanup } from "./catalog-storage-cleanup.mjs";
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const productInput = z.object({
@@ -39,6 +40,99 @@ const formText = (formData: FormData, key: string) =>
   String(formData.get(key) ?? "").trim();
 const parseOptionalInteger = (value: string) =>
   value ? Number.parseInt(value, 10) : undefined;
+
+async function processCatalogStorageCleanup(
+  supabase: Awaited<ReturnType<typeof requireCatalogAdmin>>,
+  cleanupId: string,
+) {
+  return runCatalogStorageCleanup(cleanupId, {
+    async claim(id) {
+      const { data, error } = await supabase.rpc(
+        "admin_claim_catalog_storage_cleanup",
+        { p_cleanup_id: id },
+      );
+      if (error || !data || typeof data !== "object")
+        throw new Error("claim_failed");
+      const result = data as Record<string, unknown>;
+      if (result.outcome === "claimed") {
+        if (
+          typeof result.claim_token !== "string" ||
+          typeof result.product_id !== "string" ||
+          typeof result.bucket_id !== "string" ||
+          typeof result.storage_path !== "string"
+        )
+          throw new Error("invalid_claim");
+        return {
+          outcome: "claimed" as const,
+          claimToken: result.claim_token,
+          productId: result.product_id,
+          bucketId: result.bucket_id,
+          storagePath: result.storage_path,
+        };
+      }
+      if (["completed", "busy", "missing"].includes(String(result.outcome)))
+        return { outcome: result.outcome as "completed" | "busy" | "missing" };
+      throw new Error("invalid_claim");
+    },
+    async exists(bucketId, productId, storagePath) {
+      const filename = storagePath.slice(storagePath.lastIndexOf("/") + 1);
+      const { data, error } = await supabase.storage
+        .from(bucketId)
+        .list(`products/${productId}`, { limit: 20, search: filename });
+      if (error)
+        throw Object.assign(new Error("storage_list_failed"), {
+          code: "storage_list_failed",
+        });
+      return (data ?? []).some((object) => object.name === filename);
+    },
+    async remove(bucketId, storagePath) {
+      const { error } = await supabase.storage
+        .from(bucketId)
+        .remove([storagePath]);
+      if (error)
+        throw Object.assign(new Error("storage_remove_failed"), {
+          code: "storage_remove_failed",
+        });
+    },
+    async finish(id, claimToken, errorCode) {
+      const { data, error } = await supabase.rpc(
+        "admin_finish_catalog_storage_cleanup",
+        {
+          p_cleanup_id: id,
+          p_claim_token: claimToken,
+          p_error_code: errorCode ?? null,
+        },
+      );
+      if (error) throw new Error("finish_failed");
+      return data === true;
+    },
+  });
+}
+
+export async function retryCatalogStorageCleanup(formData: FormData) {
+  const supabase = await requireCatalogAdmin("/admin/produtos/limpeza-storage");
+  const cleanupId = z
+    .string()
+    .uuid()
+    .safeParse(formText(formData, "cleanupId"));
+  if (!cleanupId.success)
+    redirect("/admin/produtos/limpeza-storage?retry=invalid");
+
+  const cleanup = await processCatalogStorageCleanup(supabase, cleanupId.data);
+  revalidatePath("/admin/produtos/limpeza-storage");
+  redirect(
+    `/admin/produtos/limpeza-storage?retry=${cleanup.ok ? "completed" : cleanup.state}`,
+  );
+}
+
+function cleanupIds(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter(
+        (id): id is string =>
+          typeof id === "string" && z.string().uuid().safeParse(id).success,
+      )
+    : [];
+}
 
 function parsePriceCents(value: string) {
   if (!value.trim()) return undefined;
@@ -419,19 +513,11 @@ export async function deleteCatalogProduct(productId: string) {
   });
   if (error || !data || typeof data !== "object")
     return { ok: false, message: "Não foi possível remover o produto." };
-  const result = data as { outcome?: string; paths?: unknown };
+  const result = data as { outcome?: string; cleanup_ids?: unknown };
   let storageOk = true;
-  if (
-    result.outcome === "deleted" &&
-    Array.isArray(result.paths) &&
-    result.paths.length
-  ) {
-    const { error: storageError } = await supabase.storage
-      .from("catalog-images")
-      .remove(
-        result.paths.filter((path): path is string => typeof path === "string"),
-      );
-    storageOk = !storageError;
+  for (const cleanupId of cleanupIds(result.cleanup_ids)) {
+    const cleanup = await processCatalogStorageCleanup(supabase, cleanupId);
+    storageOk &&= cleanup.ok;
   }
   revalidateCatalog();
   return result.outcome === "archived"
@@ -440,12 +526,19 @@ export async function deleteCatalogProduct(productId: string) {
         message:
           "Produto arquivado para preservar itens de carrinho, avaliações ou histórico.",
       }
-    : {
-        ok: storageOk,
-        message: storageOk
-          ? "Produto excluído e imagens removidas."
-          : "Produto excluído, mas não foi possível remover todos os arquivos do Storage.",
-      };
+    : result.outcome === "already_deleted"
+      ? {
+          ok: storageOk,
+          message: storageOk
+            ? "Produto já excluído; limpeza das imagens confirmada."
+            : "Produto já excluído. A limpeza das imagens segue pendente e pode ser tentada novamente.",
+        }
+      : {
+          ok: storageOk,
+          message: storageOk
+            ? "Produto excluído e imagens removidas."
+            : "Produto excluído. A limpeza das imagens segue pendente e pode ser tentada novamente.",
+        };
 }
 
 export async function renameCategory(formData: FormData) {
@@ -564,42 +657,43 @@ export async function removeProductImage(formData: FormData) {
   const productId = formText(formData, "productId");
   const mediaId = formText(formData, "mediaId");
   const supabase = await requireCatalogAdmin(`/admin/produtos/${productId}`);
-  const idsValid =
-    z.string().uuid().safeParse(productId).success &&
-    z.string().uuid().safeParse(mediaId).success;
-  if (!idsValid) redirect("/admin/produtos");
+  if (
+    !z.string().uuid().safeParse(productId).success ||
+    !z.string().uuid().safeParse(mediaId).success
+  )
+    redirect("/admin/produtos");
 
-  const { data: media, error } = await supabase
-    .from("product_media")
-    .select("id,storage_path")
-    .eq("id", mediaId)
-    .eq("product_id", productId)
-    .maybeSingle();
-  if (error || !media) redirect(`/admin/produtos/${productId}?error=image`);
-  const [{ count, error: countError }, { data: product }] = await Promise.all([
-    supabase
-      .from("product_media")
-      .select("id", { count: "exact", head: true })
-      .eq("product_id", productId),
-    supabase
-      .from("products")
-      .select("status")
-      .eq("id", productId)
-      .maybeSingle(),
-  ]);
-  if (countError || !product)
+  const { data, error } = await supabase.rpc(
+    "admin_remove_catalog_product_media",
+    {
+      p_product_id: productId,
+      p_media_id: mediaId,
+    },
+  );
+  if (error) {
+    const code =
+      error.message === "published_product_requires_media"
+        ? "lastImage"
+        : "image";
+    redirect(`/admin/produtos/${productId}?error=${code}`);
+  }
+  const result = data as { outcome?: string; cleanup_id?: unknown } | null;
+  if (
+    !result ||
+    result.outcome !== "queued" ||
+    typeof result.cleanup_id !== "string"
+  ) {
     redirect(`/admin/produtos/${productId}?error=image`);
-  if (product.status === "active" && (count ?? 0) <= 1)
-    redirect(`/admin/produtos/${productId}?error=lastImage`);
-  const { error: deleteError } = await supabase
-    .from("product_media")
-    .delete()
-    .eq("id", mediaId)
-    .eq("product_id", productId);
-  if (deleteError) redirect(`/admin/produtos/${productId}?error=image`);
-  await supabase.storage.from("catalog-images").remove([media.storage_path]);
+    return;
+  }
+  const cleanup = await processCatalogStorageCleanup(
+    supabase,
+    result.cleanup_id,
+  );
   revalidatePath(`/admin/produtos/${productId}`);
   revalidatePath("/loja");
   revalidatePath("/loja/[categoria]", "page");
-  redirect(`/admin/produtos/${productId}?imageRemoved=1`);
+  redirect(
+    `/admin/produtos/${productId}?${cleanup.ok ? "imageRemoved=1" : "error=imageCleanupPending"}`,
+  );
 }
