@@ -24,13 +24,13 @@ Current Supabase documentation consulted: [Debugging performance issues](https:/
 
 Three sequential measured executions per case were rerun on 2026-10-13 after rechecking the remote function definitions. Values are Postgres `Execution Time`; medians and observed ranges are in milliseconds. The individual planning/execution times and exact SQL appear in [Reproducible evidence](#reproducible-evidence). These are a small-sample snapshot, not p95/p99 or an end-to-end benchmark.
 
-| PLP call / parameters | Median | Observed range | Outer plan | Buffers / temp |
-| --- | ---: | ---: | --- | --- |
-| `get_catalog_categories()` | 1.202 ms | 1.137–1.229 ms | `Function Scan`, 7 rows | 400 shared hits, 0 reads; no temp I/O |
-| `get_catalog_listing(NULL, …, 'newest', 1, 12)` | 11.040 ms | 10.629–12.817 ms | `Result`, 1 JSON row | 1,574 shared hits, 0 reads; no temp I/O |
-| `get_catalog_listing('sofas', …, 'newest', 1, 12)` | 8.380 ms | 8.259–9.337 ms | `Result`, 1 JSON row | 1,558 shared hits, 0 reads; no temp I/O |
-| `get_catalog_listing(NULL, 'sofa', …, 'newest', 1, 12)` | 8.910 ms | 8.515–9.162 ms | `Result`, 1 JSON row | 1,587 shared hits, 0 reads; no temp I/O |
-| `get_product_review_summary(12 active product IDs)` | 1.227 ms | 1.166–1.353 ms | `Function Scan`, 1 summary row | 205 shared hits, 0 reads; no temp I/O |
+| PLP call / parameters                                   |    Median |   Observed range | Outer plan                     | Buffers / temp                          |
+| ------------------------------------------------------- | --------: | ---------------: | ------------------------------ | --------------------------------------- |
+| `get_catalog_categories()`                              |  1.202 ms |   1.137–1.229 ms | `Function Scan`, 7 rows        | 400 shared hits, 0 reads; no temp I/O   |
+| `get_catalog_listing(NULL, …, 'newest', 1, 12)`         | 11.040 ms | 10.629–12.817 ms | `Result`, 1 JSON row           | 1,574 shared hits, 0 reads; no temp I/O |
+| `get_catalog_listing('sofas', …, 'newest', 1, 12)`      |  8.380 ms |   8.259–9.337 ms | `Result`, 1 JSON row           | 1,558 shared hits, 0 reads; no temp I/O |
+| `get_catalog_listing(NULL, 'sofa', …, 'newest', 1, 12)` |  8.910 ms |   8.515–9.162 ms | `Result`, 1 JSON row           | 1,587 shared hits, 0 reads; no temp I/O |
+| `get_product_review_summary(12 active product IDs)`     |  1.227 ms |   1.166–1.353 ms | `Function Scan`, 1 summary row | 205 shared hits, 0 reads; no temp I/O   |
 
 Planning time stayed below 0.5 ms in the RPC wrappers. No authenticated test identity was supplied, so the user-scoped favorites read was not benchmarked under an invented identity.
 
@@ -38,13 +38,13 @@ Planning time stayed below 0.5 ms in the RPC wrappers. No authenticated test ide
 
 The `sale` aggregation in `get_catalog_listing` was separately explained using the exact read-only relational aggregate expressions from the current remote function definition. It processed the actual 71 variants and 71 inventory rows. The full SQL and raw text-format plan are in [Reproducible evidence](#reproducible-evidence):
 
-| Plan node | Actual rows | Actual startup–total (ms) | Buffers |
-| --- | ---: | ---: | ---: |
-| Aggregate | 51 groups | 0.218–0.318 | 19 shared hits |
-| Sort | 71 | 0.200–0.206 | 19 shared hits |
-| Hash Join | 71 | 0.073–0.152 | 13 shared hits |
-| Seq Scan `product_variants` | 71 | 0.015–0.076 | 12 shared hits |
-| Seq Scan `inventory` | 71 | 0.011–0.022 | 1 shared hit |
+| Plan node                   | Actual rows | Actual startup–total (ms) |        Buffers |
+| --------------------------- | ----------: | ------------------------: | -------------: |
+| Aggregate                   |   51 groups |               0.218–0.318 | 19 shared hits |
+| Sort                        |          71 |               0.200–0.206 | 19 shared hits |
+| Hash Join                   |          71 |               0.073–0.152 | 13 shared hits |
+| Seq Scan `product_variants` |          71 |               0.015–0.076 | 12 shared hits |
+| Seq Scan `inventory`        |          71 |               0.011–0.022 |   1 shared hit |
 
 The variant/inventory sequential scans are over 71 rows each and take fractions of a millisecond; at this observed cardinality they are appropriate and do not justify an index. Existing supporting indexes include `products(category_id, status)`, `product_variants(product_id, is_active)`, `inventory(variant_id)` (primary key), `product_media(product_id, position)`, and the partial published-review index `(product_id, created_at DESC)`.
 
@@ -60,11 +60,11 @@ The variant/inventory sequential scans are over 71 rows each and take fractions 
 
 The prior command output was not available as a raw artifact in this continuation, so the measurements below were safely rerun. SQL function identity was checked first against the owner-declared TEST project. `pg_get_functiondef()` canonical definitions were fingerprinted using PostgreSQL `md5()`; these are provenance fingerprints, not security hashes.
 
-| Remote function | Exact identity arguments | Return type | Attributes before analysis | `pg_get_functiondef` chars / MD5 |
-| --- | --- | --- | --- | --- |
-| `public.get_catalog_categories` | *(none)* | `TABLE(slug text, name text, description text)` | SQL, `STABLE`, `SECURITY DEFINER`, `search_path=""` | 321 / `95f316a1f53310ab331241f648347b50` |
-| `public.get_catalog_listing` | `p_category_slug text, p_query text, p_min_price_cents integer, p_max_price_cents integer, p_widths_mm integer[], p_sort text, p_page integer, p_page_size integer` | `jsonb` | SQL, `STABLE`, `SECURITY DEFINER`, `search_path=""` | 5281 / `a0322ee241d838675c19c91f8c83e58a` |
-| `public.get_product_review_summary` | `p_product_ids uuid[]` | `TABLE(product_id uuid, review_count bigint, average_rating numeric)` | SQL, `STABLE`, `SECURITY DEFINER`, `search_path=""` | 512 / `e3c2ab46eb93d51aea54054441b53879` |
+| Remote function                     | Exact identity arguments                                                                                                                                            | Return type                                                           | Attributes before analysis                          | `pg_get_functiondef` chars / MD5          |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------- | ----------------------------------------- |
+| `public.get_catalog_categories`     | _(none)_                                                                                                                                                            | `TABLE(slug text, name text, description text)`                       | SQL, `STABLE`, `SECURITY DEFINER`, `search_path=""` | 321 / `95f316a1f53310ab331241f648347b50`  |
+| `public.get_catalog_listing`        | `p_category_slug text, p_query text, p_min_price_cents integer, p_max_price_cents integer, p_widths_mm integer[], p_sort text, p_page integer, p_page_size integer` | `jsonb`                                                               | SQL, `STABLE`, `SECURITY DEFINER`, `search_path=""` | 5281 / `a0322ee241d838675c19c91f8c83e58a` |
+| `public.get_product_review_summary` | `p_product_ids uuid[]`                                                                                                                                              | `TABLE(product_id uuid, review_count bigint, average_rating numeric)` | SQL, `STABLE`, `SECURITY DEFINER`, `search_path=""` | 512 / `e3c2ab46eb93d51aea54054441b53879`  |
 
 The SQL definitions were inspected as SELECT-only before executing `EXPLAIN ANALYZE`. Project metadata rechecked as `imperiosofas` / `qsafyqsskwbjnailgoev`, Postgres `17.6`; catalog counts remained 51 products (51 active), 7 categories, 71 variants, 107 media.
 
@@ -218,7 +218,6 @@ AS $function$
 $function$
 ```
 
-
 ### Exact statements and raw timing samples
 
 The exact statements sent to the read-only SQL interface were:
@@ -261,13 +260,13 @@ In RPC terms, the listing cases used these exact parameters in order: `(NULL, NU
 
 Raw planning/execution milliseconds (`planning / execution`), in run order:
 
-| Statement | Run 1 | Run 2 | Run 3 |
-| --- | ---: | ---: | ---: |
-| Categories | `0.043 / 1.202` | `0.044 / 1.137` | `0.055 / 1.229` |
-| Listing, all categories | `0.032 / 12.817` | `0.031 / 10.629` | `0.036 / 11.040` |
-| Listing, `sofas` | `0.031 / 8.380` | `0.033 / 9.337` | `0.032 / 8.259` |
-| Listing, search `sofa` | `0.030 / 8.910` | `0.032 / 9.162` | `0.050 / 8.515` |
-| Review summary, 12 UUIDs | `0.435 / 1.353` | `0.429 / 1.166` | `0.500 / 1.227` |
+| Statement                |            Run 1 |            Run 2 |            Run 3 |
+| ------------------------ | ---------------: | ---------------: | ---------------: |
+| Categories               |  `0.043 / 1.202` |  `0.044 / 1.137` |  `0.055 / 1.229` |
+| Listing, all categories  | `0.032 / 12.817` | `0.031 / 10.629` | `0.036 / 11.040` |
+| Listing, `sofas`         |  `0.031 / 8.380` |  `0.033 / 9.337` |  `0.032 / 8.259` |
+| Listing, search `sofa`   |  `0.030 / 8.910` |  `0.032 / 9.162` |  `0.050 / 8.515` |
+| Review summary, 12 UUIDs |  `0.435 / 1.353` |  `0.429 / 1.166` |  `0.500 / 1.227` |
 
 For each case all three runs had zero shared reads, zero temp reads/writes, and constant shared-hit counts: categories 400; all-category listing 1574; `sofas` listing 1558; search listing 1587; review summary 205. The wrapper plan roots were respectively `Function Scan` (7 rows), `Result` (1 row), `Result` (1 row), `Result` (1 row), and `Function Scan` (1 row). Because these SQL functions are security-definer, those wrapper plans do not expose nested statements.
 
