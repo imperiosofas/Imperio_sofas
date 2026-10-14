@@ -1,11 +1,12 @@
 import "server-only";
 import { z } from "zod";
+import { resolveRuntimeConfig } from "./runtime-config.mjs";
 
 const serverEnvSchema = z.object({
-  APP_ENV: z.enum(["local", "staging", "production"]).default("local"),
+  APP_ENV: z.enum(["local", "staging", "production"]),
   APP_URL: z.url().default("http://localhost:3000"),
   INTEGRATION_MODE: z.enum(["mock", "sandbox", "live"]).default("mock"),
-  CATALOG_SOURCE: z.enum(["local", "supabase"]).default("local"),
+  CATALOG_SOURCE: z.enum(["local", "supabase"]),
   NEXT_PUBLIC_SUPABASE_URL: z.url().optional(),
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1).optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
@@ -24,5 +25,11 @@ const serverEnvSchema = z.object({
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
 
 export function getServerEnv(): ServerEnv {
-  return serverEnvSchema.parse(process.env);
+  const runtimeConfig = resolveRuntimeConfig(process.env);
+
+  return serverEnvSchema.parse({
+    ...process.env,
+    APP_ENV: runtimeConfig.appEnv,
+    CATALOG_SOURCE: runtimeConfig.catalogSource,
+  });
 }

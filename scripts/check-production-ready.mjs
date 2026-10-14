@@ -1,3 +1,5 @@
+import { resolveRuntimeConfig } from "../src/lib/env/runtime-config.mjs";
+
 const requiredForProduction = [
   "APP_URL",
   "CATALOG_SOURCE",
@@ -16,11 +18,20 @@ const requiredForProduction = [
   "QUOTE_SIGNING_SECRET",
 ];
 
-const appEnv = process.env.APP_ENV ?? "local";
+let runtimeConfig;
+
+try {
+  runtimeConfig = resolveRuntimeConfig(process.env);
+} catch (error) {
+  console.error("check:production falhou:");
+  console.error(`- ${error.message}`);
+  process.exit(1);
+}
+
 const mode = process.env.INTEGRATION_MODE ?? "mock";
 
-if (appEnv !== "production") {
-  console.log(`Production check skipped for APP_ENV=${appEnv}.`);
+if (runtimeConfig.appEnv !== "production") {
+  console.log(`Production check skipped for APP_ENV=${runtimeConfig.appEnv}.`);
   process.exit(0);
 }
 
@@ -31,7 +42,7 @@ const errors = [];
 
 if (mode !== "live")
   errors.push("APP_ENV=production exige INTEGRATION_MODE=live.");
-if (process.env.CATALOG_SOURCE !== "supabase")
+if (runtimeConfig.catalogSource !== "supabase")
   errors.push("APP_ENV=production exige CATALOG_SOURCE=supabase.");
 if (missing.length > 0)
   errors.push(`Variáveis ausentes: ${missing.join(", ")}.`);

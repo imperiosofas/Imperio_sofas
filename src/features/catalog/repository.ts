@@ -1,24 +1,14 @@
 import "server-only";
 
-import { z } from "zod";
 import { localCatalogRepository } from "./localCatalogRepository";
 import { supabaseCatalogRepository } from "./supabaseCatalogRepository";
 import type { CatalogRepository } from "./types";
-
-const catalogSourceSchema = z.enum(["local", "supabase"]);
-const appEnvironmentSchema = z.enum(["local", "staging", "production"]);
+import { resolveRuntimeConfig } from "../../lib/env/runtime-config.mjs";
 
 export function getCatalogRepository(): CatalogRepository {
-  const appEnv = appEnvironmentSchema.parse(process.env.APP_ENV ?? "local");
-  const source = catalogSourceSchema.parse(
-    process.env.CATALOG_SOURCE ?? (appEnv === "local" ? "local" : "supabase"),
-  );
+  const { catalogSource } = resolveRuntimeConfig(process.env);
 
-  if (appEnv !== "local" && source !== "supabase") {
-    throw new Error("Staging e produção exigem o catálogo persistente.");
-  }
-
-  if (source === "local") return localCatalogRepository;
+  if (catalogSource === "local") return localCatalogRepository;
 
   // The server-only client is created lazily on the first database operation.
   return supabaseCatalogRepository;
