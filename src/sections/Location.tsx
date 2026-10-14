@@ -115,7 +115,7 @@ export function Location() {
             />
           ) : null}
         </div>
-        <p className="mt-4 text-xs leading-5 text-muted/70">
+        <p className="mt-4 text-xs leading-5 text-muted/80">
           Endereço e horários consultados no Google Maps em 03/09/2026. Em
           feriados, confirme antes da visita.
         </p>

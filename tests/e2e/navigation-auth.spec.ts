@@ -400,6 +400,22 @@ test("@a11y core routes and register state have no serious automated violations"
     const critical = results.violations.filter(
       (violation) => violation.impact === "critical",
     );
+    const landingSevere =
+      route === "/"
+        ? results.violations
+            .filter((violation) =>
+              ["serious", "critical"].includes(violation.impact ?? ""),
+            )
+            .flatMap((violation) =>
+              violation.nodes.map((node) => ({
+                rule: violation.id,
+                impact: violation.impact,
+                target: node.target,
+                html: node.html,
+                failureSummary: node.failureSummary,
+              })),
+            )
+        : [];
     const featureFindings = results.violations.flatMap((violation) =>
       violation.nodes
         .filter((node) =>
@@ -418,6 +434,12 @@ test("@a11y core routes and register state have no serious automated violations"
       `[axe] ${route}: ${results.violations.map((item) => `${item.id}(${item.impact}:${item.nodes.length})`).join(", ") || "sem violações"}`,
     );
     expect(critical, `${route}: findings críticos`).toEqual([]);
+    if (route === "/") {
+      expect(
+        landingSevere,
+        "/: violações serious/critical; cada item inclui seletor e cores/contraste computados pelo Axe",
+      ).toEqual([]);
+    }
     expect(
       featureFindings,
       `${route}: findings na navegação/autenticação`,

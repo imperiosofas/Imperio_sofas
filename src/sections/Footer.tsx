@@ -33,7 +33,7 @@ export function Footer() {
           </a>
         </div>
       </div>
-      <div className="shell mt-9 border-t border-white/7 pt-6 text-xs text-muted/65">
+      <div className="shell mt-9 border-t border-white/7 pt-6 text-xs text-muted/80">
         © {new Date().getFullYear()} Império Sofás. Todos os direitos
         reservados.
       </div>
