@@ -14,6 +14,7 @@ type CleanupJob = {
   status: "pending" | "processing";
   attempts: number;
   next_attempt_at: string;
+  retry_ready: boolean;
   last_error_code: string | null;
   created_at: string;
 };
@@ -141,7 +142,7 @@ export default async function CatalogStorageCleanupPage({
                   Tentativas: {job.attempts} · Criada em{" "}
                   {new Date(job.created_at).toLocaleString("pt-BR")}
                 </small>
-                {new Date(job.next_attempt_at).getTime() > Date.now() && (
+                {!job.retry_ready && (
                   <small>
                     Próxima tentativa disponível em{" "}
                     {new Date(job.next_attempt_at).toLocaleString("pt-BR")}
@@ -153,14 +154,12 @@ export default async function CatalogStorageCleanupPage({
                 <button
                   className={styles.secondaryButton}
                   type="submit"
-                  disabled={
-                    new Date(job.next_attempt_at).getTime() > Date.now()
-                  }
+                  disabled={!job.retry_ready}
                 >
                   <RotateCcw size={15} />
-                  {new Date(job.next_attempt_at).getTime() > Date.now()
-                    ? "Aguardando intervalo"
-                    : "Tentar novamente"}
+                  {job.retry_ready
+                    ? "Tentar novamente"
+                    : "Aguardando intervalo"}
                 </button>
               </form>
             </article>

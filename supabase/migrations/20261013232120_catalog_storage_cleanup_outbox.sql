@@ -231,7 +231,11 @@ begin
   return (
     with pending_jobs as materialized (
       select o.id as cleanup_id, o.product_id, p.name as product_name, o.status,
-        o.attempts, o.next_attempt_at, o.last_error_code, o.created_at
+        o.attempts, o.next_attempt_at, o.last_error_code, o.created_at,
+        (
+          (o.status = 'pending' and o.next_attempt_at <= now())
+          or (o.status = 'processing' and o.lease_until <= now())
+        ) as retry_ready
       from private.catalog_storage_cleanup_outbox o
       left join public.products p on p.id = o.product_id
       where (

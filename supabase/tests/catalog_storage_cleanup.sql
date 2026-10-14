@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(30);
+select plan(32);
 insert into storage.buckets (id, name, public)
 values ('catalog-images', 'catalog-images', false)
 on conflict (id) do nothing;
@@ -68,6 +68,14 @@ select is(
   1,
   'admin can find a pending cleanup using the durable outbox after media deletion'
 );
+select ok(
+  (
+    select (job->>'retry_ready')::boolean
+    from jsonb_array_elements(public.admin_list_catalog_storage_cleanup()->'jobs') as jobs(job)
+    where job->>'cleanup_id' = (select result->>'cleanup_id' from cleanup_test_result)
+  ),
+  'list RPC reports an immediately retryable pending job using database time'
+);
 
 reset role;
 insert into private.catalog_storage_cleanup_outbox (
@@ -114,6 +122,14 @@ select is(
   public.admin_claim_catalog_storage_cleanup((select (result->>'cleanup_id')::uuid from cleanup_test_result))->>'outcome',
   'busy',
   'immediate repeated claim is blocked during cooldown'
+);
+select ok(
+  not (
+    select (job->>'retry_ready')::boolean
+    from jsonb_array_elements(public.admin_list_catalog_storage_cleanup()->'jobs') as jobs(job)
+    where job->>'cleanup_id' = (select result->>'cleanup_id' from cleanup_test_result)
+  ),
+  'list RPC reports a failed job as not ready during its cooldown using database time'
 );
 reset role;
 update private.catalog_storage_cleanup_outbox
