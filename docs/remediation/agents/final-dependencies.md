@@ -1,7 +1,7 @@
 # DEP-002 — dependency advisory revalidation
 
-Date: 2026-10-13  
-Branch: `codex/final-dep002`  
+Date: 2026-10-13
+Branch: `codex/final-dep002`
 Base: `8af0f4786d376ac9136f04eb2c8a421bfe157213`
 
 ## Verdict
