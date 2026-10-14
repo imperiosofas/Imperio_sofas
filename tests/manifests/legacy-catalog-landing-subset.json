@@ -1,0 +1,38 @@
+{
+  "source": {
+    "file": "legacy-catalog-inventory.json",
+    "sha256": "67CCBC45449DAB0C239C077B3BCBE56B48EA31298867A934311C136FB1F97822",
+    "totals": {
+      "categories": 7,
+      "products": 51,
+      "images": 107,
+      "activeVariants": 35
+    }
+  },
+  "category": {
+    "sourceId": "04855dcf-b5bd-4149-b498-ca2507b02731",
+    "slug": "sofas"
+  },
+  "products": [
+    {
+      "sourceId": "38109fe5-759b-49c2-ab5d-dd1a0dd986fa",
+      "name": "Sofá Belize",
+      "sourceSlug": "sofas-sofa-belize"
+    },
+    {
+      "sourceId": "ca706444-d0fc-4960-985c-07b7a394705b",
+      "name": "Sofá Berlim",
+      "sourceSlug": "Sofa-berlim"
+    },
+    {
+      "sourceId": "12acf0d4-4789-43e7-8ed6-c008c3796150",
+      "name": "Sofá Dallas",
+      "sourceSlug": "sofas-sofa-dallas"
+    },
+    {
+      "sourceId": "bcb67959-c58d-4505-a8aa-5833693c7461",
+      "name": "Sofá Máximo",
+      "sourceSlug": "sofas-sofa-maximo"
+    }
+  ]
+}

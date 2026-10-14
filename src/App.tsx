@@ -10,8 +10,15 @@ import { Hero } from "./sections/Hero";
 import { Location } from "./sections/Location";
 import { Reviews } from "./sections/Reviews";
 import { FloatingContact } from "./sections/FloatingContact";
+import type { LandingCatalogProduct } from "./data/products";
 
-function App() {
+function App({
+  landingProducts,
+  catalogUnavailable = false,
+}: {
+  landingProducts: LandingCatalogProduct[];
+  catalogUnavailable?: boolean;
+}) {
   return (
     <MotionConfig reducedMotion="user">
       <div className="landing-fonts min-h-screen overflow-x-clip bg-ink text-ivory selection:bg-gold selection:text-ink">
@@ -19,7 +26,10 @@ function App() {
         <main>
           <Hero />
           <Differentials />
-          <Catalog />
+          <Catalog
+            products={landingProducts}
+            catalogUnavailable={catalogUnavailable}
+          />
           <Reviews />
           <Location />
           <FinalCta />

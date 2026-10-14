@@ -2,14 +2,25 @@ import { ArrowLeft, ArrowRight, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRef } from "react";
 import { useEnhancedMotion } from "../lib/useEnhancedMotion";
-import { products } from "../data/products";
+import { formatBrlFromCents } from "../lib/money";
+import type { LandingCatalogProduct } from "../data/products";
 import { SectionHeading } from "../components/SectionHeading";
 import { WhatsAppLink } from "../components/WhatsAppLink";
 import { StorePhoto } from "../components/StorePhoto";
 import { FULL_CATALOG_URL } from "../lib/links";
 import styles from "./landing-motion.module.css";
 
-export function Catalog() {
+function formatWidth(widthMm: number): string {
+  return `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(widthMm / 1000)} m`;
+}
+
+export function Catalog({
+  products,
+  catalogUnavailable = false,
+}: {
+  products: LandingCatalogProduct[];
+  catalogUnavailable?: boolean;
+}) {
   const enhanced = useEnhancedMotion();
   const viewportRef = useRef<HTMLDivElement>(null);
 
@@ -39,22 +50,24 @@ export function Catalog() {
             title="Um sofá para cada jeito de viver."
             copy="Explore alguns estilos e chame no WhatsApp para conferir medidas, tecidos e disponibilidade."
           />
-          <div className="hidden gap-3 md:flex lg:hidden">
-            <button
-              className="catalog-prev grid size-12 place-items-center rounded-full border border-white/12 text-ivory transition hover:border-gold/50 hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
-              aria-label="Produto anterior"
-              onClick={() => moveCatalog(-1)}
-            >
-              <ArrowLeft size={20} />
-            </button>
-            <button
-              className="catalog-next grid size-12 place-items-center rounded-full border border-white/12 text-ivory transition hover:border-gold/50 hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
-              aria-label="Próximo produto"
-              onClick={() => moveCatalog(1)}
-            >
-              <ArrowRight size={20} />
-            </button>
-          </div>
+          {products.length > 1 && (
+            <div className="hidden gap-3 md:flex lg:hidden">
+              <button
+                className="catalog-prev grid size-12 place-items-center rounded-full border border-white/12 text-ivory transition hover:border-gold/50 hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
+                aria-label="Produto anterior"
+                onClick={() => moveCatalog(-1)}
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <button
+                className="catalog-next grid size-12 place-items-center rounded-full border border-white/12 text-ivory transition hover:border-gold/50 hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
+                aria-label="Próximo produto"
+                onClick={() => moveCatalog(1)}
+              >
+                <ArrowRight size={20} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
       <div
@@ -66,56 +79,103 @@ export function Catalog() {
         aria-label="Modelos de sofá em destaque"
       >
         <div className={styles.collectionTrack} data-collection-track>
-          {products.map((product) => (
-            <motion.article
-              key={product.name}
-              data-collection-card
-              data-mobile-motion-card
-              whileHover={enhanced ? { y: -6 } : undefined}
-              whileTap={enhanced ? undefined : { scale: 0.99 }}
-              transition={{ duration: 0.22 }}
-              className={`${styles.collectionCard} overflow-hidden rounded-[1.5rem] border border-white/9 bg-card shadow-2xl shadow-black/30`}
-            >
-              <div className="relative aspect-[11/10] overflow-hidden bg-card">
-                <img
-                  src={product.image}
-                  srcSet={product.srcSet}
-                  sizes="(max-width: 639px) calc(100vw - 56px), (max-width: 899px) 65vw, (max-width: 1279px) 47vw, 37vw"
-                  width="1100"
-                  height="1000"
-                  loading="lazy"
-                  decoding="async"
-                  alt={product.alt}
-                  style={{ objectPosition: product.objectPosition }}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              <div className="p-5 sm:p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-semibold uppercase tracking-[.12em] text-gold">
-                      {product.size}
-                    </p>
-                    <h3 className="mt-2 font-display text-3xl font-semibold text-ivory">
-                      {product.name}
-                    </h3>
+          {products.length ? (
+            products.map((product) => {
+              const image = product.media.find(
+                (media) => media.src && media.alt,
+              );
+              if (!image) return null;
+
+              return (
+                <motion.article
+                  key={product.id}
+                  data-collection-card
+                  data-mobile-motion-card
+                  whileHover={enhanced ? { y: -6 } : undefined}
+                  whileTap={enhanced ? undefined : { scale: 0.99 }}
+                  transition={{ duration: 0.22 }}
+                  className={`${styles.collectionCard} overflow-hidden rounded-[1.5rem] border border-white/9 bg-card shadow-2xl shadow-black/30`}
+                >
+                  <div className="relative aspect-[11/10] overflow-hidden bg-card">
+                    <img
+                      src={image.src}
+                      sizes="(max-width: 639px) calc(100vw - 56px), (max-width: 899px) 65vw, (max-width: 1279px) 47vw, 37vw"
+                      width="1100"
+                      height="1000"
+                      loading="lazy"
+                      decoding="async"
+                      alt={image.alt}
+                      style={{ objectPosition: product.objectPosition }}
+                      className="h-full w-full object-cover"
+                    />
                   </div>
-                </div>
-                <div className="mt-7 flex items-center justify-between gap-3 border-t border-white/8 pt-5">
-                  <p className="font-semibold text-ivory">{product.price}</p>
-                  <WhatsAppLink
-                    message={`Olá! Quero saber mais sobre o ${product.name} de ${product.size}, anunciado por ${product.price}.`}
-                    aria-label={`Consultar ${product.name} no WhatsApp`}
-                    className="grid size-11 shrink-0 place-items-center rounded-full bg-gold text-ink transition hover:scale-105 hover:bg-gold-light focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
-                  >
-                    <MessageCircle size={19} aria-hidden="true" />
-                  </WhatsAppLink>
-                </div>
-              </div>
-            </motion.article>
-          ))}
+                  <div className="p-5 sm:p-6">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        {product.widthMm !== null && (
+                          <p className="text-sm font-semibold uppercase tracking-[.12em] text-gold">
+                            Opções a partir de {formatWidth(product.widthMm)}
+                          </p>
+                        )}
+                        <h3 className="mt-2 font-display text-3xl font-semibold text-ivory">
+                          {product.name}
+                        </h3>
+                        <p className="mt-2 text-xs font-medium uppercase tracking-[.12em] text-muted">
+                          {product.stockStatus === "low_stock"
+                            ? "Últimas unidades"
+                            : "Disponível"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-7 flex items-center justify-between gap-3 border-t border-white/8 pt-5">
+                      <p className="font-semibold text-ivory">
+                        A partir de {formatBrlFromCents(product.priceCents)}
+                      </p>
+                      <WhatsAppLink
+                        message={`Olá! Quero saber mais sobre o ${product.name}.`}
+                        aria-label={`Consultar ${product.name} no WhatsApp`}
+                        className="grid size-11 shrink-0 place-items-center rounded-full bg-gold text-ink transition hover:scale-105 hover:bg-gold-light focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
+                      >
+                        <MessageCircle size={19} aria-hidden="true" />
+                      </WhatsAppLink>
+                    </div>
+                  </div>
+                </motion.article>
+              );
+            })
+          ) : (
+            <div
+              className="mx-auto w-[min(84vw,42rem)] self-center rounded-[1.5rem] border border-white/9 bg-card px-6 py-10 text-center sm:px-10"
+              data-collection-empty
+              data-empty-reason={
+                catalogUnavailable ? "lookup-failure" : "no-published-selection"
+              }
+              role="status"
+            >
+              <p className="eyebrow">
+                {catalogUnavailable
+                  ? "Catálogo temporariamente indisponível"
+                  : "Seleção em atualização"}
+              </p>
+              <p className="mt-3 font-display text-2xl font-semibold text-ivory sm:text-3xl">
+                {catalogUnavailable
+                  ? "Não foi possível carregar os modelos em destaque agora."
+                  : "Os modelos em destaque aparecem aqui após a confirmação do catálogo."}
+              </p>
+            </div>
+          )}
         </div>
       </div>
+      {catalogUnavailable && products.length > 0 && (
+        <p
+          className="shell mt-3 text-center text-xs leading-5 text-muted/80"
+          data-catalog-partial-failure
+          role="status"
+        >
+          Alguns modelos não puderam ser carregados agora; os disponíveis
+          continuam visíveis.
+        </p>
+      )}
       <p className="shell mt-2 text-center text-xs leading-5 text-muted/80">
         Consulte disponibilidade, opções de tecido e condições de pagamento pelo
         WhatsApp.

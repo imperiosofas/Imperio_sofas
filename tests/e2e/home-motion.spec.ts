@@ -174,23 +174,42 @@ test("@local restored landing fits the reference viewports and keeps the touch d
     if (viewport.width === 390) {
       const collection = mobilePage.locator("[data-collection-viewport]");
       await expect(collection).toBeVisible();
-      const canSwipeCollection = await collection.evaluate((element) => {
-        const viewport = element as HTMLElement;
-        return viewport.scrollWidth > viewport.clientWidth;
-      });
-      expect(canSwipeCollection).toBe(true);
-      await collection.evaluate((element) => {
-        const viewport = element as HTMLElement;
-        viewport.scrollLeft = viewport.clientWidth;
-      });
-      await expect
-        .poll(() =>
-          collection.evaluate((element) => (element as HTMLElement).scrollLeft),
-        )
-        .toBeGreaterThan(0);
-      await collection.evaluate((element) => {
-        (element as HTMLElement).scrollLeft = 0;
-      });
+      const cards = collection.locator("[data-collection-card]");
+      if ((await cards.count()) > 0) {
+        const canSwipeCollection = await collection.evaluate((element) => {
+          const viewport = element as HTMLElement;
+          return viewport.scrollWidth > viewport.clientWidth;
+        });
+        expect(canSwipeCollection).toBe(true);
+        await collection.evaluate((element) => {
+          const viewport = element as HTMLElement;
+          viewport.scrollLeft = viewport.clientWidth;
+        });
+        await expect
+          .poll(() =>
+            collection.evaluate(
+              (element) => (element as HTMLElement).scrollLeft,
+            ),
+          )
+          .toBeGreaterThan(0);
+        await collection.evaluate((element) => {
+          (element as HTMLElement).scrollLeft = 0;
+        });
+      } else {
+        const emptyState = collection.locator("[data-collection-empty]");
+        await expect(emptyState).toBeVisible();
+        await expect(emptyState).toHaveAttribute(
+          "data-empty-reason",
+          "no-published-selection",
+        );
+        await expect(emptyState).toContainText("Seleção em atualização");
+      }
+      await expect(mobilePage.locator("#catalogo")).not.toContainText(
+        "12x de R$",
+      );
+      await expect(mobilePage.locator("#catalogo")).not.toContainText(
+        "Sofá Ferrari",
+      );
       await mobilePage.evaluate(() => document.fonts.ready);
       await revealAndLoadFullPage(mobilePage);
       await mobilePage.screenshot({
