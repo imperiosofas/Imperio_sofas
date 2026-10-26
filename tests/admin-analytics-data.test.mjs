@@ -69,7 +69,6 @@ registerHooks({
       return nextResolve(specifier, context);
     }
 
-
     if (specifier === "../../lib/supabase/admin-access") {
       const source = `export async function requireCatalogAdmin() {
         return globalThis[Symbol.for(${JSON.stringify(serviceDependenciesKey.description)})].requireCatalogAdmin();
