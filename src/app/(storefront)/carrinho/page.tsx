@@ -15,5 +15,6 @@ export const dynamic = "force-dynamic";
 export default async function CartPage() {
   const { userId } = await getCommerceIdentity();
   if (!userId) redirect("/conta?next=%2Fcarrinho");
-  return <CartExperience items={await getMyCart()} />;
+  const cart = await getMyCart();
+  return <CartExperience items={cart.items} logistics={cart.logistics} />;
 }

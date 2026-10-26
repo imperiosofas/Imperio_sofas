@@ -8,6 +8,7 @@ import type { ProductDetail, ProductReview, ReviewSummary } from "./data";
 import { saveReview, removeReview, addCartItem } from "./actions";
 import { FavoriteButton } from "./FavoriteButton";
 import { formatBrlFromCents } from "../../lib/money";
+import type { PublicProductLogistics } from "../logistics/types";
 import styles from "./commerce.module.css";
 
 const meters = (mm: number) => `${(mm / 1000).toFixed(2).replace(".", ",")} m`;
@@ -19,6 +20,7 @@ export function ProductExperience({
   favorite,
   signedIn,
   ownReviewId,
+  logistics,
 }: {
   product: ProductDetail;
   reviews: ProductReview[];
@@ -26,6 +28,7 @@ export function ProductExperience({
   favorite: boolean;
   signedIn: boolean;
   ownReviewId: string | null;
+  logistics: PublicProductLogistics | null;
 }) {
   const [selected, setSelected] = useState(product.variants[0].id);
   const [photo, setPhoto] = useState(0);
@@ -139,6 +142,67 @@ export function ProductExperience({
             {product.description.trim() && (
               <p className={styles.descriptionLead}>{product.description}</p>
             )}
+            <section className={styles.logisticsInfo} aria-label="Logística">
+              <p className={styles.logisticsEyebrow}>ENTREGA E RETIRADA</p>
+              {!logistics ? (
+                <p>
+                  Não foi possível consultar as opções logísticas deste produto
+                  agora.
+                </p>
+              ) : !logistics.supplierAssigned ||
+                !logistics.supplierCode ||
+                !logistics.supplierActive ? (
+                <p>
+                  As opções de entrega e retirada ainda não estão disponíveis
+                  para este produto.
+                </p>
+              ) : (
+                <>
+                  <strong>
+                    {logistics.supplierName ?? logistics.supplierCode}
+                  </strong>
+                  <p>
+                    {logistics.fulfillmentModes.includes("delivery")
+                      ? "Entrega disponível mediante cotação do frete."
+                      : "Entrega não disponível para este produto."}
+                    {logistics.fulfillmentModes.includes("pickup")
+                      ? " Você também pode retirar em um dos locais informados."
+                      : ""}
+                  </p>
+                  {logistics.minBusinessDays !== null &&
+                  logistics.maxBusinessDays !== null ? (
+                    <p>
+                      Prazo estimado:{" "}
+                      {logistics.minBusinessDays === logistics.maxBusinessDays
+                        ? logistics.minBusinessDays
+                        : `${logistics.minBusinessDays} a ${logistics.maxBusinessDays}`}{" "}
+                      dias úteis após a confirmação do pagamento.
+                    </p>
+                  ) : null}
+                  {logistics.deliveryQuoteRequired ? (
+                    <p>
+                      O valor da entrega é confirmado após análise do CEP e do
+                      endereço.
+                    </p>
+                  ) : null}
+                  {logistics.pickupLocations.length ? (
+                    <ul>
+                      {logistics.pickupLocations.map((location) => (
+                        <li key={location.id}>
+                          {location.displayName}: {location.street},{" "}
+                          {location.streetNumber}, {location.neighborhood},{" "}
+                          {location.cityName}/{location.stateCode}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  <small>
+                    O adicional por andar é calculado uma vez por endereço,
+                    quando aplicável. A cotação não cria pedido nem pagamento.
+                  </small>
+                </>
+              )}
+            </section>
             <div className={styles.rule} />
             {product.variants.length > 1 && (
               <fieldset className={styles.variantSet}>

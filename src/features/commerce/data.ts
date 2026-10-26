@@ -3,6 +3,15 @@ import { cache } from "react";
 import { z } from "zod";
 import { createSupabaseServerClient } from "../../lib/supabase/server";
 import type { PublishedCatalogProduct } from "../catalog/types";
+import {
+  getCartLogisticsProjection,
+  toCartItemLogistics,
+  toCartLogisticsPresentation,
+} from "../logistics/storefront-data";
+import type {
+  CartItemLogistics,
+  CartLogisticsPresentation,
+} from "../logistics/types";
 
 const variant = z.object({
   id: z.string().uuid(),
@@ -68,7 +77,14 @@ export type ProductDetail = z.infer<typeof detail> & {
 };
 export type ProductReview = z.infer<typeof review>;
 export type ReviewSummary = z.infer<typeof summary>;
-export type CartItem = z.infer<typeof cartItem> & { imageSrc: string | null };
+export type CartItem = z.infer<typeof cartItem> & {
+  imageSrc: string | null;
+  logistics: CartItemLogistics | null;
+};
+export type CartPageData = {
+  items: CartItem[];
+  logistics: CartLogisticsPresentation | null;
+};
 
 export const getCommerceIdentity = cache(async () => {
   const client = await createSupabaseServerClient();
@@ -203,10 +219,14 @@ export async function getMyReviewId(productId: string): Promise<string | null> {
   return data?.id ?? null;
 }
 
-export async function getMyCart(): Promise<CartItem[]> {
+export async function getMyCart(): Promise<CartPageData> {
   const { client, userId } = await getCommerceIdentity();
-  if (!client || !userId) return [];
-  const { data, error } = await client.rpc("get_my_cart");
+  if (!client || !userId) return { items: [], logistics: null };
+  const [cartResult, logisticsProjection] = await Promise.all([
+    client.rpc("get_my_cart"),
+    getCartLogisticsProjection(client),
+  ]);
+  const { data, error } = cartResult;
   if (error) throw new Error("Não foi possível carregar o carrinho.");
   const rows = z.array(cartItem).parse(data);
   const paths = [
@@ -225,8 +245,14 @@ export async function getMyCart(): Promise<CartItem[]> {
       if (url.signedUrl) signed.set(paths[index], url.signedUrl);
     });
   }
-  return rows.map((row) => ({
-    ...row,
-    imageSrc: row.storage_path ? (signed.get(row.storage_path) ?? null) : null,
-  }));
+  return {
+    items: rows.map((row) => ({
+      ...row,
+      imageSrc: row.storage_path
+        ? (signed.get(row.storage_path) ?? null)
+        : null,
+      logistics: toCartItemLogistics(logisticsProjection, row.variant_id),
+    })),
+    logistics: toCartLogisticsPresentation(logisticsProjection),
+  };
 }

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { resolveAppUrl } from "../../../../lib/env/app-url.mjs";
 import { ProductExperience } from "../../../../features/commerce/ProductExperience";
+import { getPublicProductLogistics } from "../../../../features/logistics/storefront-data";
 import {
   getMyFavorites,
   getMyReviewId,
@@ -28,12 +30,14 @@ export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
   const product = await getProductDetail(slug);
   if (!product) notFound();
-  const [reviews, summaries, favorites, ownReviewId] = await Promise.all([
-    getProductReviews(product.id),
-    getReviewSummaries([product.id]),
-    getMyFavorites([product.id]),
-    getMyReviewId(product.id),
-  ]);
+  const [reviews, summaries, favorites, ownReviewId, logistics] =
+    await Promise.all([
+      getProductReviews(product.id),
+      getReviewSummaries([product.id]),
+      getMyFavorites([product.id]),
+      getMyReviewId(product.id),
+      getPublicProductLogistics(slug),
+    ]);
   const summary = summaries.get(product.id);
   const prices = product.variants.map((variant) => variant.price_cents / 100);
   const lowest = Math.min(...prices);
@@ -43,10 +47,7 @@ export default async function ProductPage({ params }: Props) {
     "@type": "Product",
     name: product.name,
     description: product.description,
-    url: new URL(
-      `/produto/${product.slug}`,
-      process.env.APP_URL ?? "http://localhost:3000",
-    ).toString(),
+    url: new URL(`/produto/${product.slug}`, resolveAppUrl()).toString(),
     offers:
       lowest === highest
         ? {
@@ -88,6 +89,7 @@ export default async function ProductPage({ params }: Props) {
         favorite={favorites.ids.has(product.id)}
         signedIn={!!favorites.userId}
         ownReviewId={ownReviewId}
+        logistics={logistics}
       />
     </>
   );

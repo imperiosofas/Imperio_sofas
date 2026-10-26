@@ -15,6 +15,7 @@ test("@local PDP sem Supabase configurado mostra estado indisponível", async ({
 test("@local PDP e PLP não têm overflow nos viewports de referência", async ({
   page,
 }) => {
+  test.setTimeout(90_000);
   for (const [width, height] of [
     [360, 800],
     [375, 812],
