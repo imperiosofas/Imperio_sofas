@@ -461,7 +461,7 @@ test("email token-hash GET waits for an explicit POST confirmation", async ({
     "/auth/callback?token_hash=test-only-not-a-valid-token&type=email&next=%2Fcarrinho",
   );
   await expect(
-    page.getByRole("heading", { name: "Confirme seu acesso" }),
+    page.getByRole("heading", { name: "Confirme seu e-mail" }),
   ).toBeVisible();
   const form = page.locator("form");
   await expect(form).toHaveAttribute("method", "post");
@@ -469,8 +469,23 @@ test("email token-hash GET waits for an explicit POST confirmation", async ({
   await expect(form.locator('input[name="type"]')).toHaveValue("email");
   await expect(form.locator('input[name="next"]')).toHaveValue("/carrinho");
   await expect(
-    form.getByRole("button", { name: "Confirmar e continuar" }),
+    form.getByRole("button", { name: "Confirmar e-mail" }),
   ).toBeVisible();
+});
+
+test("recovery token-hash GET shows the new-password confirmation", async ({
+  page,
+}) => {
+  await page.goto(
+    "/auth/confirm?token_hash=test-only-not-a-valid-token&type=recovery&next=%2Fconta%2Fredefinir-senha",
+  );
+  await expect(
+    page.getByRole("heading", { name: "Crie uma nova senha" }),
+  ).toBeVisible();
+  const form = page.locator("form");
+  await expect(form).toHaveAttribute("action", "/auth/confirm");
+  await expect(form.locator('input[name="type"]')).toHaveValue("recovery");
+  await expect(form.getByRole("button", { name: "Continuar" })).toBeVisible();
 });
 
 test("confirmation failures preserve a safe cart destination", async ({

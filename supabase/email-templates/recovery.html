@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
+    <title>Crie uma nova senha</title>
+  </head>
+  <body style="margin:0;padding:0;background-color:#efe9dc;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#efe9dc;font-size:1px;line-height:1px;">
+      Escolha uma nova senha para sua conta na Império Sofás.
+    </div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#efe9dc;">
+      <tr>
+        <td align="center" style="padding:32px 16px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;">
+            <tr>
+              <td align="center" style="background-color:#070b14;border-radius:20px 20px 0 0;padding:30px 24px 26px;">
+                <img src="{{ .SiteURL }}/email-logo.png" width="64" height="64" alt="Império Sofás" style="display:block;border:0;border-radius:32px;width:64px;height:64px;" />
+                <div style="padding-top:14px;font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:28px;color:#f4efe4;">Império Sofás</div>
+                <div style="padding-top:4px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;letter-spacing:0.04em;color:#d7aa42;">Vale do Paraíba</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="height:3px;line-height:3px;font-size:3px;background-color:#c39336;">&nbsp;</td>
+            </tr>
+            <tr>
+              <td style="background-color:#fbf8f1;border-radius:0 0 20px 20px;padding:36px 32px 30px;">
+                <h1 style="margin:0 0 14px;font-family:Georgia,'Times New Roman',serif;font-size:30px;line-height:34px;font-weight:normal;color:#1a1712;">Crie uma nova senha</h1>
+                <p style="margin:0 0 26px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:25px;color:#4a443a;">
+                  Recebemos um pedido para redefinir a senha da sua conta na Império Sofás. Toque no botão para escolher uma nova senha.
+                </p>
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;">
+                  <tr>
+                    <td align="center" bgcolor="#c39336" style="border-radius:12px;background:linear-gradient(90deg,#c39336,#f4d47d 52%,#c39336);">
+                      <a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=recovery" style="display:inline-block;padding:15px 34px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;font-weight:bold;color:#1a1305;text-decoration:none;border-radius:12px;">Escolher nova senha</a>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:#6b6457;">
+                  O botão não abre? Copie este endereço e cole no navegador:
+                </p>
+                <p style="margin:0 0 26px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;word-break:break-all;">
+                  <a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=recovery" style="color:#8a6720;">{{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}&amp;type=recovery</a>
+                </p>
+                <div style="border-top:1px solid #e6dfcf;padding-top:20px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:#6b6457;">
+                  Se você não pediu para redefinir a senha, ignore esta mensagem. Sua senha atual continua valendo.
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:20px 16px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#8a8372;">
+                Império Sofás &middot; Taubaté, SP
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

@@ -30,17 +30,14 @@ export async function GET(request: NextRequest) {
   const destination = getSafeAuthReturnTo(
     request.nextUrl.searchParams.get("next"),
   );
-  const supabase = await createSupabaseServerClient();
   const type: ConfirmationOtpType | null =
     requestedType === "email" || requestedType === "recovery"
       ? requestedType
       : null;
 
-  if (!supabase) {
-    return redirectToConfirmationError(request, destination);
-  }
-
   if (code) {
+    const supabase = await createSupabaseServerClient();
+    if (!supabase) return redirectToConfirmationError(request, destination);
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) return redirectToConfirmationError(request, destination);
     return redirectNoStore(new URL(destination, request.url));
@@ -50,6 +47,7 @@ export async function GET(request: NextRequest) {
     return redirectToConfirmationError(request, destination);
   }
 
+  // The interstitial only renders a form; the token is verified on POST.
   return createConfirmationInterstitialResponse({
     actionPath: "/auth/confirm",
     tokenHash,
