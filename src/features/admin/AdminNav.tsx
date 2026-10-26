@@ -108,7 +108,7 @@ const adminNavGroups: readonly AdminNavGroup[] = [
           !isRouteOrDescendant(pathname, "/admin/produtos/limpeza-storage"),
       },
       {
-        label: "Avaliações",
+        label: "Avaliações e curtidas",
         href: "/admin/avaliacoes",
         icon: Star,
         isActive: (pathname) =>

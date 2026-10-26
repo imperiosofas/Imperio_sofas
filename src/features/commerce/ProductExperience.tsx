@@ -4,9 +4,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, Minus, Plus, Star } from "lucide-react";
-import type { ProductDetail, ProductReview, ReviewSummary } from "./data";
-import { saveReview, removeReview, addCartItem } from "./actions";
+import type {
+  MyReview,
+  ProductDetail,
+  ProductReview,
+  ReviewSummary,
+} from "./data";
+import { addCartItem } from "./actions";
 import { FavoriteButton } from "./FavoriteButton";
+import { ReviewsSection } from "./ReviewsSection";
 import { formatBrlFromCents } from "../../lib/money";
 import type { PublicProductLogistics } from "../logistics/types";
 import styles from "./commerce.module.css";
@@ -19,7 +25,7 @@ export function ProductExperience({
   summary,
   favorite,
   signedIn,
-  ownReviewId,
+  ownReview,
   logistics,
 }: {
   product: ProductDetail;
@@ -27,7 +33,7 @@ export function ProductExperience({
   summary?: ReviewSummary;
   favorite: boolean;
   signedIn: boolean;
-  ownReviewId: string | null;
+  ownReview: MyReview | null;
   logistics: PublicProductLogistics | null;
 }) {
   const [selected, setSelected] = useState(product.variants[0].id);
@@ -35,9 +41,6 @@ export function ProductExperience({
   const [quantity, setQuantity] = useState(1);
   const [notice, setNotice] = useState("");
   const [pending, startTransition] = useTransition();
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState("");
-  const [reviewNotice, setReviewNotice] = useState("");
   const router = useRouter();
   const variant = product.variants.find((item) => item.id === selected)!;
   const images = product.images.filter(
@@ -352,143 +355,14 @@ export function ProductExperience({
             </details>
           )}
         </section>
-        <section
-          id="avaliacoes"
-          className={styles.reviews}
-          aria-labelledby="review-title"
-        >
-          <div className={styles.reviewHead}>
-            <div>
-              <p className={styles.eyebrow}>Opiniões de clientes</p>
-              <h2 id="review-title">Avaliações</h2>
-            </div>
-            {summary && summary.review_count > 0 && (
-              <p>
-                <Star fill="currentColor" size={22} />{" "}
-                {summary.average_rating.toFixed(1).replace(".", ",")}{" "}
-                <span>· {summary.review_count} avaliações</span>
-              </p>
-            )}
-          </div>
-          {signedIn ? (
-            <form
-              className={styles.reviewForm}
-              onSubmit={(event) => {
-                event.preventDefault();
-                startTransition(async () => {
-                  const result = await saveReview(product.id, rating, comment);
-                  setReviewNotice(result.message);
-                  if (result.ok) {
-                    setComment("");
-                    router.refresh();
-                  }
-                });
-              }}
-            >
-              <h3>Sua avaliação</h3>
-              <fieldset>
-                <legend>Nota</legend>
-                <div className={styles.stars}>
-                  {[1, 2, 3, 4, 5].map((value) => (
-                    <label key={value}>
-                      <input
-                        type="radio"
-                        name="rating"
-                        value={value}
-                        checked={rating === value}
-                        onChange={() => setRating(value)}
-                        required
-                      />
-                      <Star
-                        size={25}
-                        fill={value <= rating ? "currentColor" : "none"}
-                      />
-                      <span className="sr-only">
-                        {value} {value === 1 ? "estrela" : "estrelas"}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-              <label className={styles.commentLabel}>
-                Comentário (opcional)
-                <textarea
-                  value={comment}
-                  onChange={(event) => setComment(event.target.value)}
-                  maxLength={2000}
-                  rows={3}
-                />
-              </label>
-              <button type="submit" disabled={pending || rating === 0}>
-                Publicar avaliação
-              </button>
-              <span role="status">{reviewNotice}</span>
-            </form>
-          ) : (
-            <Link
-              className={styles.reviewLogin}
-              href={`/conta?next=${encodeURIComponent(returnTo)}`}
-            >
-              Entre para avaliar este produto <ArrowRight size={16} />
-            </Link>
-          )}
-          <div className={styles.reviewList}>
-            {ownReviewId &&
-              !reviews.some((item) => item.id === ownReviewId) && (
-                <article>
-                  <p>Sua avaliação está oculta.</p>
-                  <button
-                    type="button"
-                    disabled={pending}
-                    onClick={() =>
-                      startTransition(async () => {
-                        const result = await removeReview(product.id);
-                        setReviewNotice(result.message);
-                        router.refresh();
-                      })
-                    }
-                  >
-                    Remover meus dados da avaliação
-                  </button>
-                </article>
-              )}
-            {reviews.length ? (
-              reviews.map((item) => (
-                <article key={item.id}>
-                  <div className={styles.reviewMeta}>
-                    <strong>{item.display_name}</strong>
-                    <span>
-                      {"★".repeat(item.rating)}
-                      {"☆".repeat(5 - item.rating)}
-                    </span>
-                    <time dateTime={item.created_at}>
-                      {new Intl.DateTimeFormat("pt-BR", {
-                        dateStyle: "medium",
-                      }).format(new Date(item.created_at))}
-                    </time>
-                  </div>
-                  {item.comment && <p>{item.comment}</p>}
-                  {ownReviewId === item.id && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        startTransition(async () => {
-                          const result = await removeReview(product.id);
-                          setReviewNotice(result.message);
-                          router.refresh();
-                        })
-                      }
-                    >
-                      Remover avaliação
-                    </button>
-                  )}
-                </article>
-              ))
-            ) : (
-              <p>Ainda não há avaliações deste produto.</p>
-            )}
-          </div>
-        </section>
+        <ReviewsSection
+          productId={product.id}
+          signedIn={signedIn}
+          returnTo={returnTo}
+          reviews={reviews}
+          summary={summary}
+          own={ownReview}
+        />
       </div>
     </main>
   );

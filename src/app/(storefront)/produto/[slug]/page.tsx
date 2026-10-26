@@ -5,7 +5,7 @@ import { ProductExperience } from "../../../../features/commerce/ProductExperien
 import { getPublicProductLogistics } from "../../../../features/logistics/storefront-data";
 import {
   getMyFavorites,
-  getMyReviewId,
+  getMyReview,
   getProductDetail,
   getProductReviews,
   getReviewSummaries,
@@ -30,12 +30,12 @@ export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
   const product = await getProductDetail(slug);
   if (!product) notFound();
-  const [reviews, summaries, favorites, ownReviewId, logistics] =
+  const [reviews, summaries, favorites, ownReview, logistics] =
     await Promise.all([
       getProductReviews(product.id),
       getReviewSummaries([product.id]),
       getMyFavorites([product.id]),
-      getMyReviewId(product.id),
+      getMyReview(product.id),
       getPublicProductLogistics(slug),
     ]);
   const summary = summaries.get(product.id);
@@ -88,7 +88,7 @@ export default async function ProductPage({ params }: Props) {
         summary={summary}
         favorite={favorites.ids.has(product.id)}
         signedIn={!!favorites.userId}
-        ownReviewId={ownReviewId}
+        ownReview={ownReview}
         logistics={logistics}
       />
     </>

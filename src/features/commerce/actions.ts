@@ -38,6 +38,7 @@ export async function toggleFavorite(productId: string, current: boolean) {
       message: "Não foi possível atualizar o favorito.",
     };
   revalidatePath("/loja");
+  revalidatePath("/conta/favoritos");
   return { ok: true, requiresLogin: false, message: "Favoritos atualizados." };
 }
 

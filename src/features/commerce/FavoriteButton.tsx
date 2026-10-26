@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toggleFavorite } from "./actions";
@@ -18,25 +18,42 @@ export function FavoriteButton({
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState("");
   const router = useRouter();
+
+  useEffect(() => {
+    if (!message) return;
+    const timer = window.setTimeout(() => setMessage(""), 2400);
+    return () => window.clearTimeout(timer);
+  }, [message]);
+
   return (
     <div className={styles.favoriteWrap}>
       <button
         type="button"
-        className={styles.favorite}
+        className={`${styles.favorite} ${saved ? styles.favoriteOn : ""}`}
         aria-label={saved ? "Remover dos favoritos" : "Adicionar aos favoritos"}
         aria-pressed={saved}
         disabled={pending}
-        onClick={() =>
+        onClick={() => {
+          const next = !saved;
+          // Optimistic: the heart reacts at once and rolls back on failure.
+          setSaved(next);
           startTransition(async () => {
             const result = await toggleFavorite(productId, saved);
             if (result.requiresLogin) {
+              setSaved(saved);
               router.push(`/conta?next=${encodeURIComponent(returnTo)}`);
               return;
             }
-            if (result.ok) setSaved(!saved);
-            else setMessage(result.message);
-          })
-        }
+            if (result.ok) {
+              setMessage(
+                next ? "Salvo nos favoritos" : "Removido dos favoritos",
+              );
+            } else {
+              setSaved(saved);
+              setMessage(result.message);
+            }
+          });
+        }}
       >
         <Heart
           size={21}
@@ -44,9 +61,11 @@ export function FavoriteButton({
           aria-hidden="true"
         />
       </button>
-      <span className="sr-only" role="status">
-        {message}
-      </span>
+      {message && (
+        <span className={styles.favoriteToast} role="status">
+          {message}
+        </span>
+      )}
     </div>
   );
 }

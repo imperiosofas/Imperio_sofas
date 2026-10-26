@@ -207,16 +207,24 @@ export async function getProductReviews(
   return z.array(review).parse(data);
 }
 
-export async function getMyReviewId(productId: string): Promise<string | null> {
+const myReview = z.object({
+  id: z.string().uuid(),
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().nullable(),
+  status: z.enum(["published", "hidden"]),
+});
+export type MyReview = z.infer<typeof myReview>;
+
+export async function getMyReview(productId: string): Promise<MyReview | null> {
   const { client, userId } = await getCommerceIdentity();
   if (!client || !userId) return null;
   const { data } = await client
     .from("product_reviews")
-    .select("id")
+    .select("id,rating,comment,status")
     .eq("product_id", productId)
     .eq("user_id", userId)
     .maybeSingle();
-  return data?.id ?? null;
+  return data ? myReview.parse(data) : null;
 }
 
 export async function getMyCart(): Promise<CartPageData> {

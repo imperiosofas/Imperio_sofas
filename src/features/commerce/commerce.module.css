@@ -114,7 +114,38 @@
   margin: 9px 0 14px;
 }
 .favoriteWrap {
+  position: relative;
   flex: none;
+}
+.favoriteOn {
+  color: #a8801f;
+  border-color: #a8801f;
+  animation: favoritePop 0.32s ease-out;
+}
+.favoriteToast {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 3;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: #191b1d;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+@keyframes favoritePop {
+  0% {
+    transform: scale(0.88);
+  }
+  60% {
+    transform: scale(1.14);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 .favorite {
   display: grid;
@@ -510,6 +541,9 @@
   .favorite,
   .addButton {
     transition: none;
+  }
+  .favoriteOn {
+    animation: none;
   }
 }
 

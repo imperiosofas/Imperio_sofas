@@ -37,7 +37,12 @@ export default async function FavoritesPage() {
       active="favorites"
     >
       <div className="min-h-[60vh] bg-ink text-ivory">
-        <h2 className="mb-6 font-display text-4xl">Favoritos</h2>
+        <h2 className="font-display text-4xl">Favoritos</h2>
+        <p className="mb-6 mt-2 max-w-xl text-sm leading-6 text-muted">
+          {products.length
+            ? `${products.length} ${products.length === 1 ? "modelo salvo" : "modelos salvos"}. Toque no coração para tirar da lista.`
+            : "Salve os modelos que você gostou para comparar com calma depois."}
+        </p>
         {products.length ? (
           <CatalogProductGrid
             products={products}
@@ -46,7 +51,11 @@ export default async function FavoritesPage() {
           />
         ) : (
           <div className="border-t border-white/20 py-10">
-            <p className="text-muted">Você ainda não salvou nenhum modelo.</p>
+            <p className="text-ivory">Você ainda não salvou nenhum modelo.</p>
+            <p className="mt-2 text-sm text-muted">
+              Ao navegar pela loja, toque no coração de um produto para
+              guardá-lo aqui.
+            </p>
             <Link
               href="/loja"
               className="mt-6 inline-flex min-h-12 items-center rounded-full bg-gold px-6 font-bold text-ink"
