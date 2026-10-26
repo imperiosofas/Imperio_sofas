@@ -34,3 +34,9 @@ test-results
 *.njsproj
 *.sln
 *.sw?
+
+# Local build/validation caches and CLI state
+.next-*
+supabase/.temp
+.playwright-mcp
+.vercel
