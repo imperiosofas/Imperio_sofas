@@ -3,36 +3,10 @@ import { revalidatePath } from "next/cache";
 import { Heart, Star } from "lucide-react";
 import { z } from "zod";
 import { requireCatalogAdmin } from "../../../lib/supabase/admin-access";
+import { engagementSummarySchema } from "../../../features/admin/engagement-types";
 import styles from "./engagement.module.css";
 
 export const dynamic = "force-dynamic";
-
-const summarySchema = z.object({
-  reviews: z.object({
-    total: z.number(),
-    published: z.number(),
-    hidden: z.number(),
-    last_7_days: z.number(),
-    average_rating: z.number(),
-  }),
-  favorites: z.object({
-    total: z.number(),
-    customers: z.number(),
-    products: z.number(),
-    last_7_days: z.number(),
-  }),
-  top_favorited: z.array(
-    z.object({
-      product_id: z.string(),
-      name: z.string(),
-      slug: z.string(),
-      status: z.string(),
-      favorites: z.number(),
-      review_count: z.number(),
-      average_rating: z.number().nullable(),
-    }),
-  ),
-});
 
 const reviewRowSchema = z.object({
   id: z.string().uuid(),
@@ -147,7 +121,7 @@ export default async function AdminReviewsPage({
   if (reviewsResult.error)
     throw new Error("Não foi possível carregar as avaliações.");
   const rows = z.array(reviewRowSchema).parse(reviewsResult.data ?? []);
-  const parsed = summarySchema.safeParse(summaryResult.data);
+  const parsed = engagementSummarySchema.safeParse(summaryResult.data);
   const summary = parsed.success ? parsed.data : null;
   const topMax = Math.max(
     1,

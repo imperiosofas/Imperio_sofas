@@ -531,3 +531,95 @@
     transition: none;
   }
 }
+
+/* Not-yet-available areas stay visible so the roadmap is clear. */
+.navSoon {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.navSoon:hover {
+  background: transparent;
+}
+
+.soonBadge {
+  margin-left: auto;
+  padding: 2px 8px;
+  border: 1px solid rgb(255 255 255 / 22%);
+  border-radius: 999px;
+  color: #c5a866;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tabBar {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .tabBar {
+    position: fixed;
+    z-index: 15;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    padding-bottom: env(safe-area-inset-bottom);
+    border-top: 1px solid #dcd8cf;
+    background: #fff;
+    box-shadow: 0 -6px 20px rgb(32 36 42 / 6%);
+  }
+
+  .tabLink {
+    min-height: 62px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border: 0;
+    border-top: 3px solid transparent;
+    padding: 6px 2px;
+    background: transparent;
+    color: #4b5058;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 560;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .tabLink[aria-current="page"] {
+    border-top-color: var(--admin-shell-gold);
+    color: #20242a;
+    font-weight: 700;
+  }
+
+  .tabLink:focus-visible {
+    outline: 3px solid var(--admin-shell-focus-on-light);
+    outline-offset: -3px;
+  }
+
+  .main {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
+
+  .topbar {
+    background: var(--admin-shell-paper);
+  }
+
+  /* The tab bar's Menu replaces the header button; keep the store shortcut. */
+  .menuButton {
+    display: none;
+  }
+
+  .storeLink {
+    display: inline-flex;
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    align-self: center;
+  }
+}

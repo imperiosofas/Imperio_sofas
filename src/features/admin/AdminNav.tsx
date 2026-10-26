@@ -14,6 +14,7 @@ import {
   ArrowUpRight,
   BarChart3,
   ChevronRight,
+  CreditCard,
   FileSpreadsheet,
   ImageMinus,
   LayoutDashboard,
@@ -21,6 +22,7 @@ import {
   MousePointerClick,
   Package2,
   ShieldCheck,
+  ShoppingBag,
   Star,
   Truck,
   Warehouse,
@@ -34,6 +36,7 @@ type AdminNavItem = {
   href: string;
   icon: LucideIcon;
   isActive: (pathname: string) => boolean;
+  soon?: boolean;
 };
 
 type AdminNavGroup = {
@@ -47,10 +50,10 @@ function isRouteOrDescendant(pathname: string, route: string) {
 
 const adminNavGroups: readonly AdminNavGroup[] = [
   {
-    label: "Visão geral",
+    label: "Início",
     items: [
       {
-        label: "Painel",
+        label: "Visão geral",
         href: "/admin",
         icon: LayoutDashboard,
         isActive: (pathname) => pathname === "/admin",
@@ -58,10 +61,61 @@ const adminNavGroups: readonly AdminNavGroup[] = [
     ],
   },
   {
+    label: "Vendas",
+    items: [
+      {
+        label: "Pedidos",
+        href: "/admin/pedidos",
+        icon: ShoppingBag,
+        isActive: () => false,
+        soon: true,
+      },
+      {
+        label: "Pagamentos",
+        href: "/admin/pagamentos",
+        icon: CreditCard,
+        isActive: () => false,
+        soon: true,
+      },
+    ],
+  },
+  {
+    label: "Catálogo",
+    items: [
+      {
+        label: "Produtos",
+        href: "/admin/produtos",
+        icon: Package2,
+        isActive: (pathname) =>
+          isRouteOrDescendant(pathname, "/admin/produtos") &&
+          !isRouteOrDescendant(pathname, "/admin/produtos/limpeza-storage"),
+      },
+      {
+        label: "Avaliações e curtidas",
+        href: "/admin/avaliacoes",
+        icon: Star,
+        isActive: (pathname) =>
+          isRouteOrDescendant(pathname, "/admin/avaliacoes"),
+      },
+    ],
+  },
+  {
+    label: "Entregas",
+    items: [
+      {
+        label: "Operação logística",
+        href: "/admin/entregas",
+        icon: Truck,
+        isActive: (pathname) =>
+          isRouteOrDescendant(pathname, "/admin/entregas"),
+      },
+    ],
+  },
+  {
     label: "Análises",
     items: [
       {
-        label: "Visão geral",
+        label: "Resumo do catálogo",
         href: "/admin/analytics",
         icon: BarChart3,
         isActive: (pathname) => pathname === "/admin/analytics",
@@ -97,38 +151,6 @@ const adminNavGroups: readonly AdminNavGroup[] = [
     ],
   },
   {
-    label: "Gestão",
-    items: [
-      {
-        label: "Produtos",
-        href: "/admin/produtos",
-        icon: Package2,
-        isActive: (pathname) =>
-          isRouteOrDescendant(pathname, "/admin/produtos") &&
-          !isRouteOrDescendant(pathname, "/admin/produtos/limpeza-storage"),
-      },
-      {
-        label: "Avaliações e curtidas",
-        href: "/admin/avaliacoes",
-        icon: Star,
-        isActive: (pathname) =>
-          isRouteOrDescendant(pathname, "/admin/avaliacoes"),
-      },
-    ],
-  },
-  {
-    label: "Entregas",
-    items: [
-      {
-        label: "Operação logística",
-        href: "/admin/entregas",
-        icon: Truck,
-        isActive: (pathname) =>
-          isRouteOrDescendant(pathname, "/admin/entregas"),
-      },
-    ],
-  },
-  {
     label: "Sistema",
     items: [
       {
@@ -142,10 +164,23 @@ const adminNavGroups: readonly AdminNavGroup[] = [
   },
 ];
 
+// Shortcuts for the phone tab bar; the rest lives behind "Menu".
+const tabLabels: Record<string, string> = {
+  "/admin": "Início",
+  "/admin/entregas": "Entregas",
+  "/admin/avaliacoes": "Avaliações",
+};
+
+const tabBarItems: readonly AdminNavItem[] = [
+  adminNavGroups[0].items[0],
+  adminNavGroups[2].items[0],
+  adminNavGroups[3].items[0],
+  adminNavGroups[2].items[1],
+];
 function getRouteContext(pathname: string) {
-  if (pathname === "/admin") return { group: "Visão geral", title: "Painel" };
+  if (pathname === "/admin") return { group: "Início", title: "Visão geral" };
   if (pathname === "/admin/analytics")
-    return { group: "Análises", title: "Visão geral" };
+    return { group: "Análises", title: "Resumo do catálogo" };
   if (isRouteOrDescendant(pathname, "/admin/analytics/produtos"))
     return { group: "Análises", title: "Produtos" };
   if (isRouteOrDescendant(pathname, "/admin/analytics/estoque"))
@@ -157,14 +192,14 @@ function getRouteContext(pathname: string) {
   if (isRouteOrDescendant(pathname, "/admin/produtos/limpeza-storage"))
     return { group: "Sistema", title: "Limpeza de imagens" };
   if (pathname === "/admin/produtos/novo")
-    return { group: "Gestão", title: "Novo produto" };
+    return { group: "Catálogo", title: "Novo produto" };
   if (isRouteOrDescendant(pathname, "/admin/produtos"))
-    return { group: "Gestão", title: "Editar produto" };
+    return { group: "Catálogo", title: "Editar produto" };
   if (isRouteOrDescendant(pathname, "/admin/avaliacoes"))
-    return { group: "Gestão", title: "Avaliações" };
+    return { group: "Catálogo", title: "Avaliações e curtidas" };
   if (isRouteOrDescendant(pathname, "/admin/entregas"))
     return { group: "Entregas", title: "Entregas" };
-  return { group: "Gestão", title: "Produtos" };
+  return { group: "Catálogo", title: "Produtos" };
 }
 
 function NavigationSections({
@@ -180,8 +215,26 @@ function NavigationSections({
         <section className={styles.navGroup} key={group.label}>
           <h2 className={styles.groupLabel}>{group.label}</h2>
           <ul className={styles.navList}>
-            {group.items.map(({ href, icon: Icon, isActive, label }) => {
+            {group.items.map(({ href, icon: Icon, isActive, label, soon }) => {
               const active = isActive(pathname);
+              if (soon)
+                return (
+                  <li key={href}>
+                    <span
+                      className={`${styles.navLink} ${styles.navSoon}`}
+                      aria-disabled="true"
+                    >
+                      <Icon
+                        className={styles.navIcon}
+                        size={17}
+                        strokeWidth={1.8}
+                        aria-hidden="true"
+                      />
+                      <span>{label}</span>
+                      <small className={styles.soonBadge}>Em breve</small>
+                    </span>
+                  </li>
+                );
               return (
                 <li key={href}>
                   <Link
@@ -213,13 +266,21 @@ export function AdminNav() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const drawerRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const tabMenuRef = useRef<HTMLButtonElement>(null);
   const previousPathname = useRef(pathname);
   const routeContext = getRouteContext(pathname);
 
   const closeDrawer = useCallback((restoreFocus: boolean) => {
     setIsDrawerOpen(false);
     if (restoreFocus)
-      requestAnimationFrame(() => menuButtonRef.current?.focus());
+      requestAnimationFrame(() => {
+        const tabMenu = tabMenuRef.current;
+        // The phone tab bar replaces the header button on small screens.
+        (tabMenu && tabMenu.offsetParent !== null
+          ? tabMenu
+          : menuButtonRef.current
+        )?.focus();
+      });
   }, []);
 
   useEffect(() => {
@@ -281,7 +342,7 @@ export function AdminNav() {
   return (
     <>
       <aside className={styles.sidebar} aria-label="Área administrativa">
-        <Link className={styles.brand} href="/admin/produtos">
+        <Link className={styles.brand} href="/admin">
           <Image
             className={styles.brandLogo}
             src="/imperio-sofas-logo-128.webp"
@@ -316,7 +377,7 @@ export function AdminNav() {
         </div>
 
         <div className={styles.mobileIdentity}>
-          <Link className={styles.mobileBrand} href="/admin/produtos">
+          <Link className={styles.mobileBrand} href="/admin">
             <Image
               className={styles.mobileBrandLogo}
               src="/imperio-sofas-logo-128.webp"
@@ -359,6 +420,34 @@ export function AdminNav() {
         </Link>
       </header>
 
+      <nav className={styles.tabBar} aria-label="Atalhos do painel">
+        {tabBarItems.map(({ href, icon: Icon, isActive, label }) => {
+          const active = isActive(pathname);
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={styles.tabLink}
+              aria-current={active ? "page" : undefined}
+            >
+              <Icon size={20} strokeWidth={1.8} aria-hidden="true" />
+              <span>{tabLabels[href] ?? label}</span>
+            </Link>
+          );
+        })}
+        <button
+          type="button"
+          className={styles.tabLink}
+          aria-controls="admin-mobile-drawer"
+          aria-expanded={isDrawerOpen}
+          onClick={() => setIsDrawerOpen(true)}
+          ref={tabMenuRef}
+        >
+          <Menu size={20} strokeWidth={1.8} aria-hidden="true" />
+          <span>Menu</span>
+        </button>
+      </nav>
+
       <div className={styles.drawerLayer} hidden={!isDrawerOpen}>
         <button
           aria-label="Fechar menu administrativo"
@@ -381,7 +470,7 @@ export function AdminNav() {
           <div className={styles.drawerHeader}>
             <Link
               className={styles.brand}
-              href="/admin/produtos"
+              href="/admin"
               onClick={() => closeDrawer(false)}
             >
               <Image
