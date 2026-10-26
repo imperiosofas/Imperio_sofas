@@ -25,6 +25,9 @@ function friendlyInitialError(value: string | null) {
   if (value === "oauth") {
     return "Não foi possível continuar com este provedor. Tente novamente ou use seu e-mail.";
   }
+  if (value === "auth_callback") {
+    return "Não foi possível concluir este acesso. Se o link já foi confirmado, tente entrar com seu e-mail e senha.";
+  }
   return value;
 }
 
@@ -217,7 +220,7 @@ export function AuthExperience({
 
       if (submittedView === "register") {
         const confirmationUrl = new URL(
-          "/auth/confirm",
+          "/auth/callback",
           window.location.origin,
         );
         confirmationUrl.searchParams.set("next", nextPath);

@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Package,
   ShoppingBag,
+  Truck,
   UserRound,
 } from "lucide-react";
 import { SignOutButton } from "./SignOutButton";
@@ -31,6 +32,12 @@ const links = [
     key: "favorites",
   },
   { href: "/carrinho", label: "Meu carrinho", icon: ShoppingBag, key: "cart" },
+  {
+    href: "/conta/entregas",
+    label: "Minhas entregas",
+    icon: Truck,
+    key: "deliveries",
+  },
 ];
 
 export function AccountShell({

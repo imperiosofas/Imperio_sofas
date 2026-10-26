@@ -325,6 +325,52 @@ test("unauthenticated account route shows login and fails closed without config"
   await expect(page).toHaveURL(/\/conta$/);
 });
 
+test("email signup sends confirmation to the local PKCE callback", async ({
+  page,
+}) => {
+  test.skip(
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    "Este teste requer o Supabase TEST público configurado; a chamada de signup é interceptada e não envia e-mail.",
+  );
+
+  let redirectTo: string | null = null;
+  await page.route("**/auth/v1/signup*", async (route) => {
+    const requestUrl = new URL(route.request().url());
+    redirectTo = requestUrl.searchParams.get("redirect_to");
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        id: "123e4567-e89b-42d3-a456-426614174000",
+        aud: "authenticated",
+        role: "authenticated",
+        email: "novo-cliente@example.invalid",
+        email_confirmed_at: null,
+        created_at: "2026-10-23T12:00:00.000Z",
+        app_metadata: { provider: "email", providers: ["email"] },
+        user_metadata: {},
+        identities: [],
+      }),
+    });
+  });
+
+  await page.goto("/conta?next=%2Fcarrinho");
+  await page.locator("#auth-tab-register").click();
+  await page.locator("#auth-email").fill("novo-cliente@example.invalid");
+  await page.getByRole("button", { name: "Continuar com e-mail" }).click();
+  await page.locator("#auth-password").fill("Senha-forte-123!");
+  await page.locator("#auth-confirm-password").fill("Senha-forte-123!");
+  await page.getByRole("button", { name: "Criar minha conta" }).click();
+
+  await expect(
+    page.getByRole("heading", { name: "Confira sua caixa de entrada." }),
+  ).toBeVisible();
+  expect(redirectTo).toBe(
+    `${new URL(page.url()).origin}/auth/callback?next=%2Fcarrinho`,
+  );
+});
+
 test("cart redirects anonymous visitors to account with a safe return path", async ({
   page,
 }) => {
@@ -382,10 +428,56 @@ test("OAuth callback hides provider errors and rejects unsafe return paths", asy
     "/auth/callback?error=access_denied&error_description=provider-secret&next=https%3A%2F%2Fexample.com",
   );
   await expect(page).toHaveURL(/\/conta\?erro=oauth$/);
-  await expect(page.getByRole("alert")).toContainText(
+  await expect(page.locator("#auth-stage-error")).toContainText(
     "Não foi possível continuar com este provedor",
   );
   await expect(page.getByRole("main")).not.toContainText("provider-secret");
+});
+
+test("auth callback preserves a safe cart destination after a provider error", async ({
+  page,
+}) => {
+  await page.goto("/auth/callback?error=access_denied&next=%2Fcarrinho");
+  await expect(page).toHaveURL(/\/conta\?erro=oauth&next=%2Fcarrinho$/);
+  await expect(page.locator("#auth-stage-error")).toContainText(
+    "Não foi possível continuar com este provedor",
+  );
+});
+
+test("auth callback reports missing code without losing the cart destination", async ({
+  page,
+}) => {
+  await page.goto("/auth/callback?next=%2Fcarrinho");
+  await expect(page).toHaveURL(/\/conta\?erro=auth_callback&next=%2Fcarrinho$/);
+  await expect(page.locator("#auth-stage-error")).toContainText(
+    "Se o link já foi confirmado, tente entrar com seu e-mail e senha",
+  );
+});
+
+test("email token-hash GET waits for an explicit POST confirmation", async ({
+  page,
+}) => {
+  await page.goto(
+    "/auth/callback?token_hash=test-only-not-a-valid-token&type=email&next=%2Fcarrinho",
+  );
+  await expect(
+    page.getByRole("heading", { name: "Confirme seu acesso" }),
+  ).toBeVisible();
+  const form = page.locator("form");
+  await expect(form).toHaveAttribute("method", "post");
+  await expect(form).toHaveAttribute("action", "/auth/callback");
+  await expect(form.locator('input[name="type"]')).toHaveValue("email");
+  await expect(form.locator('input[name="next"]')).toHaveValue("/carrinho");
+  await expect(
+    form.getByRole("button", { name: "Confirmar e continuar" }),
+  ).toBeVisible();
+});
+
+test("confirmation failures preserve a safe cart destination", async ({
+  page,
+}) => {
+  await page.goto("/auth/confirm?next=%2Fcarrinho");
+  await expect(page).toHaveURL(/\/conta\?erro=confirmacao&next=%2Fcarrinho$/);
 });
 
 test("@a11y core routes and register state have no serious automated violations", async ({

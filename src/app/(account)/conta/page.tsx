@@ -48,7 +48,9 @@ export default async function AccountPage({
       isConfigured={isSupabaseAuthConfigured()}
       nextPath={nextPath}
       initialError={
-        params.erro === "confirmacao" || params.erro === "oauth"
+        params.erro === "confirmacao" ||
+        params.erro === "oauth" ||
+        params.erro === "auth_callback"
           ? params.erro
           : null
       }
