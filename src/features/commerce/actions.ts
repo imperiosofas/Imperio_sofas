@@ -26,9 +26,11 @@ export async function toggleFavorite(productId: string, current: boolean) {
         .eq("product_id", productId)
     : auth.client
         .from("product_favorites")
+        // favorites are insert/delete only (no UPDATE grant), so a repeated
+        // save must be ON CONFLICT DO NOTHING rather than an updating upsert.
         .upsert(
           { user_id: auth.userId, product_id: productId },
-          { onConflict: "user_id,product_id" },
+          { onConflict: "user_id,product_id", ignoreDuplicates: true },
         );
   const { error } = await query;
   if (error)
@@ -46,6 +48,7 @@ export async function saveReview(
   productId: string,
   rating: number,
   comment: string,
+  displayName: string,
 ) {
   const auth = await authenticated();
   if (!auth) return { ok: false, message: "Entre na sua conta para avaliar." };
@@ -56,10 +59,17 @@ export async function saveReview(
     comment.length > 2000
   )
     return { ok: false, message: "Confira a nota e o comentário." };
+  const name = displayName.trim();
+  if (name.length < 2 || name.length > 40)
+    return {
+      ok: false,
+      message: "Informe como seu nome deve aparecer (2 a 40 letras).",
+    };
   const { error } = await auth.client.rpc("save_product_review", {
     p_product_id: productId,
     p_rating: rating,
     p_comment: comment.trim() || null,
+    p_display_name: name,
   });
   if (error)
     return { ok: false, message: "Não foi possível publicar sua avaliação." };

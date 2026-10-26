@@ -9,6 +9,7 @@ import {
   getProductDetail,
   getProductReviews,
   getReviewSummaries,
+  getSuggestedReviewerName,
 } from "../../../../features/commerce/data";
 
 export const dynamic = "force-dynamic";
@@ -30,13 +31,14 @@ export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
   const product = await getProductDetail(slug);
   if (!product) notFound();
-  const [reviews, summaries, favorites, ownReview, logistics] =
+  const [reviews, summaries, favorites, ownReview, logistics, suggestedName] =
     await Promise.all([
       getProductReviews(product.id),
       getReviewSummaries([product.id]),
       getMyFavorites([product.id]),
       getMyReview(product.id),
       getPublicProductLogistics(slug),
+      getSuggestedReviewerName(),
     ]);
   const summary = summaries.get(product.id);
   const prices = product.variants.map((variant) => variant.price_cents / 100);
@@ -89,6 +91,7 @@ export default async function ProductPage({ params }: Props) {
         favorite={favorites.ids.has(product.id)}
         signedIn={!!favorites.userId}
         ownReview={ownReview}
+        suggestedName={suggestedName}
         logistics={logistics}
       />
     </>

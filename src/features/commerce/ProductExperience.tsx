@@ -26,6 +26,7 @@ export function ProductExperience({
   favorite,
   signedIn,
   ownReview,
+  suggestedName,
   logistics,
 }: {
   product: ProductDetail;
@@ -34,6 +35,7 @@ export function ProductExperience({
   favorite: boolean;
   signedIn: boolean;
   ownReview: MyReview | null;
+  suggestedName: string;
   logistics: PublicProductLogistics | null;
 }) {
   const [selected, setSelected] = useState(product.variants[0].id);
@@ -362,6 +364,7 @@ export function ProductExperience({
           reviews={reviews}
           summary={summary}
           own={ownReview}
+          suggestedName={suggestedName}
         />
       </div>
     </main>

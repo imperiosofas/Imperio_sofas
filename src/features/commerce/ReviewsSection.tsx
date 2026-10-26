@@ -44,6 +44,7 @@ export function ReviewsSection({
   reviews,
   summary,
   own,
+  suggestedName,
 }: {
   productId: string;
   signedIn: boolean;
@@ -51,12 +52,16 @@ export function ReviewsSection({
   reviews: ProductReview[];
   summary?: ReviewSummary;
   own: MyReview | null;
+  suggestedName: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [rating, setRating] = useState(own?.rating ?? 0);
   const [hover, setHover] = useState(0);
   const [comment, setComment] = useState(own?.comment ?? "");
+  const [name, setName] = useState(
+    own && own.display_name !== "Cliente" ? own.display_name : suggestedName,
+  );
   const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(
     null,
   );
@@ -77,7 +82,7 @@ export function ReviewsSection({
 
   function submit() {
     startTransition(async () => {
-      const result = await saveReview(productId, rating, comment);
+      const result = await saveReview(productId, rating, comment, name);
       setNotice({ ok: result.ok, text: result.message });
       if (result.ok) router.refresh();
     });
@@ -199,6 +204,23 @@ export function ReviewsSection({
                   </span>
                 </div>
               </fieldset>
+              <label className={styles.nameLabel}>
+                Como seu nome deve aparecer
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  minLength={2}
+                  maxLength={40}
+                  required
+                  autoComplete="name"
+                  placeholder="Ex.: Maria S."
+                />
+                <span className={styles.hint}>
+                  Aparece ao lado da sua avaliação. Use só o primeiro nome e a
+                  inicial do sobrenome, se preferir.
+                </span>
+              </label>
               <label className={styles.commentLabel}>
                 Comentário (opcional)
                 <textarea
@@ -214,7 +236,10 @@ export function ReviewsSection({
                 </span>
               </label>
               <div className={styles.actions}>
-                <button type="submit" disabled={pending || rating === 0}>
+                <button
+                  type="submit"
+                  disabled={pending || rating === 0 || name.trim().length < 2}
+                >
                   {pending
                     ? "Salvando..."
                     : own

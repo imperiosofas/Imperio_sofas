@@ -212,6 +212,7 @@ const myReview = z.object({
   rating: z.number().int().min(1).max(5),
   comment: z.string().nullable(),
   status: z.enum(["published", "hidden"]),
+  display_name: z.string(),
 });
 export type MyReview = z.infer<typeof myReview>;
 
@@ -220,11 +221,27 @@ export async function getMyReview(productId: string): Promise<MyReview | null> {
   if (!client || !userId) return null;
   const { data } = await client
     .from("product_reviews")
-    .select("id,rating,comment,status")
+    .select("id,rating,comment,status,display_name")
     .eq("product_id", productId)
     .eq("user_id", userId)
     .maybeSingle();
   return data ? myReview.parse(data) : null;
+}
+
+// Suggested name for the review form: the saved profile name, shortened to
+// "First L." so the public page never shows a full name by default.
+export async function getSuggestedReviewerName(): Promise<string> {
+  const { client, userId } = await getCommerceIdentity();
+  if (!client || !userId) return "";
+  const { data } = await client
+    .from("customer_profiles")
+    .select("display_name")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const parts = (data?.display_name ?? "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "";
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`;
 }
 
 export async function getMyCart(): Promise<CartPageData> {

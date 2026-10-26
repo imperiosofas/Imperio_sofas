@@ -164,11 +164,33 @@
   font-weight: 600;
   color: #8d6a2a;
 }
+.nameLabel,
 .commentLabel {
   display: grid;
   gap: 7px;
   font-size: 13px;
   font-weight: 600;
+}
+.nameLabel input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #b8b4aa;
+  border-radius: 12px;
+  background: #fff;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 400;
+  color: #191b1d;
+}
+.nameLabel input:focus-visible {
+  outline: 2px solid #191b1d;
+  outline-offset: 1px;
+}
+.hint {
+  font-size: 12px;
+  font-weight: 400;
+  color: #797770;
 }
 .commentLabel textarea {
   width: 100%;
