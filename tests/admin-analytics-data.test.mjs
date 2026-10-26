@@ -1,10 +1,6 @@
 import assert from "node:assert/strict";
 import { registerHooks } from "node:module";
 import test from "node:test";
-import {
-  adminAnalyticsCategoryIdSchema,
-  adminAnalyticsSnapshotSchema,
-} from "../src/features/admin/analytics-types.ts";
 
 const validSnapshot = {
   snapshot_at: "2026-10-15T15:30:00.000Z",
@@ -62,9 +58,17 @@ const serviceDependenciesKey = Symbol.for(
 
 registerHooks({
   resolve(specifier, context, nextResolve) {
+    // "server-only" throws outside the Next.js bundler, so tests stub it.
+    if (specifier === "server-only") {
+      return {
+        url: `data:text/javascript,${encodeURIComponent("export {};")}`,
+        shortCircuit: true,
+      };
+    }
     if (!context.parentURL?.endsWith("/src/features/admin/analytics-data.ts")) {
       return nextResolve(specifier, context);
     }
+
 
     if (specifier === "../../lib/supabase/admin-access") {
       const source = `export async function requireCatalogAdmin() {
@@ -87,6 +91,10 @@ registerHooks({
   },
 });
 
+const { adminAnalyticsCategoryIdSchema, adminAnalyticsSnapshotSchema } =
+  await import(
+    new URL("../src/features/admin/analytics-types.ts", import.meta.url).href
+  );
 test("accepts the agreed analytics snapshot contract", () => {
   assert.deepEqual(
     adminAnalyticsSnapshotSchema.parse(validSnapshot),
