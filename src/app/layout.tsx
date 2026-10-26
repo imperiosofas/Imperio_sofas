@@ -3,6 +3,7 @@ import { Cormorant_Garamond, Inter } from "next/font/google";
 import "../index.css";
 import { Header } from "../sections/Header";
 import { BottomNavigation } from "../sections/BottomNavigation";
+import { resolveAppUrl } from "../lib/env/app-url.mjs";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -19,7 +20,7 @@ const cormorantGaramond = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
+  metadataBase: resolveAppUrl(),
   title: {
     default: "Império Sofás | Sofás em Taubaté e região",
     template: "%s | Império Sofás",

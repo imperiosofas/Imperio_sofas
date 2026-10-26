@@ -98,7 +98,8 @@ export default defineConfig({
   webServer: {
     command: `node tests/e2e/assert-sanitized-env.mjs && npm run dev -- --hostname ${webServerHostname} --port ${parsedBaseURL.port || "80"}`,
     url: baseURL,
-    reuseExistingServer: false,
+    reuseExistingServer:
+      process.env.PLAYWRIGHT_REUSE_EXISTING_SERVER === "true",
     env: {
       ...sanitizedWebServerEnv,
       NEXT_DIST_DIR: ".next-e2e",

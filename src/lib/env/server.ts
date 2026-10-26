@@ -1,6 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { resolveRuntimeConfig } from "./runtime-config.mjs";
+import { resolveAppUrl } from "./app-url.mjs";
 
 const serverEnvSchema = z.object({
   APP_ENV: z.enum(["local", "staging", "production"]),
@@ -30,6 +31,7 @@ export function getServerEnv(): ServerEnv {
   return serverEnvSchema.parse({
     ...process.env,
     APP_ENV: runtimeConfig.appEnv,
+    APP_URL: resolveAppUrl(process.env).href,
     CATALOG_SOURCE: runtimeConfig.catalogSource,
   });
 }
