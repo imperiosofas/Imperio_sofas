@@ -1,0 +1,27 @@
+# Matriz de propriedade e conflitos — Analytics/Admin
+
+Base observada: `integration/final-hardening` / `72a0ad0`, com alterações de usuário já presentes no checkout ativo. Nenhum agente deve assumir que a branch está limpa. Cada subagente deve usar branch/worktree separada baseada no estado dessa integração; se a ferramenta não transportar a árvore de trabalho, reportar isso antes de integrar e não sobrescrever arquivos locais.
+
+| Frente                     | Dono                   | Escrita exclusiva                                                                                                               | Leitura permitida                    | Dependências/ordem                                                                                                    |
+| -------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| Dados e autorização        | DATA                   | `supabase/migrations/*admin_analytics*`, `supabase/tests/admin_analytics.sql`                                                   | schema/admin guard                   | Onda 1; migration aditiva; nenhuma DDL remota sem inventário/rollback e revisão                                       |
+| Contrato/serviço Analytics | API                    | `src/features/admin/analytics-data.ts`, tipos e testes focados próprios                                                         | migration/SQL e `admin-access.ts`    | Onda 1; usar sessão do admin, sem `SUPABASE_SECRET_KEY`                                                               |
+| Shell/sidebar              | ADMIN DESIGN           | `src/features/admin/AdminShell.tsx`, `src/features/admin/AdminNav.tsx`, `src/features/admin/admin-shell.module.css`             | rotas/admin css existentes           | Onda 1; não alterar client nav, `admin.module.css` nem páginas                                                        |
+| Dashboard e páginas        | DASHBOARD              | `src/app/admin/analytics/**`, componentes/CSS próprios sob `src/features/admin/analytics-ui/**`                                 | contrato publicado pelo API e shell  | Onda 2, após contrato; não editar service, shell ou package                                                           |
+| XLSX                       | EXPORT                 | `src/app/api/admin/reports/**`, `src/features/admin/analytics-export/**`, testes próprios e proposta de dependência server-only | contrato do API; tabelas de métricas | Onda 2, após contrato; apenas EXPORT propõe dependência na sua branch, Integrator decide a integração de package/lock |
+| QA                         | QA                     | specs novos `tests/e2e/admin-analytics*.spec.ts`, fixtures/manifests próprios                                                   | todas as frentes integradas          | Onda 3; nunca alterar telas/SQL para fazer teste passar                                                               |
+| Code review                | CODE REVIEW            | Nenhuma escrita nos arquivos revisados                                                                                          | diffs e testes da branch candidata   | Depois das ondas 1/2; revisão separada do implementador                                                               |
+| Security review            | SECURITY               | Nenhuma escrita nos arquivos revisados                                                                                          | RPC/RLS, rotas, export, consent/docs | Obrigatória para DATA/API/EXPORT; encontrar falhas retorna ao implementador                                           |
+| Integração                 | COORDINATOR/INTEGRATOR | integração local de candidatos aprovados + docs/veredito                                                                        | todas as branches                    | Última onda; sem cherry-pick de código não aprovado; preservar alterações alheias                                     |
+
+## Áreas compartilhadas proibidas durante paralelo
+
+- `package.json` e `package-lock.json`: apenas EXPORT pode propor dependência server-only na sua branch; apenas Integrator decide e aplica essa proposta na integração. Não trazer alterações não relacionadas da árvore local.
+- `docs/progress.md`, `docs/test-evidence.md` e arquivos de remediação: apenas Coordinator após a revisão final.
+- `src/app/admin/layout.tsx`, `src/lib/supabase/admin-access.ts`, `src/features/admin/actions.ts`, `src/features/admin/admin.module.css`, `src/features/admin/catalog-data.ts`: existentes com mudanças ou usados por outros fluxos; não alterar sem autorização explícita de coordenação.
+- `src/app/page.tsx`, `src/sections/**`, rotas de cliente/carrinho e navegação global: fora do escopo de redesign do admin.
+- `.env*`, `.next*`, `supabase/.temp`, logs, capturas e diretórios Playwright: não adicionar, limpar ou sobrescrever.
+
+## Revisão/integrar
+
+Antes de aceitar uma frente: `git diff --check`, testes focados, Prettier apenas nos arquivos novos/tocados, tipo/lint quando factível, relatório de arquivos e limitações. Reviewer independente classifica `APPROVE`, `APPROVE WITH CAVEATS` ou `REJECT`. Mudança rejeitada volta à worktree de origem. Integrator aplica somente branches aprovadas e reexecuta gates após a integração.
