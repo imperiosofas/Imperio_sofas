@@ -54,6 +54,50 @@ const productSchema = z.object({
 export type AdminCategory = z.infer<typeof categorySchema>;
 export type AdminProduct = z.infer<typeof productSchema>;
 
+const adminProductPageSchema = z.object({
+  products: z.array(productSchema),
+  total: z.number().int().nonnegative(),
+  page: z.number().int().positive(),
+  page_size: z.number().int().positive(),
+  summary: z.object({
+    total: z.number().int().nonnegative(),
+    published: z.number().int().nonnegative(),
+    drafts: z.number().int().nonnegative(),
+    low_stock: z.number().int().nonnegative(),
+    out_of_stock: z.number().int().nonnegative(),
+    pending: z.number().int().nonnegative(),
+  }),
+});
+
+export type AdminProductPage = z.infer<typeof adminProductPageSchema>;
+
+export async function listAdminProductsPage(
+  supabase: SupabaseClient,
+  params: {
+    query: string;
+    categoryId: string | null;
+    status: string;
+    stock: string;
+    pending: string;
+    sort: string;
+    page: number;
+    pageSize: number;
+  },
+) {
+  const { data, error } = await supabase.rpc("admin_list_catalog_products", {
+    p_query: params.query || null,
+    p_category_id: params.categoryId,
+    p_status: params.status,
+    p_stock: params.stock,
+    p_pending: params.pending,
+    p_sort: params.sort,
+    p_page: params.page,
+    p_page_size: params.pageSize,
+  });
+  if (error) throw new Error("Não foi possível carregar os produtos.");
+  return adminProductPageSchema.parse(data);
+}
+
 export async function listAdminCategories(supabase: SupabaseClient) {
   const { data, error } = await supabase
     .from("categories")
@@ -62,17 +106,6 @@ export async function listAdminCategories(supabase: SupabaseClient) {
     .order("name");
   if (error) throw new Error("Não foi possível carregar as categorias.");
   return z.array(categorySchema).parse(data);
-}
-
-export async function listAdminProducts(supabase: SupabaseClient) {
-  const { data, error } = await supabase
-    .from("products")
-    .select(
-      "id,category_id,name,slug,description,status,free_shipping,updated_at,categories(name,slug),product_variants(id,sku,price_cents,width_mm,depth_mm,height_mm,fabric,color,is_active,inventory(on_hand,reserved,low_stock_threshold)),product_media(id,storage_path,alt_text,position)",
-    )
-    .order("updated_at", { ascending: false });
-  if (error) throw new Error("Não foi possível carregar os produtos.");
-  return z.array(productSchema).parse(data);
 }
 
 export async function getAdminProduct(supabase: SupabaseClient, id: string) {

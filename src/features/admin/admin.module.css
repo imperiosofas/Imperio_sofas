@@ -1173,6 +1173,11 @@
   width: 100%;
   padding: 0 8px;
 }
+.catalogLoadingStatus {
+  margin: 8px 0;
+  color: var(--admin-muted);
+  font-size: 12px;
+}
 .catalogSearch {
   display: flex;
   align-items: center;

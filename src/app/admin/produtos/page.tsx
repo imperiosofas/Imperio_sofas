@@ -1,9 +1,10 @@
 import { CatalogManagementCenter } from "../../../features/admin/CatalogManagementCenter";
 import {
   listAdminCategories,
-  listAdminProducts,
+  listAdminProductsPage,
 } from "../../../features/admin/catalog-data";
 import { requireCatalogAdmin } from "../../../lib/supabase/admin-access";
+import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
@@ -14,10 +15,38 @@ export default async function AdminProductsPage({
 }) {
   const query = await searchParams;
   const supabase = await requireCatalogAdmin("/admin/produtos");
-  const [products, categories] = await Promise.all([
-    listAdminProducts(supabase),
+  const stringParam = (
+    value: string | string[] | undefined,
+    fallback: string,
+  ) => (typeof value === "string" ? value : fallback);
+  const categoryValue = stringParam(query.category, "all");
+  const categoryId = z.string().uuid().safeParse(categoryValue).success
+    ? categoryValue
+    : null;
+  const statusValue = stringParam(query.status, "all");
+  const stockValue = stringParam(query.stock, "all");
+  const pendingValue = stringParam(query.pending, "all");
+  const sortValue = stringParam(query.sort, "recent");
+  const requestedSize = Number(stringParam(query.size, "25"));
+  const pageSize = [25, 50, 100].includes(requestedSize) ? requestedSize : 25;
+  const requestedPage = Number(stringParam(query.page, "1"));
+  const page = Number.isInteger(requestedPage)
+    ? Math.max(1, Math.min(requestedPage, 1000))
+    : 1;
+  const [productPage, categories] = await Promise.all([
+    listAdminProductsPage(supabase, {
+      query: stringParam(query.q, "").trim().slice(0, 180),
+      categoryId,
+      status: statusValue,
+      stock: stockValue,
+      pending: pendingValue,
+      sort: sortValue,
+      page,
+      pageSize,
+    }),
     listAdminCategories(supabase),
   ]);
+  const products = productPage.products;
   const imagePaths = products.map(
     (product) =>
       [...product.product_media].sort((a, b) => a.position - b.position)[0]
@@ -41,14 +70,6 @@ export default async function AdminProductsPage({
       ? (signedByPath.get(imagePaths[index]!) ?? null)
       : null,
   }));
-  const stringParam = (
-    value: string | string[] | undefined,
-    fallback: string,
-  ) => (typeof value === "string" ? value : fallback);
-  const requestedPage = Number(stringParam(query.page, "1"));
-  const initialPage = Number.isInteger(requestedPage)
-    ? Math.max(1, Math.min(requestedPage, 1000))
-    : 1;
   const categoryError = stringParam(query.categoryError, "");
   const flashMessage =
     stringParam(query.categorySaved, "") === "1"
@@ -62,15 +83,17 @@ export default async function AdminProductsPage({
   return (
     <CatalogManagementCenter
       products={withThumbnails}
+      total={productPage.total}
+      summary={productPage.summary}
       categories={categories}
       initialQuery={stringParam(query.q, "")}
-      initialCategory={stringParam(query.category, "all")}
-      initialStatus={stringParam(query.status, "all")}
-      initialStock={stringParam(query.stock, "all")}
-      initialPending={stringParam(query.pending, "all")}
-      initialSort={stringParam(query.sort, "recent")}
-      initialPageSize={Number(stringParam(query.size, "25")) || 25}
-      initialPage={initialPage}
+      initialCategory={categoryId ?? "all"}
+      initialStatus={statusValue}
+      initialStock={stockValue}
+      initialPending={pendingValue}
+      initialSort={sortValue}
+      initialPageSize={pageSize}
+      initialPage={productPage.page}
       flashMessage={flashMessage}
     />
   );

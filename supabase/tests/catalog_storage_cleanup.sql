@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(32);
+select plan(36);
 insert into storage.buckets (id, name, public)
 values ('catalog-images', 'catalog-images', false)
 on conflict (id) do nothing;
@@ -27,7 +27,8 @@ insert into public.product_media (id, product_id, storage_path, alt_text)
 values
   ('66666666-6666-4666-8666-666666666666', '33333333-3333-4333-8333-333333333333', 'products/33333333-3333-4333-8333-333333333333/77777777-7777-4777-8777-777777777777.webp', 'TEST owned'),
   ('88888888-8888-4888-8888-888888888888', '44444444-4444-4444-8444-444444444444', 'products/44444444-4444-4444-8444-444444444444/99999999-9999-4999-8999-999999999999.webp', 'TEST foreign'),
-  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '55555555-5555-4555-8555-555555555555', 'products/55555555-5555-4555-8555-555555555555/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.webp', 'TEST whole product');
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '55555555-5555-4555-8555-555555555555', 'products/55555555-5555-4555-8555-555555555555/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.webp', 'TEST whole product'),
+  ('abababab-abab-4bab-8bab-abababababab', '33333333-3333-4333-8333-333333333333', 'products/33333333-3333-4333-8333-333333333333/not-a-uuid.webp', 'TEST invalid path');
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"22222222-2222-4222-8222-222222222222","role":"authenticated","aal":"aal1"}', true);
@@ -35,7 +36,7 @@ select throws_ok(
   $$select public.admin_remove_catalog_product_media('33333333-3333-4333-8333-333333333333', '66666666-6666-4666-8666-666666666666')$$,
   '42501', null, 'non-admin cannot remove catalog media'
 );
-select is((select count(*)::integer from public.product_media where id = '66666666-6666-4666-8666-666666666666'), 1, 'unauthorized attempt leaves media intact');
+select is((select count(*)::integer from public.product_media where id = '66666666-6666-4666-8666-666666666666'), 0, 'non-admin cannot read protected media metadata');
 select throws_ok(
   $$select public.admin_claim_catalog_storage_cleanup('00000000-0000-4000-8000-000000000000')$$,
   '42501', null, 'non-admin cannot claim cleanup jobs'
@@ -51,6 +52,11 @@ select throws_ok(
   'P0002', null, 'media id from another product is rejected without exposing its path'
 );
 select is((select count(*)::integer from public.product_media where id = '88888888-8888-4888-8888-888888888888'), 1, 'foreign product media remains intact');
+select throws_ok(
+  $$select public.admin_remove_catalog_product_media('33333333-3333-4333-8333-333333333333', 'abababab-abab-4bab-8bab-abababababab')$$,
+  '22023', null, 'malformed Storage path is rejected before enqueue'
+);
+select is((select count(*)::integer from public.product_media where id = 'abababab-abab-4bab-8bab-abababababab'), 1, 'invalid-path metadata remains intact');
 
 create temporary table cleanup_test_result as
 select public.admin_remove_catalog_product_media(
@@ -109,7 +115,7 @@ select public.admin_finish_catalog_storage_cleanup(
   (select (result->>'cleanup_id')::uuid from cleanup_test_result),
   (select (result->>'claim_token')::uuid from cleanup_claim_first), 'storage_remove_failed'
 ) as finished;
-select ok((select finished from cleanup_failure), 'storage failure is recorded as retryable');
+select is((select finished from cleanup_failure), false, 'storage failure remains incomplete and retryable');
 reset role;
 select ok(
   (select next_attempt_at > now() + interval '1 minute'
@@ -173,17 +179,30 @@ create temporary table cleanup_claim_after_proof as
 select public.admin_claim_catalog_storage_cleanup((select (result->>'cleanup_id')::uuid from cleanup_test_result)) as result;
 select is((select result->>'outcome' from cleanup_claim_after_proof), 'claimed', 'rejected success leaves the job available for retry');
 reset role;
-delete from storage.objects
-where bucket_id = 'catalog-images'
-  and name = 'products/33333333-3333-4333-8333-333333333333/77777777-7777-4777-8777-777777777777.webp';
+insert into private.catalog_storage_cleanup_outbox (
+  id, source_media_id, product_id, bucket_id, storage_path
+) values (
+  'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+  'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+  '33333333-3333-4333-8333-333333333333',
+  'catalog-images',
+  'products/33333333-3333-4333-8333-333333333333/dddddddd-dddd-4ddd-8ddd-dddddddddddd.webp'
+);
 set local role authenticated;
+create temporary table cleanup_claim_absent as
+select public.admin_claim_catalog_storage_cleanup('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee') as result;
+select is((select result->>'outcome' from cleanup_claim_absent), 'claimed', 'missing Storage object job can be claimed for final verification');
 select ok(public.admin_finish_catalog_storage_cleanup(
-  (select (result->>'cleanup_id')::uuid from cleanup_test_result),
-  (select (result->>'claim_token')::uuid from cleanup_claim_after_proof), null
-), 'successful retry marks the job complete');
+  'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+  (select (result->>'claim_token')::uuid from cleanup_claim_absent), null
+), 'job completes when the Storage object is already absent');
+select is(
+  public.admin_claim_catalog_storage_cleanup('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee')->>'outcome',
+  'completed', 'duplicate retry after verified absence is idempotent'
+);
 select is(
   public.admin_claim_catalog_storage_cleanup((select (result->>'cleanup_id')::uuid from cleanup_test_result))->>'outcome',
-  'completed', 'duplicate retry after completion is idempotent'
+  'busy', 'job with a still-present object remains retryable only after cooldown'
 );
 
 create temporary table cleanup_product_result as

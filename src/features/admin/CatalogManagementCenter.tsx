@@ -13,7 +13,11 @@ import {
   Trash2,
 } from "lucide-react";
 import type { FormEvent } from "react";
-import type { AdminCategory, AdminProduct } from "./catalog-data";
+import type {
+  AdminCategory,
+  AdminProduct,
+  AdminProductPage,
+} from "./catalog-data";
 import {
   adjustCatalogInventory,
   changeCatalogCategory,
@@ -61,20 +65,6 @@ function isLowStock(product: AdminProduct) {
   });
 }
 
-function hasPending(product: AdminProduct, category?: AdminCategory) {
-  const sellable = product.product_variants.some(
-    (variant) =>
-      Boolean(variant.sku?.trim()) &&
-      (variant.price_cents ?? 0) > 0 &&
-      (variant.inventory?.on_hand ?? 0) > (variant.inventory?.reserved ?? 0),
-  );
-  return (
-    !category?.is_active ||
-    !sellable ||
-    !product.product_media.some((media) => media.alt_text.trim())
-  );
-}
-
 function primarySku(product: AdminProduct) {
   return (
     product.product_variants.find((variant) => variant.sku)?.sku ?? "Sem SKU"
@@ -115,6 +105,8 @@ function parseBrl(value: string) {
 
 export function CatalogManagementCenter({
   products,
+  total,
+  summary,
   categories,
   initialQuery,
   initialCategory,
@@ -127,6 +119,8 @@ export function CatalogManagementCenter({
   flashMessage,
 }: {
   products: ProductRow[];
+  total: number;
+  summary: AdminProductPage["summary"];
   categories: AdminCategory[];
   initialQuery: string;
   initialCategory: string;
@@ -174,55 +168,6 @@ export function CatalogManagementCenter({
     () => new Map(categories.map((item) => [item.id, item])),
     [categories],
   );
-  const filtered = useMemo(() => {
-    const needle = query.trim().toLocaleLowerCase("pt-BR");
-    const result = products.filter((product) => {
-      const categoryInfo = categoriesById.get(product.category_id);
-      const available = productStock(product);
-      const text = [
-        product.name,
-        product.slug,
-        ...product.product_variants.map((variant) => variant.sku ?? ""),
-      ]
-        .join(" ")
-        .toLocaleLowerCase("pt-BR");
-      return (
-        (!needle || text.includes(needle)) &&
-        (category === "all" || product.category_id === category) &&
-        (status === "all" || product.status === status) &&
-        (stock === "all" ||
-          (stock === "available" && available > 0) ||
-          (stock === "low" && isLowStock(product)) ||
-          (stock === "out" && available === 0)) &&
-        (pendingFilter === "all" ||
-          (pendingFilter === "pending" && hasPending(product, categoryInfo)) ||
-          (pendingFilter === "ready" && !hasPending(product, categoryInfo)))
-      );
-    });
-    return result.sort((a, b) => {
-      const aPrices = a.product_variants.map((v) => v.price_cents ?? Infinity);
-      const bPrices = b.product_variants.map((v) => v.price_cents ?? Infinity);
-      const aPrice = Math.min(...aPrices);
-      const bPrice = Math.min(...bPrices);
-      if (sort === "oldest") return a.updated_at.localeCompare(b.updated_at);
-      if (sort === "name-asc") return a.name.localeCompare(b.name, "pt-BR");
-      if (sort === "name-desc") return b.name.localeCompare(a.name, "pt-BR");
-      if (sort === "price-asc") return aPrice - bPrice;
-      if (sort === "price-desc") return bPrice - aPrice;
-      if (sort === "stock-asc") return productStock(a) - productStock(b);
-      if (sort === "stock-desc") return productStock(b) - productStock(a);
-      return b.updated_at.localeCompare(a.updated_at);
-    });
-  }, [
-    products,
-    categoriesById,
-    query,
-    category,
-    status,
-    stock,
-    pendingFilter,
-    sort,
-  ]);
 
   useEffect(() => {
     if (!initializedFilters.current) {
@@ -244,25 +189,27 @@ export function CatalogManagementCenter({
     if (page !== 1) params.set("page", String(page));
     const next = params.size ? `/admin/produtos?${params}` : "/admin/produtos";
     const timer = window.setTimeout(
-      () => window.history.replaceState(null, "", next),
+      () => startTransition(() => router.replace(next, { scroll: false })),
       280,
     );
     return () => window.clearTimeout(timer);
-  }, [query, category, status, stock, pendingFilter, sort, pageSize, page]);
+  }, [
+    query,
+    category,
+    status,
+    stock,
+    pendingFilter,
+    sort,
+    pageSize,
+    page,
+    router,
+  ]);
 
-  const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const visible = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  const visible = products;
   const pageIds = visible.map((product) => product.id);
   const allPageSelected =
     pageIds.length > 0 && pageIds.every((id) => selected.includes(id));
-  const lowCount = products.filter(isLowStock).length;
-  const noStockCount = products.filter(
-    (item) => productStock(item) === 0,
-  ).length;
-  const pendingCount = products.filter((item) =>
-    hasPending(item, categoriesById.get(item.category_id)),
-  ).length;
-
   function toggleSelected(id: string) {
     setSelected((current) =>
       current.includes(id)
@@ -358,7 +305,7 @@ export function CatalogManagementCenter({
   }
 
   return (
-    <section className={styles.catalogCenter}>
+    <section className={styles.catalogCenter} aria-busy={isPending}>
       <header className={styles.catalogHeading}>
         <div>
           <h1>Produtos</h1>
@@ -383,7 +330,7 @@ export function CatalogManagementCenter({
             setPendingFilter("all");
           }}
         >
-          <strong>{products.length}</strong>
+          <strong>{summary.total}</strong>
           <span>Todos</span>
         </button>
         <button
@@ -394,9 +341,7 @@ export function CatalogManagementCenter({
             setPendingFilter("all");
           }}
         >
-          <strong>
-            {products.filter((p) => p.status === "active").length}
-          </strong>
+          <strong>{summary.published}</strong>
           <span>Publicados</span>
         </button>
         <button
@@ -407,7 +352,7 @@ export function CatalogManagementCenter({
             setPendingFilter("all");
           }}
         >
-          <strong>{products.filter((p) => p.status === "draft").length}</strong>
+          <strong>{summary.drafts}</strong>
           <span>Rascunhos</span>
         </button>
         <button
@@ -417,7 +362,7 @@ export function CatalogManagementCenter({
             setStatus("all");
           }}
         >
-          <strong>{lowCount}</strong>
+          <strong>{summary.low_stock}</strong>
           <span>Estoque baixo</span>
         </button>
         <button
@@ -427,7 +372,7 @@ export function CatalogManagementCenter({
             setStatus("all");
           }}
         >
-          <strong>{noStockCount}</strong>
+          <strong>{summary.out_of_stock}</strong>
           <span>Sem estoque</span>
         </button>
         <button
@@ -437,7 +382,7 @@ export function CatalogManagementCenter({
             setStatus("all");
           }}
         >
-          <strong>{pendingCount}</strong>
+          <strong>{summary.pending}</strong>
           <span>Com pendências</span>
         </button>
       </div>
@@ -588,6 +533,11 @@ export function CatalogManagementCenter({
           </select>
         </label>
       </div>
+      {isPending && (
+        <p className={styles.catalogLoadingStatus} role="status">
+          Atualizando resultados do catálogo…
+        </p>
+      )}
 
       {selected.length > 0 && (
         <div
@@ -702,7 +652,7 @@ export function CatalogManagementCenter({
               <th className={styles.selectColumn}>
                 <input
                   type="checkbox"
-                  aria-label="Selecionar produtos desta página"
+                  aria-label="Selecionar todos os produtos desta página"
                   checked={allPageSelected}
                   onChange={() =>
                     setSelected((current) =>
@@ -865,8 +815,8 @@ export function CatalogManagementCenter({
       </div>
       <footer className={styles.catalogPagination}>
         <span>
-          {filtered.length
-            ? `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, filtered.length)} de ${filtered.length}`
+          {total
+            ? `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, total)} de ${total}`
             : "0 produtos"}
         </span>
         <label>
