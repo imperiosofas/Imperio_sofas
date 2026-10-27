@@ -36,7 +36,7 @@ export default async function FavoritesPage() {
       cartCount={cartCount}
       active="favorites"
     >
-      <div className="min-h-[60vh] bg-ink text-ivory">
+      <div className="min-h-[60vh] text-ivory">
         <h2 className="font-display text-4xl">Favoritos</h2>
         <p className="mb-6 mt-2 max-w-xl text-sm leading-6 text-muted">
           {products.length

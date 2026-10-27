@@ -109,7 +109,9 @@ img {
   .grain {
     display: none;
   }
-  header {
+  /* Only the site header: a bare `header` selector also painted every
+     section/page heading (admin, account, auth cards) black on phones. */
+  .site-header {
     background-color: #0d0d0d;
   }
 }

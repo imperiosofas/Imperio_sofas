@@ -1,15 +1,5 @@
 "use client";
 
-import {
-  animate,
-  motion,
-  useMotionValue,
-  useReducedMotion,
-  useSpring,
-  useTransform,
-  useVelocity,
-  type MotionValue,
-} from "framer-motion";
 import { House, ShoppingBag, Store, UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -19,6 +9,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import { createSupabaseBrowserClient } from "../lib/supabase/client";
 import styles from "./bottom-navigation.module.css";
@@ -62,14 +53,10 @@ type CartSummaryRequest = {
 const clamp = (value: number) => Math.max(0, Math.min(1, value));
 const smooth = (value: number) => value * value * (3 - 2 * value);
 
-// The concavity is the actual top edge, leaving the page visible through it.
-function platePath(
-  width: number,
-  center: number,
-  lift: number,
-  selected: boolean,
-) {
-  const depth = 28 + lift;
+// The bar's top edge melts into a concave cradle around the active tab: the
+// curve leaves the edge and meets the cradle tangentially, so nothing creases.
+function platePath(width: number, center: number, selected: boolean) {
+  const depth = 28;
   const top = selected
     ? `H ${center - 34}
        C ${center - 26} 0 ${center - 27} ${depth} ${center} ${depth}
@@ -83,89 +70,53 @@ function platePath(
     V ${CORNER} Q 0 0 ${CORNER} 0 Z`;
 }
 
-type DockMotion = {
-  position: MotionValue<number>;
-  destination: MotionValue<number>;
-  departure: MotionValue<number[]>;
-};
+const reducedMotionQuery = "(prefers-reduced-motion: reduce)";
 
-function DockTab({
-  index,
-  active,
-  travel,
-  onNavigate,
-  cartCount,
-}: {
-  index: number;
-  active: boolean;
-  travel: DockMotion;
-  onNavigate: () => void;
-  cartCount: number;
-}) {
-  const { label, href, Icon } = destinations[index];
-  const proximity = useTransform(() => {
-    const target = travel.destination.get();
-    const current = travel.position.get();
-    const departing = travel.departure.get()[index];
-    // Passing over Loja on the way from Início to Conta must not select Loja.
-    if (target < 0 || (target !== index && departing < 0.01)) return 0;
-    return smooth(clamp(1 - Math.abs(current - index) / 0.72));
-  });
-  const iconOpacity = useTransform(proximity, (value) => 1 - value);
-  const iconY = useTransform(proximity, (value) => -8 * value);
-  const labelY = useTransform(proximity, (value) => 4 * (1 - value));
+function usePrefersReducedMotion() {
+  return useSyncExternalStore(
+    (notify) => {
+      const query = window.matchMedia(reducedMotionQuery);
+      query.addEventListener("change", notify);
+      return () => query.removeEventListener("change", notify);
+    },
+    () => window.matchMedia(reducedMotionQuery).matches,
+    () => false,
+  );
+}
 
-  return (
-    <Link
-      href={href}
-      aria-label={
-        label === "Carrinho" && cartCount > 0
-          ? `Carrinho, ${cartCount} itens`
-          : label
+// Slot-space spring (0..3). Plain React state on purpose: geometry derived from
+// motion values captured a stale width once and left the whole dock invisible.
+function useDockPosition(target: number) {
+  const reduced = usePrefersReducedMotion();
+  const [position, setPosition] = useState(target);
+  const motion = useRef({ x: target, v: 0 });
+  const frame = useRef(0);
+
+  useEffect(() => {
+    if (reduced) return;
+    const state = motion.current;
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = Math.min(0.032, (now - last) / 1000);
+      last = now;
+      const acceleration = 190 * (target - state.x) - 27 * state.v;
+      state.v += acceleration * dt;
+      state.x += state.v * dt;
+      if (Math.abs(target - state.x) < 0.002 && Math.abs(state.v) < 0.02) {
+        state.x = target;
+        state.v = 0;
+        setPosition(target);
+        return;
       }
-      aria-current={active ? "page" : undefined}
-      className={styles.dockLink}
-      onNavigate={onNavigate}
-    >
-      <motion.span
-        className={styles.dockIcon}
-        style={{ opacity: iconOpacity, y: iconY }}
-        aria-hidden="true"
-      >
-        <Icon size={21} strokeWidth={1.8} />
-      </motion.span>
-      {label === "Carrinho" && cartCount > 0 && (
-        <span className={styles.cartBadge} aria-hidden="true">
-          {cartCount > 99 ? "99+" : cartCount}
-        </span>
-      )}
-      <motion.span
-        className={styles.dockLabel}
-        style={{ opacity: proximity, y: labelY }}
-        aria-hidden="true"
-      >
-        {label}
-      </motion.span>
-    </Link>
-  );
-}
+      setPosition(state.x);
+      frame.current = requestAnimationFrame(tick);
+    };
+    frame.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame.current);
+  }, [target, reduced]);
 
-function CarriedIcon({
-  index,
-  weights,
-}: {
-  index: number;
-  weights: MotionValue<number[]>;
-}) {
-  const { Icon } = destinations[index];
-  const opacity = useTransform(weights, (values) => values[index]);
-  return (
-    <motion.span className={styles.carriedIcon} style={{ opacity }}>
-      <Icon size={22} strokeWidth={2} />
-    </motion.span>
-  );
+  return reduced ? target : position;
 }
-
 export function BottomNavigation() {
   const pathname = usePathname();
   const [cartCount, setCartCount] = useState(0);
@@ -249,108 +200,50 @@ export function BottomNavigation() {
       listener.subscription.unsubscribe();
     };
   }, []);
-  const activeIndex = destinations.findIndex(({ isActive }) =>
+
+  const routeIndex = destinations.findIndex(({ isActive }) =>
     isActive(pathname),
   );
-  const reducedMotion = useReducedMotion();
-  const navRef = useRef<HTMLElement>(null);
-  const movement = useRef<ReturnType<typeof animate> | null>(null);
-  // Slot coordinates survive a resize without restarting the spring.
-  const position = useMotionValue(Math.max(0, activeIndex));
-  const destination = useMotionValue(activeIndex);
-  const start = useMotionValue(Math.max(0, activeIndex));
-  const departure = useMotionValue(
-    destinations.map((_, index) => Number(index === activeIndex)),
-  );
-  const plateOpacity = Number(navWidth > 0);
-  const beadX = useTransform(
-    position,
-    (value) => ((value + 0.5) * navWidth) / destinations.length,
-  );
-  const velocity = useVelocity(position);
-  const liftTarget = useTransform(velocity, (speed) =>
-    reducedMotion ? 0 : -Math.min(4, Math.abs(speed) * 1.5),
-  );
-  const lift = useSpring(liftTarget, { stiffness: 420, damping: 35 });
-  const beadY = useTransform(lift, (value) => (reducedMotion ? 0 : value));
-  const weights = useTransform(() => {
-    const target = destination.get();
-    const current = position.get();
-    const origin = start.get();
-    const distance = target - origin;
-    const progress =
-      Math.abs(distance) < 0.001
-        ? 1
-        : smooth(clamp((current - origin) / distance));
-    return departure
-      .get()
-      .map(
-        (weight, index) =>
-          weight * (1 - progress) + Number(index === target) * progress,
-      );
+  // A tap selects the tab immediately; it stops applying once the route
+  // changes, so the pathname stays authoritative (redirects, back/forward).
+  const [tap, setTap] = useState<{ index: number; from: string } | null>(null);
+  const activeIndex = tap && tap.from === pathname ? tap.index : routeIndex;
+  // Remember where the bead came from so its icon can cross-fade on the way.
+  const [track, setTrack] = useState({
+    active: Math.max(0, activeIndex),
+    from: Math.max(0, activeIndex),
   });
-  const notchedPath = useTransform(() =>
-    platePath(navWidth, beadX.get(), beadY.get(), destination.get() >= 0),
-  );
-  const beadOpacity = Number(navWidth > 0 && destination.get() >= 0);
+  if (activeIndex >= 0 && activeIndex !== track.active)
+    setTrack({ active: activeIndex, from: track.active });
+  const fromIndex = track.from;
+  const position = useDockPosition(Math.max(0, activeIndex));
+  const navRef = useRef<HTMLElement>(null);
 
-  const moveTo = useCallback(
-    (index: number) => {
-      if (destination.get() === index && !reducedMotion) return;
-      // Capture the current blend before redirecting an interrupted journey.
-      const currentWeights = weights.get();
-      movement.current?.stop();
-      departure.set(currentWeights);
-      start.set(position.get());
-      destination.set(index);
-      if (index < 0) return;
-      if (reducedMotion) {
-        position.jump(index);
-        lift.jump(0);
-        return;
-      }
-      movement.current = animate(position, index, {
-        type: "spring",
-        stiffness: 190,
-        damping: 27,
-        mass: 1,
-        restDelta: 0.001,
-        restSpeed: 0.01,
-      });
-    },
-    [departure, destination, lift, position, reducedMotion, start, weights],
-  );
-
+  const measure = useCallback(() => {
+    const width = navRef.current?.getBoundingClientRect().width ?? 0;
+    setNavWidth((current) =>
+      Math.abs(current - width) < 0.5 ? current : width,
+    );
+  }, []);
   useLayoutEffect(() => {
     const nav = navRef.current;
     if (!nav) return;
-    const measure = () => {
-      const measuredWidth = nav.getBoundingClientRect().width;
-      setNavWidth((currentWidth) =>
-        Math.abs(currentWidth - measuredWidth) < 0.5
-          ? currentWidth
-          : measuredWidth,
-      );
-    };
-    // Use React state for layout geometry: a MotionValue write made during the
-    // initial layout effect can happen before Motion's DOM subscriptions attach
-    // and then remain stale at zero throughout hydration.
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(nav);
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
-
-  // Pathname is authoritative on redirects and back/forward. A normal Link
-  // navigation starts below, before its route has committed or loaded.
-  useLayoutEffect(() => {
-    moveTo(activeIndex);
-  }, [pathname, activeIndex, moveTo]);
-  useLayoutEffect(() => () => movement.current?.stop(), []);
+    return () => observer.disconnect();
+  }, [measure]);
 
   if (pathname.startsWith("/admin")) return null;
+
+  const slot = navWidth / destinations.length;
+  const ready = navWidth > 0;
+  const selected = activeIndex >= 0;
+  const beadX = (position + 0.5) * slot;
+  const toIndex = Math.max(0, activeIndex);
+  const travel = toIndex - fromIndex;
+  const progress =
+    travel === 0 ? 1 : smooth(clamp((position - fromIndex) / travel));
 
   return (
     <div className={styles.dockRoot}>
@@ -359,33 +252,87 @@ export function BottomNavigation() {
         className={styles.dockBar}
         aria-label="Navegação principal"
       >
-        <motion.svg
+        <svg
           className={styles.dockPlate}
-          style={{ opacity: plateOpacity }}
+          style={{ opacity: ready ? 1 : 0 }}
           aria-hidden="true"
           focusable="false"
         >
-          <motion.path d={notchedPath} className={styles.dockSurface} />
-        </motion.svg>
-        <motion.span
+          <path
+            d={platePath(navWidth, beadX, selected)}
+            className={styles.dockSurface}
+          />
+        </svg>
+        <span
           className={styles.goldBead}
-          style={{ x: beadX, y: beadY, opacity: beadOpacity }}
+          style={{
+            opacity: ready && selected ? 1 : 0,
+            transform: `translateX(${beadX}px)`,
+          }}
           aria-hidden="true"
         >
-          {destinations.map(({ href }, index) => (
-            <CarriedIcon key={href} index={index} weights={weights} />
-          ))}
-        </motion.span>
-        {destinations.map(({ href }, index) => (
-          <DockTab
-            key={href}
-            index={index}
-            active={index === activeIndex}
-            travel={{ position, destination, departure }}
-            onNavigate={() => moveTo(index)}
-            cartCount={cartCount}
-          />
-        ))}
+          {destinations.map(({ href, Icon }, index) => {
+            const opacity =
+              index === toIndex
+                ? progress
+                : index === fromIndex
+                  ? 1 - progress
+                  : 0;
+            return (
+              <span
+                key={href}
+                className={styles.carriedIcon}
+                style={{ opacity }}
+              >
+                <Icon size={22} strokeWidth={2} />
+              </span>
+            );
+          })}
+        </span>
+        {destinations.map(({ label, href, Icon }, index) => {
+          const active = index === activeIndex;
+          // Icons step aside while the bead sits over them; only the
+          // destination tab shows a label.
+          const cover = ready
+            ? smooth(clamp(1 - Math.abs(position - index) / 0.72))
+            : 0;
+          const iconOpacity = selected ? 1 - cover : 1;
+          const labelOpacity = active ? progress : 0;
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-label={
+                label === "Carrinho" && cartCount > 0
+                  ? `Carrinho, ${cartCount} itens`
+                  : label
+              }
+              aria-current={index === routeIndex ? "page" : undefined}
+              className={styles.dockLink}
+              onNavigate={() => setTap({ index, from: pathname })}
+            >
+              <span
+                className={styles.dockIcon}
+                style={{ opacity: iconOpacity }}
+                aria-hidden="true"
+              >
+                <Icon size={21} strokeWidth={1.8} />
+              </span>
+              {label === "Carrinho" && cartCount > 0 && (
+                <span className={styles.cartBadge} aria-hidden="true">
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              )}
+              <span
+                className={styles.dockLabel}
+                style={{ opacity: labelOpacity }}
+                aria-hidden="true"
+              >
+                {label}
+              </span>
+            </Link>
+          );
+        })}
       </nav>
     </div>
   );
