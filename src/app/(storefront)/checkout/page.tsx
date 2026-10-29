@@ -160,7 +160,9 @@ export default async function CheckoutPage() {
                   ? quoteGroup?.mode === "pickup"
                     ? "Retirada"
                     : "Entrega"
-                  : "Retirada";
+                  : mode === "pickup"
+                    ? "Retirada"
+                    : "";
               return (
                 <section className={styles.panel} key={group.code}>
                   <div className={styles.groupHead}>

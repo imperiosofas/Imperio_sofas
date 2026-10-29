@@ -72,7 +72,8 @@ export default async function OrderPage({
   const canPay = pending && !expired && config.status === "ready";
   const mock =
     canPay && config.status === "ready" && config.provider === "mock";
-  const message = retorno ? returnMessages[retorno] : undefined;
+  const message =
+    retorno && order.status !== "paid" ? returnMessages[retorno] : undefined;
 
   return (
     <main className={styles.page}>
