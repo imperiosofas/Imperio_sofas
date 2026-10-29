@@ -142,9 +142,11 @@ export function CartExperience({
                   <strong>{formatBrlFromCents(total)}</strong>
                 </div>
                 <p>
-                  Você pode solicitar uma cotação de entrega abaixo. O pagamento
-                  e a criação do pedido não fazem parte desta etapa.
+                  Retirada não tem frete. Para entrega, solicite a cotação
+                  abaixo, aguarde a resposta da loja e aceite em Minhas entregas
+                  antes de pagar.
                 </p>
+                <Link href="/checkout">Finalizar compra</Link>
                 <Link href="/loja">Continuar explorando a loja</Link>
               </aside>
             </div>

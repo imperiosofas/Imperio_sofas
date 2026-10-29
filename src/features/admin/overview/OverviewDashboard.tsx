@@ -19,6 +19,7 @@ import {
   formatNumber,
   type Segment,
 } from "./charts";
+import { formatBrlFromCents } from "../../../lib/money";
 import type { OverviewData } from "./overview-data";
 import styles from "./overview.module.css";
 
@@ -48,8 +49,23 @@ function buildAttention({
   snapshot,
   engagement,
   logistics,
+  orders,
 }: OverviewData): Attention[] {
   const items: Attention[] = [];
+  if (orders && orders.needs_review > 0)
+    items.push({
+      key: "orders-review",
+      tone: "alert",
+      text: `${plural(orders.needs_review, "pedido precisa de conferência", "pedidos precisam de conferência")}`,
+      href: "/admin/pedidos?status=needs_review",
+    });
+  if (orders && orders.pending_payment > 0)
+    items.push({
+      key: "orders-pending",
+      tone: "info",
+      text: `${plural(orders.pending_payment, "pedido aguardando pagamento", "pedidos aguardando pagamento")}`,
+      href: "/admin/pedidos?status=pending_payment",
+    });
   if (snapshot) {
     const { out_of_stock_variants: out, low_stock_variants: low } =
       snapshot.summary;
@@ -170,7 +186,7 @@ function Kpi({
 }
 
 export function OverviewDashboard(data: OverviewData) {
-  const { snapshot, engagement, logistics } = data;
+  const { snapshot, engagement, logistics, orders } = data;
   const attention = buildAttention(data);
 
   const updatedAt = snapshot
@@ -474,19 +490,45 @@ export function OverviewDashboard(data: OverviewData) {
           )}
         </Card>
 
-        <Card title="Vendas e receita" icon={ShoppingBag} wide>
-          <div className={styles.soon}>
-            <p>
-              Pedidos, receita, ticket médio e conversão aparecem aqui assim que
-              o checkout estiver ativo. Nenhum valor é estimado antes disso.
-            </p>
-            <ul>
-              <li>Pedidos e status</li>
-              <li>Receita e ticket médio</li>
-              <li>Pagamentos e reembolsos</li>
-              <li>Funil de compra</li>
-            </ul>
-          </div>
+        <Card
+          title="Vendas e receita"
+          icon={ShoppingBag}
+          href="/admin/pedidos"
+          hrefLabel="Ver pedidos"
+          wide
+        >
+          {orders && orders.total > 0 ? (
+            <dl className={styles.facts}>
+              <div>
+                <dt>Pedidos pagos</dt>
+                <dd>{formatNumber(orders.paid)}</dd>
+              </div>
+              <div>
+                <dt>Receita (pagos)</dt>
+                <dd>{formatBrlFromCents(orders.revenue_cents)}</dd>
+              </div>
+              <div>
+                <dt>Ticket médio</dt>
+                <dd>
+                  {orders.paid
+                    ? formatBrlFromCents(orders.average_ticket_cents)
+                    : "—"}
+                </dd>
+              </div>
+              <div>
+                <dt>Aguardando pagamento</dt>
+                <dd>{formatNumber(orders.pending_payment)}</dd>
+              </div>
+            </dl>
+          ) : (
+            <div className={styles.soon}>
+              <p>
+                {orders
+                  ? "Ainda não há pedidos. Quando um cliente finalizar uma compra, os números de vendas aparecem aqui. Nada é estimado antes disso."
+                  : "Não foi possível carregar os pedidos agora."}
+              </p>
+            </div>
+          )}
         </Card>
       </div>
     </div>

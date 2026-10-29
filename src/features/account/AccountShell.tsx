@@ -33,6 +33,12 @@ const links = [
   },
   { href: "/carrinho", label: "Meu carrinho", icon: ShoppingBag, key: "cart" },
   {
+    href: "/conta/pedidos",
+    label: "Meus pedidos",
+    icon: Package,
+    key: "orders",
+  },
+  {
     href: "/conta/entregas",
     label: "Minhas entregas",
     icon: Truck,
@@ -112,7 +118,9 @@ export function AccountShell({
             </nav>
             <div className={styles.sidebarFoot}>
               <Package size={17} />
-              <span>Seus pedidos aparecerão aqui após uma compra.</span>
+              <span>
+                Pagamento e entrega de cada pedido ficam em Meus pedidos.
+              </span>
             </div>
           </aside>
 

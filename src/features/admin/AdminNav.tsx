@@ -14,7 +14,6 @@ import {
   ArrowUpRight,
   BarChart3,
   ChevronRight,
-  CreditCard,
   FileSpreadsheet,
   ImageMinus,
   LayoutDashboard,
@@ -67,15 +66,7 @@ const adminNavGroups: readonly AdminNavGroup[] = [
         label: "Pedidos",
         href: "/admin/pedidos",
         icon: ShoppingBag,
-        isActive: () => false,
-        soon: true,
-      },
-      {
-        label: "Pagamentos",
-        href: "/admin/pagamentos",
-        icon: CreditCard,
-        isActive: () => false,
-        soon: true,
+        isActive: (pathname) => isRouteOrDescendant(pathname, "/admin/pedidos"),
       },
     ],
   },
@@ -168,14 +159,14 @@ const adminNavGroups: readonly AdminNavGroup[] = [
 const tabLabels: Record<string, string> = {
   "/admin": "Início",
   "/admin/entregas": "Entregas",
-  "/admin/avaliacoes": "Avaliações",
+  "/admin/pedidos": "Pedidos",
 };
 
 const tabBarItems: readonly AdminNavItem[] = [
   adminNavGroups[0].items[0],
+  adminNavGroups[1].items[0],
   adminNavGroups[2].items[0],
   adminNavGroups[3].items[0],
-  adminNavGroups[2].items[1],
 ];
 function getRouteContext(pathname: string) {
   if (pathname === "/admin") return { group: "Início", title: "Visão geral" };
@@ -195,6 +186,8 @@ function getRouteContext(pathname: string) {
     return { group: "Catálogo", title: "Novo produto" };
   if (isRouteOrDescendant(pathname, "/admin/produtos"))
     return { group: "Catálogo", title: "Editar produto" };
+  if (isRouteOrDescendant(pathname, "/admin/pedidos"))
+    return { group: "Vendas", title: "Pedidos" };
   if (isRouteOrDescendant(pathname, "/admin/avaliacoes"))
     return { group: "Catálogo", title: "Avaliações e curtidas" };
   if (isRouteOrDescendant(pathname, "/admin/entregas"))
