@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
 import { startCheckoutAction, type CheckoutState } from "./actions";
 import styles from "./checkout.module.css";
@@ -74,6 +75,17 @@ export function CheckoutForm({
             </select>
           </label>
         ))}
+
+      <label className={styles.consent}>
+        <input type="checkbox" name="acceptTerms" required />
+        <span>
+          Li e aceito os <Link href="/termos">termos de compra</Link>, a{" "}
+          <Link href="/trocas-e-devolucoes">
+            política de trocas e devoluções
+          </Link>{" "}
+          e a <Link href="/privacidade">política de privacidade</Link>.
+        </span>
+      </label>
 
       <button
         className={styles.primary}

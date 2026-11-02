@@ -68,6 +68,12 @@ export async function startCheckoutAction(
   if (getPaymentConfig().status !== "ready")
     return { error: "O pagamento online ainda não está disponível." };
 
+  if (formData.get("acceptTerms") !== "on")
+    return {
+      error:
+        "Para continuar, aceite os termos de compra e a política de trocas.",
+    };
+
   let pickup: unknown = [];
   try {
     pickup = JSON.parse(String(formData.get("pickup") ?? "[]"));

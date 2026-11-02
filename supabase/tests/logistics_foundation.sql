@@ -84,7 +84,7 @@ select is((select city_name from public.logistics_areas where ibge_code = '35541
 select is((select postal_code from public.logistics_pickup_locations l join public.logistics_suppliers s on s.id = l.supplier_id where s.code = 'VALE'), '12081-670', 'Vale pickup uses the supplied CEP');
 select is((select floor_charge_cents from public.logistics_settings where singleton), 1000, 'floor fee defaults to R$10.00');
 select is((select included_through_floor from public.logistics_settings where singleton), 4, 'floors through four are included');
-select is((select quote_expiration_minutes from public.logistics_settings where singleton), null::integer, 'quote expiry stays unconfigured');
+select is((select quote_expiration_minutes from public.logistics_settings where singleton), 1440, 'quote expiry defaults to 24 hours');
 select is((select whatsapp_phone_e164 from public.logistics_settings where singleton), null::text, 'WhatsApp stays unconfigured');
 select ok((select supplier_id is null from public.products where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'), 'products are not automatically classified');
 select ok((select relrowsecurity from pg_class where oid = 'public.logistics_quotes'::regclass), 'quote table has RLS enabled');

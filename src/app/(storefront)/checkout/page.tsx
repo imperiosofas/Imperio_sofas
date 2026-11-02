@@ -6,6 +6,7 @@ import {
   CheckoutForm,
   type PickupGroup,
 } from "../../../features/checkout/CheckoutForm";
+import { LegalLinks } from "../../../features/legal/LegalLinks";
 import { getPaymentConfig } from "../../../features/checkout/payment-service";
 import styles from "../../../features/checkout/checkout.module.css";
 import {
@@ -280,6 +281,7 @@ export default async function CheckoutPage() {
                 Voltar ao carrinho
               </Link>
             )}
+            <LegalLinks />
           </aside>
         </div>
       </div>

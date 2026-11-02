@@ -133,6 +133,26 @@
   font-size: 15px;
   font-weight: 400;
 }
+.consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #3d3f44;
+}
+.consent input {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  accent-color: #17191d;
+}
+.consent a {
+  color: #6b531c;
+  text-decoration: underline;
+}
 .summary {
   position: sticky;
   top: 90px;

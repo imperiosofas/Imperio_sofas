@@ -1,0 +1,98 @@
+.page {
+  min-height: 100vh;
+  padding: 48px 20px 150px;
+  background: #ede9e1;
+  color: #17191d;
+}
+.shell {
+  max-width: 760px;
+  margin: 0 auto;
+}
+.heading {
+  padding-bottom: 22px;
+  border-bottom: 1px solid #c7c2b7;
+}
+.eyebrow {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #8d6a2a;
+}
+.heading h1 {
+  margin: 4px 0 8px;
+  font:
+    600 clamp(34px, 5vw, 54px) / 1 var(--font-display),
+    Georgia,
+    serif;
+}
+.meta {
+  margin: 0;
+  font-size: 14px;
+  color: #5b5851;
+}
+.section {
+  margin-top: 28px;
+}
+.continued {
+  margin-top: 0;
+}
+.continued p,
+.continued li {
+  font-size: 16px;
+  line-height: 1.65;
+  color: #2b2d31;
+}
+.continued p {
+  margin: 0 0 10px;
+}
+.section h2 {
+  margin: 0 0 10px;
+  font:
+    600 22px var(--font-display),
+    Georgia,
+    serif;
+}
+.section p,
+.section li {
+  font-size: 16px;
+  line-height: 1.65;
+  color: #2b2d31;
+}
+.section p {
+  margin: 0 0 10px;
+}
+.section ul {
+  margin: 0 0 10px;
+  padding-left: 22px;
+}
+.nav {
+  display: grid;
+  gap: 4px;
+  margin-top: 40px;
+  padding-top: 18px;
+  border-top: 1px solid #c7c2b7;
+}
+.nav a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b531c;
+  text-decoration: underline;
+}
+.inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin: 16px 0 0;
+}
+.inline a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  color: #6b531c;
+  text-decoration: underline;
+}

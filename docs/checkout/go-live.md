@@ -10,9 +10,9 @@
 ## Falta antes de vender de verdade
 1. Conta Mercado Pago do cliente: credenciais sandbox → testar webhook de ponta a ponta → credenciais live (`MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET`, `MP_ENV`, `MP_EXPECTED_COLLECTOR_ID`, `INTEGRATION_MODE=live`, `APP_ENV=production`).
 2. `CRON_SECRET` (≥32 caracteres) e agendamento do cron de expiração.
-3. Páginas legais e aceite de termos no checkout.
-4. Política de frete para entrega múltipla (Vale + Mundial) — hoje bloqueada por design.
+3. Revisão jurídica da Política de Privacidade (texto redigido com base no que o sistema coleta; os Termos e a política de Trocas vêm do texto do cliente). Registrar o aceite dos termos no pedido (hoje só é exigido no checkbox).
+4. ~~Política de frete misto~~ decidida: um frete por fornecedor, adicional por andar uma vez por endereço (migration `20261102120000`, precisa ser aplicada em cada banco).
 5. Fiscal / Bling (NF-e) e dados fiscais.
 6. Plano Vercel Pro, projeto Supabase de produção, domínio.
-7. Os 13 produtos legados ausentes e os 8 inativos publicados; WhatsApp oficial; validade da cotação.
+7. Os 13 produtos legados ausentes e os 8 inativos publicados; WhatsApp oficial; validade da cotação (24 h, definida na mesma migration).
 8. E-mails de pedido (Resend API ainda não configurada).
