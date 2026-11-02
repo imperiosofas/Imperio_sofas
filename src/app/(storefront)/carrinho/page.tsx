@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { StoreFooter } from "../../../features/legal/StoreFooter";
 import { CartExperience } from "../../../features/commerce/CartExperience";
 import {
   getCommerceIdentity,
@@ -16,5 +17,10 @@ export default async function CartPage() {
   const { userId } = await getCommerceIdentity();
   if (!userId) redirect("/conta?next=%2Fcarrinho");
   const cart = await getMyCart();
-  return <CartExperience items={cart.items} logistics={cart.logistics} />;
+  return (
+    <>
+      <CartExperience items={cart.items} logistics={cart.logistics} />
+      <StoreFooter />
+    </>
+  );
 }

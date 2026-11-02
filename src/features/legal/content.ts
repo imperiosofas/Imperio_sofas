@@ -27,6 +27,8 @@ const contactBullets = [
 ];
 
 export const TERMS_UPDATED_AT = "30 de outubro de 2026";
+// Stored on each order; bump together with TERMS_UPDATED_AT when the terms change.
+export const TERMS_VERSION = "2026-10-30";
 
 export const terms: LegalDocument = {
   slug: "termos",

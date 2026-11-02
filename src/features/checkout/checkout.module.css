@@ -134,6 +134,7 @@
   font-weight: 400;
 }
 .consent {
+  min-height: 44px;
   display: flex;
   align-items: flex-start;
   gap: 10px;
@@ -318,5 +319,12 @@
   }
   .heading .meta {
     margin-left: 0;
+  }
+  .panel,
+  .summary {
+    padding: 18px 16px;
+  }
+  .items li {
+    gap: 10px;
   }
 }

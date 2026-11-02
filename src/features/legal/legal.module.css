@@ -96,3 +96,34 @@
   color: #6b531c;
   text-decoration: underline;
 }
+
+.storeFooter {
+  padding: 28px 20px calc(110px + env(safe-area-inset-bottom));
+  border-top: 1px solid #c7c2b7;
+  background: #ede9e1;
+  color: #5b5851;
+}
+.storeFooterInner {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+.storeFooterInner p {
+  margin: 0 0 4px;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.storeFooterInner > p > a {
+  color: #6b531c;
+  text-decoration: underline;
+}
+.storeFooterName {
+  font-weight: 600;
+  color: #17191d;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 28px 16px 130px;
+  }
+}

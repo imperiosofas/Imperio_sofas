@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { TERMS_VERSION } from "../legal/content";
 import { createSupabaseServiceClient } from "../../lib/supabase/service";
 import { getVerifiedCustomerSession } from "../logistics/server-session";
 import {
@@ -97,6 +98,13 @@ export async function startCheckoutAction(
   });
   if (error || typeof data !== "string")
     return { error: friendly(error?.message) };
+
+  // The checkbox is enforced above; this stores which terms version was accepted.
+  // A failure here must not strand a paid-intent order, so it does not block payment.
+  await session.client.rpc("record_order_terms_acceptance", {
+    p_order_id: data,
+    p_terms_version: TERMS_VERSION,
+  });
 
   const payment = await startOrderPayment(session.client, data);
   revalidatePath("/carrinho");

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import Link from "next/link";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   cancelCustomerLogisticsQuote,
@@ -27,6 +28,68 @@ function formatBrl(cents: number) {
   }).format(cents / 100);
 }
 
+type Ask = {
+  title: string;
+  text: string;
+  confirmLabel: string;
+  danger?: boolean;
+  run: () => void;
+};
+
+function ConfirmDialog({
+  ask,
+  pending,
+  onClose,
+}: {
+  ask: Ask | null;
+  pending: boolean;
+  onClose: () => void;
+}) {
+  const confirmRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!ask) return;
+    confirmRef.current?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [ask, onClose]);
+  if (!ask) return null;
+  return (
+    <div className={styles.dialogBackdrop} onClick={onClose}>
+      <div
+        className={styles.dialog}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="quote-dialog-title"
+        aria-describedby="quote-dialog-text"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h3 id="quote-dialog-title">{ask.title}</h3>
+        <p id="quote-dialog-text">{ask.text}</p>
+        <div className={styles.dialogActions}>
+          <button type="button" onClick={onClose} disabled={pending}>
+            Voltar
+          </button>
+          <button
+            ref={confirmRef}
+            type="button"
+            className={ask.danger ? styles.dialogDanger : styles.dialogPrimary}
+            disabled={pending}
+            onClick={() => {
+              onClose();
+              ask.run();
+            }}
+          >
+            {ask.confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function MyLogisticsQuotes({
   status,
   quotes,
@@ -38,6 +101,8 @@ export function MyLogisticsQuotes({
     Record<string, CustomerLogisticsQuote>
   >({});
   const [notice, setNotice] = useState("");
+  const [ask, setAsk] = useState<Ask | null>(null);
+  const [accepted, setAccepted] = useState(false);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -59,34 +124,57 @@ export function MyLogisticsQuotes({
   }
 
   function respond(id: string, accept: boolean) {
-    const message = accept
-      ? "A cotação será aceita. Isso não cria pedido nem pagamento."
-      : "Deseja recusar esta cotação?";
-    if (!window.confirm(message)) return;
-    startTransition(async () => {
-      const result = await respondToCustomerLogisticsQuote({
-        quoteId: id,
-        accept,
+    const run = () =>
+      startTransition(async () => {
+        const result = await respondToCustomerLogisticsQuote({
+          quoteId: id,
+          accept,
+        });
+        setAccepted(result.status === "ok" && accept);
+        setNotice(
+          result.status === "ok"
+            ? accept
+              ? "Cotação aceita. Agora é só finalizar a compra."
+              : "Cotação recusada."
+            : "Não foi possível registrar sua resposta.",
+        );
+        if (result.status === "ok") router.refresh();
       });
-      setNotice(
-        result.status === "ok"
-          ? "Resposta registrada. Nenhum pedido ou pagamento foi criado."
-          : "Não foi possível registrar sua resposta.",
-      );
-      if (result.status === "ok") router.refresh();
-    });
+    setAsk(
+      accept
+        ? {
+            title: "Aceitar esta cotação?",
+            text: "Você confirma os fretes informados para este endereço. O pagamento só acontece depois, na finalização da compra.",
+            confirmLabel: "Aceitar cotação",
+            run,
+          }
+        : {
+            title: "Recusar esta cotação?",
+            text: "Você poderá pedir uma nova cotação a qualquer momento.",
+            confirmLabel: "Recusar",
+            danger: true,
+            run,
+          },
+    );
   }
 
   function cancel(id: string) {
-    if (!window.confirm("Deseja cancelar esta solicitação de cotação?")) return;
-    startTransition(async () => {
-      const result = await cancelCustomerLogisticsQuote(id);
-      setNotice(
-        result.status === "ok"
-          ? "Solicitação cancelada."
-          : "Não foi possível cancelar agora.",
-      );
-      if (result.status === "ok") router.refresh();
+    setAsk({
+      title: "Cancelar esta solicitação?",
+      text: "A solicitação de cotação será cancelada. Você pode pedir outra depois.",
+      confirmLabel: "Cancelar solicitação",
+      danger: true,
+      run: () =>
+        startTransition(async () => {
+          const result = await cancelCustomerLogisticsQuote(id);
+          setAccepted(false);
+          setNotice(
+            result.status === "ok"
+              ? "Solicitação cancelada."
+              : "Não foi possível cancelar agora.",
+          );
+          if (result.status === "ok") router.refresh();
+        }),
     });
   }
 
@@ -99,8 +187,8 @@ export function MyLogisticsQuotes({
         <p className={styles.eyebrow}>ACOMPANHAMENTO</p>
         <h2 id="delivery-quotes-title">Minhas entregas</h2>
         <p>
-          As respostas desta etapa são sobre a cotação logística. Aceitar não
-          finaliza compra e não cria pedido ou pagamento.
+          Aqui você acompanha as cotações de frete. Depois de aceitar uma
+          cotação, finalize a compra para pagar.
         </p>
       </div>
       {status === "not_configured" ? (
@@ -209,7 +297,14 @@ export function MyLogisticsQuotes({
       )}
       <span role="status" aria-live="polite">
         {notice}
+        {accepted ? (
+          <>
+            {" "}
+            <Link href="/checkout">Ir para o pagamento</Link>
+          </>
+        ) : null}
       </span>
+      <ConfirmDialog ask={ask} pending={pending} onClose={() => setAsk(null)} />
     </section>
   );
 }

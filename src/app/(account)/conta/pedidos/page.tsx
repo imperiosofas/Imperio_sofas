@@ -63,7 +63,9 @@ export default async function OrdersPage() {
                 >
                   <span className="grid gap-1">
                     <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                      <strong className="text-base">Pedido nº {order.order_number}</strong>
+                      <strong className="text-base">
+                        Pedido nº {order.order_number}
+                      </strong>
                       <span className="rounded-full bg-gold/15 px-3 py-0.5 text-xs font-semibold text-gold">
                         {orderStatusLabel[order.status]}
                       </span>

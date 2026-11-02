@@ -254,7 +254,29 @@ begin
   execute 'set local role authenticated';
   v_order := public.create_checkout_order(gen_random_uuid(), null,
     jsonb_build_array(jsonb_build_object('supplier_code', 'VALE', 'pickup_location_id', v_pickup_location)));
+
+  -- Terms acceptance: customer-owned, write-once, versioned.
+  perform pg_temp.chk(public.record_order_terms_acceptance(v_order, '2026-10-30') = true, 'terms acceptance is recorded'); v_n := v_n + 1;
+  perform pg_temp.chk(public.record_order_terms_acceptance(v_order, '2099-01-01') = false, 'terms acceptance is write-once'); v_n := v_n + 1;
+  perform pg_temp.chk((select terms_version from public.orders where id = v_order) = '2026-10-30'
+    and (select terms_accepted_at from public.orders where id = v_order) is not null, 'order keeps the first accepted terms version'); v_n := v_n + 1;
+  begin
+    perform public.record_order_terms_acceptance(v_order, '   ');
+    v_err := null;
+  exception when others then v_err := sqlerrm; end;
+  perform pg_temp.chk(v_err = 'terms version invalid', 'blank terms version is refused, got: ' || coalesce(v_err, 'no error')); v_n := v_n + 1;
   execute 'reset role';
+  perform pg_temp.chk(exists (select 1 from public.order_events where order_id = v_order and event_type = 'terms_accepted'), 'terms acceptance is logged as an order event'); v_n := v_n + 1;
+  perform set_config('request.jwt.claims', json_build_object('sub', v_c2, 'role', 'authenticated')::text, true);
+  perform set_config('request.jwt.claim.sub', v_c2::text, true);
+  execute 'set local role authenticated';
+  begin
+    perform public.record_order_terms_acceptance(v_order, '2026-10-30');
+    v_err := null;
+  exception when others then v_err := sqlerrm; end;
+  perform pg_temp.chk(v_err = 'order not found', 'another customer cannot record terms for the order, got: ' || coalesce(v_err, 'no error')); v_n := v_n + 1;
+  execute 'reset role';
+  perform pg_temp.chk(not has_function_privilege('anon', 'public.record_order_terms_acceptance(uuid,text)', 'execute'), 'anon cannot record terms acceptance'); v_n := v_n + 1;
   update public.orders set payment_expires_at = now() - interval '1 minute' where id = v_order;
   perform pg_temp.chk(public.expire_pending_orders() >= 1, 'expiry job closes overdue orders'); v_n := v_n + 1;
   perform pg_temp.chk((select status from public.orders where id = v_order) = 'expired', 'order is expired'); v_n := v_n + 1;

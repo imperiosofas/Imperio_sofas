@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCatalogCategories } from "../../../../features/catalog/queries";
+import { StoreFooter } from "../../../../features/legal/StoreFooter";
 import { CatalogListingPage } from "../../../../features/catalog/CatalogListingPage";
 
 export const dynamic = "force-dynamic";
@@ -28,10 +29,13 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   );
   if (!category) notFound();
   return (
-    <CatalogListingPage
-      categorySlug={category.slug}
-      categoryName={category.name}
-      searchValues={await searchParams}
-    />
+    <>
+      <CatalogListingPage
+        categorySlug={category.slug}
+        categoryName={category.name}
+        searchValues={await searchParams}
+      />
+      <StoreFooter />
+    </>
   );
 }

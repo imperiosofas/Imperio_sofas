@@ -49,6 +49,8 @@ const orderSchema = z.object({
   delivery_floor: z.number().nullable(),
   payment_expires_at: z.string(),
   paid_at: z.string().nullable(),
+  terms_accepted_at: z.string().nullable().optional(),
+  terms_version: z.string().nullable().optional(),
   created_at: z.string(),
   cancel_reason: z.string().nullable(),
   groups: z.array(
@@ -173,6 +175,11 @@ export default async function AdminOrderPage({
             ? ` · pago em ${dateFormat.format(new Date(order.paid_at))}`
             : ""}
           {order.cancel_reason ? ` · motivo: ${order.cancel_reason}` : ""}
+        </p>
+        <p className={styles.lead}>
+          {order.terms_accepted_at
+            ? `Termos aceitos em ${dateFormat.format(new Date(order.terms_accepted_at))}${order.terms_version ? ` (versão ${order.terms_version})` : ""}`
+            : "Aceite dos termos não registrado"}
         </p>
       </div>
 

@@ -133,6 +133,10 @@ export default async function AdminOrdersPage({
         </div>
       )}
 
+      <p className={styles.lead}>
+        <Link href="/admin/relatorios/vendas">Ver relatório de vendas</Link>
+      </p>
+
       <nav aria-label="Filtrar pedidos" className={styles.filters}>
         {FILTERS.map((item) => (
           <Link

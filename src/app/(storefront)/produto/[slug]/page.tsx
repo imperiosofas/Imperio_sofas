@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { resolveAppUrl } from "../../../../lib/env/app-url.mjs";
+import { StoreFooter } from "../../../../features/legal/StoreFooter";
 import { ProductExperience } from "../../../../features/commerce/ProductExperience";
 import { getPublicProductLogistics } from "../../../../features/logistics/storefront-data";
 import {
@@ -94,6 +95,7 @@ export default async function ProductPage({ params }: Props) {
         suggestedName={suggestedName}
         logistics={logistics}
       />
+      <StoreFooter />
     </>
   );
 }
