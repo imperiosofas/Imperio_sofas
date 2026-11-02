@@ -1,4 +1,5 @@
 const VIACEP_BASE_URL = "https://viacep.com.br/ws";
+const BRASILAPI_BASE_URL = "https://brasilapi.com.br/api/cep/v2";
 const IBGE_MUNICIPALITY_BASE_URL =
   "https://servicodados.ibge.gov.br/api/v1/localidades/municipios";
 const LOOKUP_TIMEOUT_MS = 3500;
@@ -21,10 +22,7 @@ function validMunicipality(payload, municipalityId, state) {
   );
 }
 
-export async function lookupPostalCode(value, fetcher = fetch) {
-  const postalCode = normalizePostalCode(value);
-  if (!postalCode) return { status: "invalid" };
-
+async function lookupViaCep(postalCode, fetcher) {
   try {
     const viaCepResponse = await fetcher(
       `${VIACEP_BASE_URL}/${postalCode}/json/`,
@@ -71,4 +69,46 @@ export async function lookupPostalCode(value, fetcher = fetch) {
     // Do not log CEPs or provider payloads; the caller gets a non-sensitive state.
     return { status: "unavailable" };
   }
+}
+
+// Fallback used only when ViaCEP or IBGE is unreachable (some providers rate
+// limit or block datacenter IPs). BrasilAPI returns the IBGE city code itself.
+async function lookupBrasilApi(postalCode, fetcher) {
+  try {
+    const response = await fetcher(`${BRASILAPI_BASE_URL}/${postalCode}`, {
+      signal: AbortSignal.timeout(LOOKUP_TIMEOUT_MS),
+      next: { revalidate: LOOKUP_CACHE_SECONDS },
+    });
+    if (response.status === 404) return { status: "not_found" };
+    if (!response.ok) return { status: "unavailable" };
+
+    const payload = await response.json();
+    const municipalityId = String(payload?.ibge?.city ?? "");
+    const state = String(payload?.state ?? "").toUpperCase();
+    const city = String(payload?.city ?? "").trim();
+    if (!/^\d{7}$/.test(municipalityId) || !/^[A-Z]{2}$/.test(state) || !city)
+      return { status: "unavailable" };
+
+    return {
+      status: "found",
+      postalCode,
+      municipalityId,
+      city,
+      state,
+      street: typeof payload.street === "string" ? payload.street : "",
+      neighborhood:
+        typeof payload.neighborhood === "string" ? payload.neighborhood : "",
+    };
+  } catch {
+    return { status: "unavailable" };
+  }
+}
+
+export async function lookupPostalCode(value, fetcher = fetch) {
+  const postalCode = normalizePostalCode(value);
+  if (!postalCode) return { status: "invalid" };
+
+  const primary = await lookupViaCep(postalCode, fetcher);
+  if (primary.status !== "unavailable") return primary;
+  return lookupBrasilApi(postalCode, fetcher);
 }

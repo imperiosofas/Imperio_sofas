@@ -107,3 +107,32 @@ test("treats provider errors, malformed data, and timeouts as unavailable", asyn
     { status: "unavailable" },
   );
 });
+
+test("falls back to BrasilAPI when ViaCEP is unreachable", async () => {
+  const urls = [];
+  const fetcher = async (url) => {
+    urls.push(url);
+    if (url.includes("viacep")) return { ok: false, json: async () => ({}) };
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({
+        city: "Taubaté",
+        state: "SP",
+        neighborhood: "Jardim Gurilândia",
+        street: "Avenida Cinderela",
+        ibge: { city: "3554102" },
+      }),
+    };
+  };
+  assert.deepEqual(await lookupPostalCode("12071-500", fetcher), {
+    status: "found",
+    postalCode: "12071500",
+    municipalityId: "3554102",
+    city: "Taubaté",
+    state: "SP",
+    street: "Avenida Cinderela",
+    neighborhood: "Jardim Gurilândia",
+  });
+  assert.equal(urls.length, 2);
+});
