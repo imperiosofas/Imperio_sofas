@@ -199,12 +199,11 @@ export default async function CheckoutPage() {
               <section className={styles.panel}>
                 <h2>Entrega</h2>
                 <p className={styles.place}>
-                  {acceptedQuote.cityName}/{acceptedQuote.stateCode}, CEP{" "}
-                  {acceptedQuote.postalCode}
-                  {acceptedQuote.floorNumber !== null
-                    ? `, ${acceptedQuote.floorNumber}º andar`
+                  Entrega em {acceptedQuote.cityName ?? "o endereço da cotação"}
+                  {acceptedQuote.floorChargeCents > 0
+                    ? `, com adicional por andar de ${formatBrlFromCents(acceptedQuote.floorChargeCents)} (cobrado uma vez por endereço)`
                     : ""}
-                  .
+                  . O endereço completo aparece no pedido.
                 </p>
                 <p className={styles.lead}>
                   Os prazos são contados em dias úteis a partir da confirmação
