@@ -156,15 +156,18 @@ export const returns: LegalDocument = {
   ],
 };
 
+export const PRIVACY_UPDATED_AT = "4 de novembro de 2026";
+
 export const privacy: LegalDocument = {
   slug: "privacidade",
   title: "Política de Privacidade",
-  updatedAt: TERMS_UPDATED_AT,
+  updatedAt: PRIVACY_UPDATED_AT,
   sections: [
     {
       title: "Quem é o responsável pelos dados",
       paragraphs: [
-        `${COMPANY.legalName} (${COMPANY.tradeName}), CNPJ ${COMPANY.cnpj}, ${COMPANY.address}, é a responsável pelo tratamento dos dados pessoais coletados neste site, conforme a Lei Geral de Proteção de Dados Pessoais (LGPD, Lei nº 13.709/2018).`,
+        `${COMPANY.legalName} (${COMPANY.tradeName}), CNPJ ${COMPANY.cnpj}, ${COMPANY.address}, é a responsável pelo tratamento dos dados pessoais coletados no site ${COMPANY.site}, conforme a Lei Geral de Proteção de Dados Pessoais (LGPD, Lei nº 13.709/2018).`,
+        "Esta política explica quais informações coletamos, como as usamos, com quem podemos compartilhá-las e quais são os seus direitos.",
       ],
     },
     {
@@ -172,7 +175,7 @@ export const privacy: LegalDocument = {
       bullets: [
         "Dados de cadastro: nome, e-mail e senha (a senha é guardada de forma protegida, nunca em texto aberto).",
         "Dados de contato e entrega: telefone, CEP, endereço, número, complemento e andar, quando você pede uma cotação ou finaliza uma compra.",
-        "Dados do pedido: produtos, valores, frete, forma e situação do pagamento.",
+        "Dados do pedido: produtos, valores, frete, forma e situação do pagamento, e dados necessários à emissão da nota fiscal.",
         "Interações na loja: favoritos, carrinho e avaliações que você publica.",
         "Dados técnicos de sessão necessários para manter você conectado e proteger a conta.",
       ],
@@ -182,22 +185,49 @@ export const privacy: LegalDocument = {
       bullets: [
         "Processar pedidos, pagamentos e entregas ou retiradas.",
         "Calcular frete e confirmar cotações.",
-        "Atender dúvidas e acompanhar pedidos.",
+        "Emitir notas fiscais e cumprir obrigações tributárias.",
+        "Atender dúvidas, prestar suporte e informar o andamento dos pedidos.",
         "Enviar e-mails de conta e de segurança, como confirmação de cadastro e redefinição de senha.",
-        "Cumprir obrigações legais, fiscais e de prevenção a fraudes.",
+        "Cumprir obrigações legais e prevenir fraudes.",
+      ],
+    },
+    {
+      title: "Bases legais",
+      bullets: [
+        "Execução de contrato: processamento de pedidos, entregas e comunicações necessárias à compra.",
+        "Cumprimento de obrigação legal: emissão de documentos fiscais e guarda de registros.",
+        "Legítimo interesse: segurança da conta e prevenção a fraudes.",
       ],
     },
     {
       title: "Com quem compartilhamos",
       paragraphs: [
-        "Compartilhamos apenas o necessário com prestadores que operam o site e a venda: provedores de hospedagem e banco de dados, de envio de e-mails e de pagamento. Os dados de cartão ou de conta usados no pagamento são tratados diretamente pelo provedor de pagamento e não ficam guardados por nós.",
-        "Também podemos compartilhar com os fornecedores dos produtos o necessário para a entrega ou a retirada do seu pedido. Não vendemos dados pessoais.",
+        "Compartilhamos apenas o necessário para cada finalidade, com:",
+      ],
+      bullets: [
+        "Mercado Pago: processamento e confirmação dos pagamentos, conforme as condições e a política de privacidade do próprio Mercado Pago. Os dados de cartão ou de conta usados no pagamento são tratados diretamente por ele e não ficam guardados por nós.",
+        "Bling: sistema usado para emissão de notas fiscais e gestão fiscal.",
+        "Prestadores de infraestrutura: hospedagem, banco de dados e envio de e-mails que fazem o site funcionar.",
+        "Fornecedores dos produtos: o necessário para a entrega ou a retirada do seu pedido.",
+        "Autoridades públicas: quando houver obrigação legal ou requisição válida.",
+      ],
+    },
+    {
+      title: "Não vendemos seus dados",
+      paragraphs: [
+        "A Império Sofás não comercializa os dados pessoais dos clientes.",
       ],
     },
     {
       title: "Por quanto tempo guardamos",
       paragraphs: [
-        "Guardamos os dados pelo tempo necessário para atender ao pedido, ao pós-venda e às obrigações legais e fiscais. Os dados de conta ficam enquanto a conta existir.",
+        "Guardamos os dados pelo tempo necessário para atender ao pedido, ao pós-venda e às obrigações legais, fiscais e contábeis. Os dados de conta ficam enquanto a conta existir. Quando não houver mais necessidade ou fundamento legal, os dados são eliminados ou anonimizados.",
+      ],
+    },
+    {
+      title: "Segurança",
+      paragraphs: [
+        "Adotamos medidas técnicas e administrativas para proteger os dados, como controle de acesso, comunicação protegida e restrição de permissões. Nenhum ambiente digital é totalmente livre de riscos; em caso de incidente de segurança com dados pessoais, tomaremos as providências exigidas pela legislação.",
       ],
     },
     {
@@ -205,22 +235,36 @@ export const privacy: LegalDocument = {
       paragraphs: ["Pela LGPD, você pode pedir a qualquer momento:"],
       bullets: [
         "Confirmação de que tratamos seus dados e acesso a eles.",
-        "Correção de dados incompletos ou desatualizados.",
+        "Correção de dados incompletos, incorretos ou desatualizados.",
         "Anonimização, bloqueio ou eliminação de dados desnecessários ou tratados em desacordo com a lei.",
+        "Portabilidade, quando aplicável.",
         "Informação sobre com quem compartilhamos seus dados.",
         "Revogação de consentimento, quando o tratamento depender dele.",
+        "Oposição a tratamentos, nas hipóteses previstas em lei.",
       ],
     },
     {
       title: "Cookies",
       paragraphs: [
-        "Usamos apenas cookies essenciais, necessários para manter a sua sessão de login e a segurança da conta.",
+        "Usamos apenas cookies essenciais, necessários para manter a sua sessão de login, o carrinho e a segurança da conta.",
+      ],
+    },
+    {
+      title: "Transferência internacional",
+      paragraphs: [
+        "Alguns serviços de tecnologia que usamos podem armazenar ou processar dados fora do Brasil, sempre com as garantias previstas na LGPD.",
+      ],
+    },
+    {
+      title: "Atualizações desta política",
+      paragraphs: [
+        "Esta política pode ser atualizada para refletir mudanças em nossas atividades, nas tecnologias usadas ou na lei. A versão vigente e a data de atualização ficam sempre nesta página.",
       ],
     },
     {
       title: "Como falar com a gente",
       paragraphs: [
-        "Para exercer seus direitos ou tirar dúvidas sobre os seus dados:",
+        "Para exercer seus direitos ou tirar dúvidas sobre os seus dados, podemos pedir informações estritamente necessárias para confirmar a sua identidade:",
       ],
       bullets: contactBullets,
     },
