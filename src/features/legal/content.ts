@@ -189,6 +189,7 @@ export const privacy: LegalDocument = {
         "Atender dúvidas, prestar suporte e informar o andamento dos pedidos.",
         "Enviar e-mails de conta e de segurança, como confirmação de cadastro e redefinição de senha.",
         "Cumprir obrigações legais e prevenir fraudes.",
+        "Enviar ofertas e promoções pelo WhatsApp, somente se você tiver autorizado.",
       ],
     },
     {
@@ -196,7 +197,15 @@ export const privacy: LegalDocument = {
       bullets: [
         "Execução de contrato: processamento de pedidos, entregas e comunicações necessárias à compra.",
         "Cumprimento de obrigação legal: emissão de documentos fiscais e guarda de registros.",
+        "Consentimento: promoções pelo WhatsApp.",
         "Legítimo interesse: segurança da conta e prevenção a fraudes.",
+      ],
+    },
+    {
+      title: "Promoções pelo WhatsApp",
+      paragraphs: [
+        "No checkout há uma caixa opcional, inicialmente desmarcada, para você receber ofertas, novidades e campanhas pelo WhatsApp. A escolha é independente da compra: comprar não depende dessa autorização.",
+        `Você pode revogar a autorização a qualquer momento, pedindo o cancelamento pelo e-mail ${COMPANY.email} ou pelo WhatsApp ${COMPANY.phone}. A revogação não afeta tratamentos anteriores feitos de forma legítima nem impede as comunicações necessárias para atender o seu pedido.`,
       ],
     },
     {

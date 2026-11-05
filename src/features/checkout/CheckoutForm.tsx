@@ -87,6 +87,14 @@ export function CheckoutForm({
         </span>
       </label>
 
+      <label className={styles.consent}>
+        <input type="checkbox" name="marketingWhatsapp" />
+        <span>
+          Quero receber ofertas e novidades da Império Sofás pelo WhatsApp
+          (opcional; não é necessário para comprar).
+        </span>
+      </label>
+
       <button
         className={styles.primary}
         type="submit"

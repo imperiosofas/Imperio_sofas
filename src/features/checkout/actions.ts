@@ -106,6 +106,12 @@ export async function startCheckoutAction(
     p_terms_version: TERMS_VERSION,
   });
 
+  // Optional and independent from the purchase; failure must not block payment.
+  if (formData.get("marketingWhatsapp") === "on")
+    await session.client.rpc("record_order_marketing_consent", {
+      p_order_id: data,
+    });
+
   const payment = await startOrderPayment(session.client, data);
   revalidatePath("/carrinho");
   if (!payment.ok) {
