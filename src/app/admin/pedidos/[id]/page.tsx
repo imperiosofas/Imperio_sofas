@@ -51,6 +51,8 @@ const orderSchema = z.object({
   paid_at: z.string().nullable(),
   terms_accepted_at: z.string().nullable().optional(),
   terms_version: z.string().nullable().optional(),
+  withdrawal_requested_at: z.string().nullable().optional(),
+  withdrawal_reason: z.string().nullable().optional(),
   created_at: z.string(),
   cancel_reason: z.string().nullable(),
   groups: z.array(
@@ -126,6 +128,47 @@ async function advanceGroup(formData: FormData) {
   revalidatePath("/admin/pedidos");
 }
 
+async function registerRefund(formData: FormData) {
+  "use server";
+  const client = await requireCatalogAdmin("/admin/pedidos");
+  const orderId = z.string().uuid().safeParse(formData.get("orderId"));
+  const reason = z
+    .string()
+    .trim()
+    .min(3)
+    .max(500)
+    .safeParse(formData.get("reason"));
+  if (!orderId.success || !reason.success) return;
+  const { error } = await client.rpc("admin_register_order_refund", {
+    p_order_id: orderId.data,
+    p_reason: reason.data,
+    p_restock: formData.get("restock") === "on",
+  });
+  if (error) throw new Error("Não foi possível registrar o estorno.");
+  revalidatePath(`/admin/pedidos/${orderId.data}`);
+  revalidatePath("/admin/pedidos");
+}
+
+async function closeReview(formData: FormData) {
+  "use server";
+  const client = await requireCatalogAdmin("/admin/pedidos");
+  const orderId = z.string().uuid().safeParse(formData.get("orderId"));
+  if (!orderId.success) return;
+  const reasonValue = formData.get("reason");
+  const { error } = await client.rpc("admin_close_needs_review_order", {
+    p_order_id: orderId.data,
+    p_confirm_refunded: formData.get("confirmRefunded") === "on",
+    p_reason:
+      typeof reasonValue === "string" ? reasonValue.trim().slice(0, 500) : null,
+  });
+  if (error)
+    throw new Error(
+      "Não foi possível encerrar. Se houver pagamento aprovado, estorne no provedor e use “Registrar estorno”.",
+    );
+  revalidatePath(`/admin/pedidos/${orderId.data}`);
+  revalidatePath("/admin/pedidos");
+}
+
 function nextStep(
   status: z.infer<typeof groupStatusSchema>,
   mode: "delivery" | "pickup",
@@ -183,13 +226,71 @@ export default async function AdminOrderPage({
         </p>
       </div>
 
-      {order.status === "needs_review" && (
+      {order.withdrawal_requested_at && (
         <p className={styles.section} role="alert">
-          Este pedido precisa de conferência: o valor recebido não bateu com o
-          total ou o pagamento chegou depois de o estoque ser liberado. Confira
-          no painel do provedor antes de qualquer envio.
+          O cliente pediu para desistir da compra (direito de arrependimento) em{" "}
+          {dateFormat.format(new Date(order.withdrawal_requested_at))}
+          {order.withdrawal_reason
+            ? `. Motivo: ${order.withdrawal_reason}`
+            : ""}
+          . Combine o recolhimento, estorne o valor total (inclusive o frete) no
+          provedor de pagamento e depois registre o estorno abaixo.
         </p>
       )}
+
+      {order.status === "needs_review" && (
+        <section className={styles.section} role="alert">
+          <p>
+            Este pedido precisa de conferência: o valor recebido não bateu com o
+            total ou o pagamento chegou depois de o estoque ser liberado.
+            Confira no painel do provedor antes de qualquer envio.
+          </p>
+          <form action={closeReview} className={styles.actions}>
+            <input type="hidden" name="orderId" value={order.id} />
+            <input
+              name="reason"
+              maxLength={500}
+              placeholder="Motivo (opcional)"
+              aria-label="Motivo do encerramento"
+            />
+            <label>
+              <input type="checkbox" name="confirmRefunded" /> Se entrou
+              dinheiro, já estornei no provedor
+            </label>
+            <button type="submit">Encerrar e liberar o estoque</button>
+          </form>
+        </section>
+      )}
+
+      {(order.status === "paid" || order.status === "refunded") &&
+        !order.events.some(
+          (event) => event.event_type === "order_refund_registered",
+        ) && (
+          <section className={styles.section}>
+            <h2>Cancelamento ou desistência</h2>
+            <p className={styles.lead}>
+              Use depois de estornar o pagamento no painel do Mercado Pago. O
+              pedido passa para “Estornado” e as entregas pendentes são
+              canceladas.
+            </p>
+            <form action={registerRefund} className={styles.actions}>
+              <input type="hidden" name="orderId" value={order.id} />
+              <input
+                name="reason"
+                required
+                minLength={3}
+                maxLength={500}
+                placeholder="Motivo (obrigatório)"
+                aria-label="Motivo do estorno"
+              />
+              <label>
+                <input type="checkbox" name="restock" /> Devolver os itens ao
+                estoque
+              </label>
+              <button type="submit">Registrar estorno</button>
+            </form>
+          </section>
+        )}
 
       <div className={styles.grid}>
         <div className={styles.stack}>

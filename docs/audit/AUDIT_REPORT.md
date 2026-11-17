@@ -1,0 +1,92 @@
+# Auditoria completa — Império Sofás (17/11/2026)
+
+**Base:** branch `staging` em `f8b92db` (clonada em `P:\Codex\imperio-sofas-staging`; a pasta de trabalho antiga tinha sido apagada).
+**Entrega:** correções em commit **local** — nada foi enviado ao GitHub nem à Vercel (push na `staging` faz deploy, e o pedido proibia deploy).
+**Equipe:** 5 agentes de auditoria em paralelo (segurança, banco/RLS, QA, frontend+arquitetura, e-commerce/jurídico) + 1 revisão independente final das correções.
+
+Documentos: [SECURITY_REPORT](SECURITY_REPORT.md) · [QA_REPORT](QA_REPORT.md) · [ARCHITECTURE_REPORT](ARCHITECTURE_REPORT.md) · [REMAINING_TASKS](REMAINING_TASKS.md)
+
+## Situação geral
+
+A base é sólida: RLS ligada nas 27 tabelas públicas, funções `SECURITY DEFINER` com `search_path=''`, preço/estoque/frete/total recalculados no banco, webhook com HMAC e deduplicação, idempotência no checkout, admin verificado no servidor em todas as páginas, actions e rotas. Nenhuma forma de um cliente virar admin foi encontrada.
+
+Os problemas mais graves eram: **Next.js com CVE crítico**, **edição rápida de preço no admin gravando 100× o valor**, e lacunas legais do e-commerce (sem desistência pelo site, sem estorno no sistema, identificação do vendedor ausente em várias páginas).
+
+**Limite da auditoria:** o Supabase TEST estava fora do ar (DNS NXDOMAIN). Testes ao vivo de RLS e os fluxos logados (carrinho, conta, pedidos, admin) **não foram executados**. A análise do banco foi estática.
+
+## Números
+
+|                                                                     |                                                                                                              |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Achados únicos (após remover duplicados entre agentes)              | **84**                                                                                                       |
+| Corrigidos nesta entrega (alguns parcialmente, ver tabela)          | **30**                                                                                                       |
+| Críticos restantes                                                  | **1 de ambiente** (Supabase TEST fora do ar) — nenhum crítico de código                                      |
+| Altos restantes                                                     | **2**: e-mails transacionais (ECO-02, depende de Resend) e imagens sem otimização (FE-02, custo/performance) |
+| Bugs introduzidos pelas próprias correções e pegos na revisão final | 7 (1 alto, 4 médios, 2 baixos) — todos corrigidos antes do commit                                            |
+
+## Correções realizadas
+
+| #   | Achado                                                                                        | Gravidade | O que foi feito                                                                                                                     | Arquivos                                                                                                  |
+| --- | --------------------------------------------------------------------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| 1   | Next 16.3.8 com RCE no otimizador de imagens (SVG), DoS em Server Actions, vazamento de cache | CRÍTICO   | Next/eslint-config-next 16.4.6                                                                                                      | `package.json`, lock                                                                                      |
+| 2   | zod < 4.6.6 (DoS de memória)                                                                  | ALTO      | zod 4.6.7                                                                                                                           | idem                                                                                                      |
+| 3   | ARC-01 edição rápida grava preço ×100 ("1299.90" → R$ 129.990,00)                             | ALTO      | Conversor único `parseBrlToCents` (inteiro, formatos BR) + testes                                                                   | `src/lib/money.ts`, `CatalogManagementCenter.tsx`, `admin/actions.ts`, `tests/money.test.mjs`             |
+| 4   | ECO-01 sem desistência (art. 49 CDC / Dec. 7.962 art. 5º) pelo site                           | ALTO      | Botão "Desistir da compra" no pedido pago, protocolo com data/hora imediato, aviso no admin; texto da política atualizado           | migration `20261117120000`, `pedido/[id]/page.tsx`, `checkout/actions.ts`, `orders-data.ts`, `content.ts` |
+| 5   | ECO-03 pedido pago não podia ser cancelado/estornado no sistema                               | ALTO      | "Registrar estorno" no admin (uma vez, opção de devolver ao estoque)                                                                | migration, `admin/pedidos/[id]/page.tsx`                                                                  |
+| 6   | ECO-04 CNPJ/razão social/contato ausentes em checkout, pedido, conta e páginas legais         | ALTO      | Rodapé legal nos layouts dos grupos `(storefront)`, `(account)`, `(legal)`                                                          | `src/app/*/layout.tsx`                                                                                    |
+| 7   | ECO-05 checkout sem prazo e sem variante                                                      | ALTO      | Prazo por fornecedor, largura do item e validade de 24 h da cotação no checkout (endereço completo e forma de pagamento: pendentes) | `checkout/page.tsx`                                                                                       |
+| 8   | SEC-01 sem headers de segurança                                                               | MÉDIO     | CSP base, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy, HSTS (sem sobrescrever a CSP estrita de `/auth/*`)         | `next.config.ts`                                                                                          |
+| 9   | SEC-02 cookies de sessão sem `Secure`                                                         | MÉDIO     | `cookieOptions` com `secure` em produção nos 3 clientes                                                                             | `cookie-options.ts`, `server.ts`, `client.ts`, `proxy.ts`                                                 |
+| 10  | SEC-03 login CSRF em `POST /auth/confirm` e `/auth/callback`                                  | MÉDIO     | Checagem Sec-Fetch-Site/Origin                                                                                                      | `src/lib/auth/same-origin.ts`, rotas                                                                      |
+| 11  | SEC-05/QA-07 senha sem mínimo na interface                                                    | MÉDIO     | `minLength=8` + dica (política no Supabase: pendente)                                                                               | auth components                                                                                           |
+| 12  | SEC-06/DB-02 `user_id` dos avaliadores visível a visitantes                                   | BAIXO     | Remove política pública e `select` do anon                                                                                          | migration                                                                                                 |
+| 13  | SEC-07/ECO-21 pagamento sem aceite dos termos registrado                                      | BAIXO     | Pagamento exige `terms_accepted_at`; falha ao gravar o aceite é tratada                                                             | `payment-service.ts`, `checkout/actions.ts`                                                               |
+| 14  | SEC-08 duas tentativas simultâneas criavam duas preferências                                  | BAIXO     | 1ª tentativa usa o id do pedido como chave                                                                                          | `payment-service.ts`                                                                                      |
+| 15  | SEC-09 upload confiava no MIME do cliente                                                     | BAIXO     | Formato real lido dos bytes                                                                                                         | `admin/actions.ts`                                                                                        |
+| 16  | SEC-11 Server Actions sem validação de tipo/UUID                                              | BAIXO     | Validação em favoritos, avaliações, carrinho, retry de pagamento                                                                    | `commerce/actions.ts`, `checkout/actions.ts`                                                              |
+| 17  | SEC-13 admin validado só pelo JWT local                                                       | BAIXO     | `getUser()` adicional                                                                                                               | `admin-access.ts`                                                                                         |
+| 18  | SEC-14/ARC-02 nome da chave secreta divergente                                                | INFO      | `SUPABASE_SECRET_KEY` em todo lugar                                                                                                 | `.env.example`, `env/server.ts`, `check-production-ready.mjs`                                             |
+| 19  | SEC-19 redefinir senha sem senha atual com qualquer sessão                                    | BAIXO     | Página só abre com cookie HttpOnly ligado ao usuário, criado pelo link de recuperação (token_hash e PKCE)                           | `password-recovery.ts`, `auth/confirm`, `redefinir-senha/page.tsx`                                        |
+| 20  | DB-01 pedidos `needs_review` prendiam estoque para sempre                                     | MÉDIO     | Admin encerra e libera estoque; exige confirmação de estorno se entrou dinheiro                                                     | migration, admin                                                                                          |
+| 21  | DB-06 `customer_profiles` com DELETE/TRUNCATE padrão                                          | BAIXO     | Só select/insert/update                                                                                                             | migration                                                                                                 |
+| 22  | DB-11 índices de FK ausentes                                                                  | INFO      | 2 índices                                                                                                                           | migration                                                                                                 |
+| 23  | ECO-06 início dos 7 dias não informado                                                        | MÉDIO     | "contados do recebimento (ou retirada)" + frete devolvido                                                                           | `content.ts` (política de trocas)                                                                         |
+| 24  | ECO-07 garantia sugeria só o fornecedor responsável                                           | MÉDIO     | Loja e fabricantes respondem (CDC) — política de trocas                                                                             | `content.ts`                                                                                              |
+| 25  | ECO-09 validade da cotação não exibida                                                        | MÉDIO     | Exibida em "Minhas entregas" e no checkout                                                                                          | `MyLogisticsQuotes.tsx`, checkout                                                                         |
+| 26  | ECO-16 cadastro sem aviso de privacidade                                                      | MÉDIO     | Aviso com link no cadastro                                                                                                          | `AuthAccountStage.tsx`                                                                                    |
+| 27  | ECO-19 dados estruturados sempre "InStock"                                                    | MÉDIO     | Disponibilidade real                                                                                                                | `produto/[slug]/page.tsx`                                                                                 |
+| 28  | ARC-03 testes do admin de logística fora do CI                                                | MÉDIO     | Incluídos no CI                                                                                                                     | `.github/workflows/ci.yml`                                                                                |
+| 29  | FE-08 `public/robots.txt`/`sitemap.xml` antigos competindo com os gerados                     | BAIXO     | Removidos (os de `src/app` bloqueiam indexação fora de produção)                                                                    | `public/`                                                                                                 |
+| 30  | QA-04 indicador da barra inferior errado após "Voltar" (teste falhando)                       | BAIXO     | Estado do toque limpo ao mudar de rota                                                                                              | `BottomNavigation.tsx`                                                                                    |
+
+Também: script de probe de RLS versionado em `scripts/audit/probe-db-authz.cjs` e testes pgTAP em `supabase/tests/audit_hardening.sql` (ambos ainda não executados — banco fora do ar).
+
+## Revisão independente das correções (Fase 6)
+
+Um agente revisou todo o diff. Encontrou e foi corrigido antes do commit:
+
+- **ALTO** — encerrar pedido `needs_review` podia apagar o registro de um pagamento real (valor divergente fica como `in_process`). Agora exige confirmação explícita de estorno e preserva o registro.
+- **MÉDIO** — headers globais sobrescreviam a CSP estrita da página de confirmação de e-mail → `/auth/*` excluído da CSP/Referrer globais (verificado com `curl` no build de produção).
+- **MÉDIO** — recuperação de senha por link PKCE ficaria sem saída → cookie também no fluxo `code`.
+- **MÉDIO** — falha ao gravar o aceite dos termos deixava um pedido impagável segurando estoque → agora devolve erro e o reenvio reaproveita o mesmo pedido.
+- **MÉDIO** — formulário de estorno sumia quando o webhook já marcava `refunded` → aparece até o registro ser feito.
+- **BAIXO** — cookie de recuperação não era ligado ao usuário → agora guarda e confere o id. Links legais duplicados no checkout → removidos.
+
+Aceitos: chave de idempotência pelo id do pedido é segura no banco (confirmado); `same-origin` ainda aceita `Origin: null` sem Fetch Metadata (navegadores antigos) — risco baixo, registrado.
+
+## Problemas ainda pendentes (resumo — detalhes em REMAINING_TASKS)
+
+Bloqueiam o lançamento:
+
+1. Reativar Supabase TEST e repetir RLS ao vivo + QA logado.
+2. Aplicar migrations `20261105120000` e `20261117120000`; rodar pgTAP.
+3. Mercado Pago: credenciais, sandbox, webhook real, parcelas/boleto.
+4. E-mails transacionais de pedido (Resend + domínio).
+5. Revisão jurídica e ajustes nos Termos do cliente (prazo "do pagamento", garantia, cancelamento, retirada).
+6. Configurações do Supabase Auth (allowlist exata, senha, CAPTCHA, limites).
+7. Agendar a expiração de pedidos (`CRON_SECRET` + cron ou `pg_cron`).
+8. Supabase/Vercel de produção, `APP_ENV=production`, `APP_URL`, DNS.
+
+## Prontidão para produção
+
+**Não está pronto para produção.** O código ficou mais seguro e completo, mas os itens 1–8 acima são impeditivos, e os fluxos logados e o RLS ainda não foram testados ao vivo nesta rodada.

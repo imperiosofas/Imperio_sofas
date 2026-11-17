@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { StoreFooter } from "../../../features/legal/StoreFooter";
 import { CatalogListingPage } from "../../../features/catalog/CatalogListingPage";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +16,6 @@ export default async function StorePage({
   return (
     <>
       <CatalogListingPage searchValues={await searchParams} />
-      <StoreFooter />
     </>
   );
 }

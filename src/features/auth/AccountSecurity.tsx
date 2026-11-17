@@ -251,6 +251,8 @@ export function AccountSecurity({
             label="Nova senha"
             type="password"
             autoComplete="new-password"
+            minLength={8}
+            hint="Mínimo de 8 caracteres."
             required
             value={newPassword}
             onChange={setNewPassword}

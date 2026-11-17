@@ -10,6 +10,12 @@ async function authenticated() {
   return { client, userId: data.claims.sub };
 }
 
+// Server Actions are public endpoints: arguments are untrusted at runtime.
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isUuid(value: unknown): value is string {
+  return typeof value === "string" && UUID.test(value);
+}
+
 export async function toggleFavorite(productId: string, current: boolean) {
   const auth = await authenticated();
   if (!auth)
@@ -18,6 +24,8 @@ export async function toggleFavorite(productId: string, current: boolean) {
       requiresLogin: true,
       message: "Entre na sua conta para salvar favoritos.",
     };
+  if (!isUuid(productId) || typeof current !== "boolean")
+    return { ok: false, requiresLogin: false, message: "Produto inválido." };
   const query = current
     ? auth.client
         .from("product_favorites")
@@ -53,6 +61,9 @@ export async function saveReview(
   const auth = await authenticated();
   if (!auth) return { ok: false, message: "Entre na sua conta para avaliar." };
   if (
+    !isUuid(productId) ||
+    typeof comment !== "string" ||
+    typeof displayName !== "string" ||
     !Number.isInteger(rating) ||
     rating < 1 ||
     rating > 5 ||
@@ -92,6 +103,7 @@ export async function saveReview(
 export async function removeReview(productId: string) {
   const auth = await authenticated();
   if (!auth) return { ok: false, message: "Entre na sua conta." };
+  if (!isUuid(productId)) return { ok: false, message: "Produto inválido." };
   const { error } = await auth.client.rpc("delete_my_product_review", {
     p_product_id: productId,
   });
@@ -109,7 +121,12 @@ export async function setCartItem(variantId: string, quantity: number) {
       requiresLogin: true,
       message: "Entre na sua conta para usar o carrinho.",
     };
-  if (!Number.isInteger(quantity) || quantity < 0 || quantity > 99)
+  if (
+    !isUuid(variantId) ||
+    !Number.isInteger(quantity) ||
+    quantity < 0 ||
+    quantity > 99
+  )
     return { ok: false, requiresLogin: false, message: "Quantidade inválida." };
   const { error } = await auth.client.rpc("set_cart_item", {
     p_variant_id: variantId,
@@ -138,7 +155,12 @@ export async function addCartItem(variantId: string, quantity: number) {
       requiresLogin: true,
       message: "Entre na sua conta para usar o carrinho.",
     };
-  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99)
+  if (
+    !isUuid(variantId) ||
+    !Number.isInteger(quantity) ||
+    quantity < 1 ||
+    quantity > 99
+  )
     return { ok: false, requiresLogin: false, message: "Quantidade inválida." };
   const { error } = await auth.client.rpc("add_cart_item", {
     p_variant_id: variantId,

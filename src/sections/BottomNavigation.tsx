@@ -207,6 +207,13 @@ export function BottomNavigation() {
   // A tap selects the tab immediately; it stops applying once the route
   // changes, so the pathname stays authoritative (redirects, back/forward).
   const [tap, setTap] = useState<{ index: number; from: string } | null>(null);
+  // Drop the tap as soon as the route changes; otherwise going Back to the
+  // page where the tap happened would revive it (stale bead position).
+  const [tapPathname, setTapPathname] = useState(pathname);
+  if (tapPathname !== pathname) {
+    setTapPathname(pathname);
+    if (tap) setTap(null);
+  }
   const activeIndex = tap && tap.from === pathname ? tap.index : routeIndex;
   // Remember where the bead came from so its icon can cross-fade on the way.
   const [track, setTrack] = useState({

@@ -6,7 +6,6 @@ import {
   CheckoutForm,
   type PickupGroup,
 } from "../../../features/checkout/CheckoutForm";
-import { LegalLinks } from "../../../features/legal/LegalLinks";
 import { getPaymentConfig } from "../../../features/checkout/payment-service";
 import styles from "../../../features/checkout/checkout.module.css";
 import {
@@ -18,6 +17,8 @@ import { getCustomerLogisticsQuotes } from "../../../features/logistics/customer
 import type { CustomerLogisticsQuote } from "../../../features/logistics/types";
 import { getVerifiedCustomerSession } from "../../../features/logistics/server-session";
 import { formatBrlFromCents } from "../../../lib/money";
+import { getPublicProductLogistics } from "../../../features/logistics/storefront-data";
+import { leadTimeText } from "../../../features/checkout/types";
 
 export const metadata: Metadata = {
   title: "Finalizar compra",
@@ -76,6 +77,22 @@ export default async function CheckoutPage() {
     (item) => item.stock_status === "unavailable",
   );
   const groups = groupBySupplier(cart.items);
+  // Lead time per supplier, shown before payment (Decreto 7.962, art. 2 e 4).
+  const leadTimes = new Map(
+    await Promise.all(
+      (groups ?? []).map(async (group) => {
+        const info = await getPublicProductLogistics(
+          group.items[0].product_slug,
+        );
+        return [
+          group.code,
+          info
+            ? leadTimeText(info.minBusinessDays, info.maxBusinessDays)
+            : null,
+        ] as const;
+      }),
+    ),
+  );
   const paymentReady = getPaymentConfig().status === "ready";
   const checkoutOpen = settings?.checkout_enabled === true && paymentReady;
 
@@ -175,7 +192,12 @@ export default async function CheckoutPage() {
                       <li key={item.variant_id}>
                         <span>
                           {item.name}
-                          <small>Quantidade: {item.quantity}</small>
+                          <small>
+                            {item.width_mm
+                              ? `Largura ${Math.round(item.width_mm / 10)} cm · `
+                              : ""}
+                            Quantidade: {item.quantity}
+                          </small>
                         </span>
                         <strong>
                           {formatBrlFromCents(item.price_cents * item.quantity)}
@@ -183,6 +205,11 @@ export default async function CheckoutPage() {
                       </li>
                     ))}
                   </ul>
+                  {leadTimes.get(group.code) && (
+                    <p className={styles.lead}>
+                      Prazo: {leadTimes.get(group.code)}.
+                    </p>
+                  )}
                   {mode === "quote" && quoteGroup?.mode === "delivery" && (
                     <p className={styles.place}>
                       Frete combinado:{" "}
@@ -208,7 +235,8 @@ export default async function CheckoutPage() {
                 <p className={styles.lead}>
                   Os prazos são contados em dias úteis a partir da confirmação
                   do pagamento. A cotação aceita vale apenas para estes itens e
-                  este endereço.
+                  este endereço, por 24 horas; depois disso o frete é
+                  recalculado com os preços atuais.
                 </p>
               </section>
             )}
@@ -280,7 +308,6 @@ export default async function CheckoutPage() {
                 Voltar ao carrinho
               </Link>
             )}
-            <LegalLinks />
           </aside>
         </div>
       </div>

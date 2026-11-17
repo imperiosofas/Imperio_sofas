@@ -28,7 +28,7 @@ import {
   setCatalogProductStatuses,
   toggleCategory,
 } from "./actions";
-import { formatBrlFromCents } from "../../lib/money";
+import { formatBrlFromCents, parseBrlToCents } from "../../lib/money";
 import styles from "./admin.module.css";
 
 type ProductRow = AdminProduct & { thumbnail: string | null };
@@ -95,12 +95,6 @@ function productVariantLabel(
 
 function priceInput(value: number | null) {
   return value === null ? "" : (value / 100).toFixed(2).replace(".", ",");
-}
-
-function parseBrl(value: string) {
-  const normalized = value.trim().replace(/\./g, "").replace(",", ".");
-  if (!/^\d+(?:\.\d{1,2})?$/.test(normalized)) return Number.NaN;
-  return Math.round(Number(normalized) * 100);
 }
 
 export function CatalogManagementCenter({
@@ -241,7 +235,7 @@ export function CatalogManagementCenter({
     const variants = quickProduct.product_variants.map((variant, index) => ({
       id: variant.id,
       sku: String(form.get(`sku-${index}`) ?? "").trim(),
-      priceCents: parseBrl(String(form.get(`price-${index}`) ?? "")),
+      priceCents: parseBrlToCents(String(form.get(`price-${index}`) ?? "")),
       onHand: Number(form.get(`stock-${index}`)),
       lowStockThreshold: Number(form.get(`threshold-${index}`)),
     }));

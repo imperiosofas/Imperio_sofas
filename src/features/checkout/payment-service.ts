@@ -33,6 +33,7 @@ type OrderForPayment = {
   floor_charge_cents: number;
   customer_email: string | null;
   payment_expires_at: string;
+  terms_accepted_at: string | null;
   order_items: {
     product_name: string;
     quantity: number;
@@ -62,7 +63,7 @@ export async function startOrderPayment(
     .from("orders")
     .select(
       `id, order_number, status, freight_cents, floor_charge_cents, customer_email,
-       payment_expires_at,
+       payment_expires_at, terms_accepted_at,
        order_items (product_name, quantity, unit_price_cents),
        order_payments (provider, status, checkout_url)`,
     )
@@ -73,6 +74,9 @@ export async function startOrderPayment(
     error ||
     !order ||
     order.status !== "pending_payment" ||
+    // Terms acceptance is a precondition of payment, also for orders created
+    // by calling the database directly instead of the checkout action.
+    !order.terms_accepted_at ||
     new Date(order.payment_expires_at).getTime() <= Date.now()
   )
     return { ok: false, code: "order_unavailable" };
@@ -88,7 +92,9 @@ export async function startOrderPayment(
   const service = createSupabaseServiceClient();
   if (!service) return { ok: false, code: "provider_error" };
 
-  const idempotencyKey = randomUUID();
+  // First attempt uses the order id, so two concurrent clicks resolve to the
+  // same provider preference; later retries get a fresh key.
+  const idempotencyKey = order.order_payments.length ? randomUUID() : order.id;
   let preferenceId: string;
   let checkoutUrl: string;
 

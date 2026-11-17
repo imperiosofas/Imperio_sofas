@@ -187,8 +187,8 @@ export function MyLogisticsQuotes({
         <p className={styles.eyebrow}>ACOMPANHAMENTO</p>
         <h2 id="delivery-quotes-title">Minhas entregas</h2>
         <p>
-          Aqui você acompanha as cotações de frete. Depois de aceitar uma
-          cotação, finalize a compra para pagar.
+          Aqui você acompanha as cotações de frete. Cada cotação vale por 24
+          horas; depois de aceitar, finalize a compra para pagar.
         </p>
       </div>
       {status === "not_configured" ? (

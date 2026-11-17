@@ -3,11 +3,15 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import {
   cancelOrderAction,
+  requestWithdrawalAction,
   retryPaymentAction,
   simulateMockPaymentAction,
 } from "../../../../features/checkout/actions";
 import styles from "../../../../features/checkout/checkout.module.css";
-import { getMyOrder } from "../../../../features/checkout/orders-data";
+import {
+  getMyOrder,
+  getMyOrderWithdrawal,
+} from "../../../../features/checkout/orders-data";
 import { getPaymentConfig } from "../../../../features/checkout/payment-service";
 import {
   groupStatusLabel,
@@ -40,6 +44,10 @@ const returnMessages: Record<string, { text: string; tone: string }> = {
     text: "Não foi possível abrir a página de pagamento. Tente novamente em instantes.",
     tone: "bannerError",
   },
+  "desistencia-erro": {
+    text: "Não foi possível registrar a desistência agora. Tente de novo ou fale com a loja pelo WhatsApp ou e-mail.",
+    tone: "bannerError",
+  },
 };
 
 const timeFormat = new Intl.DateTimeFormat("pt-BR", {
@@ -65,6 +73,7 @@ export default async function OrderPage({
   if (!userId) redirect(`/conta?next=${encodeURIComponent(`/pedido/${id}`)}`);
   const order = await getMyOrder(id);
   if (!order) notFound();
+  const withdrawal = await getMyOrderWithdrawal(id);
 
   const config = getPaymentConfig();
   const pending = order.status === "pending_payment";
@@ -73,7 +82,9 @@ export default async function OrderPage({
   const mock =
     canPay && config.status === "ready" && config.provider === "mock";
   const message =
-    retorno && order.status !== "paid" ? returnMessages[retorno] : undefined;
+    retorno && (order.status !== "paid" || retorno === "desistencia-erro")
+      ? returnMessages[retorno]
+      : undefined;
 
   return (
     <main className={styles.page}>
@@ -101,6 +112,17 @@ export default async function OrderPage({
             Pagamento confirmado em{" "}
             {order.paid_at ? timeFormat.format(new Date(order.paid_at)) : "—"}.
             Acompanhe abaixo o andamento de cada entrega ou retirada.
+          </p>
+        )}
+        {withdrawal && (
+          <p className={`${styles.banner} ${styles.bannerOk}`} role="status">
+            Desistência registrada em{" "}
+            <strong>
+              {timeFormat.format(new Date(withdrawal.requestedAt))}
+            </strong>
+            . Protocolo: pedido nº {order.order_number}. A loja vai entrar em
+            contato para combinar o recolhimento e a devolução integral dos
+            valores pagos, inclusive o frete.
           </p>
         )}
         {pending && !expired && (
@@ -252,6 +274,24 @@ export default async function OrderPage({
                   </button>
                 </form>
               </div>
+            )}
+            {order.status === "paid" && !withdrawal && (
+              <form
+                className={styles.withdrawal}
+                action={requestWithdrawalAction.bind(null, order.id)}
+              >
+                <p className={styles.note}>
+                  Direito de arrependimento: você pode desistir da compra em até
+                  7 dias corridos depois de receber ou retirar o produto.
+                </p>
+                <label className={styles.field}>
+                  Motivo (opcional)
+                  <textarea name="reason" maxLength={500} rows={3} />
+                </label>
+                <button className={styles.danger} type="submit">
+                  Desistir da compra
+                </button>
+              </form>
             )}
             {pending && (
               <form action={cancelOrderAction.bind(null, order.id)}>

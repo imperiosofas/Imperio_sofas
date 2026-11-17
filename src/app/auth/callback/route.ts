@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createSupabaseServerClient } from "../../../lib/supabase/server";
 import { getSafeAuthReturnTo } from "../../../lib/auth-return-to";
 import { createConfirmationInterstitialResponse } from "../../../lib/auth/confirmation-interstitial";
+import { isSameOriginPost } from "../../../lib/auth/same-origin";
 
 function redirectNoStore(url: URL) {
   const response = NextResponse.redirect(url);
@@ -100,6 +101,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!isSameOriginPost(request)) {
+    logCallbackDiagnostic("cross_site_post_rejected", request);
+    return redirectToAuthError(request, "/conta", "confirmacao");
+  }
   const form = await request.formData();
   const tokenHashValue = form.get("token_hash");
   const typeValue = form.get("type");

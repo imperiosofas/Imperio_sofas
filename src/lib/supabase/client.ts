@@ -1,6 +1,7 @@
 "use client";
 
 import { createBrowserClient } from "@supabase/ssr";
+import { supabaseCookieOptions } from "./cookie-options";
 
 export function createSupabaseBrowserClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -8,5 +9,7 @@ export function createSupabaseBrowserClient() {
 
   if (!url || !key) return null;
 
-  return createBrowserClient(url, key);
+  return createBrowserClient(url, key, {
+    cookieOptions: supabaseCookieOptions,
+  });
 }

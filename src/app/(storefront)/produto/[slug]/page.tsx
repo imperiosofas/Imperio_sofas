@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { resolveAppUrl } from "../../../../lib/env/app-url.mjs";
-import { StoreFooter } from "../../../../features/legal/StoreFooter";
 import { ProductExperience } from "../../../../features/commerce/ProductExperience";
 import { getPublicProductLogistics } from "../../../../features/logistics/storefront-data";
 import {
@@ -45,6 +44,12 @@ export default async function ProductPage({ params }: Props) {
   const prices = product.variants.map((variant) => variant.price_cents / 100);
   const lowest = Math.min(...prices);
   const highest = Math.max(...prices);
+  // Schema.org availability must follow real stock, not a hard-coded value.
+  const availability = product.variants.some(
+    (variant) => variant.stock_status !== "unavailable",
+  )
+    ? "https://schema.org/InStock"
+    : "https://schema.org/OutOfStock";
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -57,7 +62,7 @@ export default async function ProductPage({ params }: Props) {
             "@type": "Offer",
             priceCurrency: "BRL",
             price: lowest,
-            availability: "https://schema.org/InStock",
+            availability,
           }
         : {
             "@type": "AggregateOffer",
@@ -65,7 +70,7 @@ export default async function ProductPage({ params }: Props) {
             lowPrice: lowest,
             highPrice: highest,
             offerCount: product.variants.length,
-            availability: "https://schema.org/InStock",
+            availability,
           },
     ...(summary && summary.review_count > 0
       ? {
@@ -95,7 +100,6 @@ export default async function ProductPage({ params }: Props) {
         suggestedName={suggestedName}
         logistics={logistics}
       />
-      <StoreFooter />
     </>
   );
 }

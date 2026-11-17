@@ -5,6 +5,12 @@ import {
   createConfirmationInterstitialResponse,
   type ConfirmationOtpType,
 } from "../../../lib/auth/confirmation-interstitial";
+import { isSameOriginPost } from "../../../lib/auth/same-origin";
+import {
+  PASSWORD_RECOVERY_COOKIE,
+  PASSWORD_RECOVERY_PATH,
+  passwordRecoveryCookieOptions,
+} from "../../../lib/auth/password-recovery";
 
 function redirectNoStore(url: URL) {
   const response = NextResponse.redirect(url);
@@ -38,9 +44,17 @@ export async function GET(request: NextRequest) {
   if (code) {
     const supabase = await createSupabaseServerClient();
     if (!supabase) return redirectToConfirmationError(request, destination);
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) return redirectToConfirmationError(request, destination);
-    return redirectNoStore(new URL(destination, request.url));
+    const response = redirectNoStore(new URL(destination, request.url));
+    // PKCE recovery links come back here with next=/conta/redefinir-senha.
+    if (destination === PASSWORD_RECOVERY_PATH && data.user)
+      response.cookies.set(
+        PASSWORD_RECOVERY_COOKIE,
+        data.user.id,
+        passwordRecoveryCookieOptions,
+      );
+    return response;
   }
 
   if (!tokenHash || !type || tokenHash.length > 2048) {
@@ -57,6 +71,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!isSameOriginPost(request))
+    return redirectToConfirmationError(request, "/conta");
   const form = await request.formData();
   const tokenHashValue = form.get("token_hash");
   const requestedType = form.get("type");
@@ -79,12 +95,21 @@ export async function POST(request: NextRequest) {
     return redirectToConfirmationError(request, destination);
   }
 
-  const { error } = await supabase.auth.verifyOtp({
+  const { data, error } = await supabase.auth.verifyOtp({
     token_hash: tokenHash,
     type,
   });
 
   if (error) return redirectToConfirmationError(request, destination);
 
-  return redirectNoStore(new URL(destination, request.url));
+  const response = redirectNoStore(new URL(destination, request.url));
+  // Only a fresh recovery link unlocks /conta/redefinir-senha (no current
+  // password asked there); any other session must use /conta/seguranca.
+  if (type === "recovery" && data.user)
+    response.cookies.set(
+      PASSWORD_RECOVERY_COOKIE,
+      data.user.id,
+      passwordRecoveryCookieOptions,
+    );
+  return response;
 }

@@ -67,4 +67,4 @@ jobs:
         run: npm run lint
 
       - name: Unit tests
-        run: node --test tests/*.test.mjs
+        run: node --test tests/*.test.mjs src/features/admin/logistics/*.test.mjs

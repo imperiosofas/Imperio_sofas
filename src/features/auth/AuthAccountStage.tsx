@@ -322,6 +322,10 @@ export function AuthAccountStage({
                   mode === "register" ? "new-password" : "current-password"
                 }
                 enterKeyHint={mode === "register" ? "next" : "go"}
+                minLength={mode === "register" ? 8 : undefined}
+                hint={
+                  mode === "register" ? "Mínimo de 8 caracteres." : undefined
+                }
                 value={password}
                 onChange={onPasswordChange}
                 inputRef={passwordInputRef}
@@ -374,6 +378,16 @@ export function AuthAccountStage({
                   aria-invalid={Boolean(error)}
                   required
                 />
+              )}
+
+              {mode === "register" && (
+                <p className={styles.privacyNote}>
+                  Ao criar a conta, você declara que leu a{" "}
+                  <a href="/privacidade" target="_blank" rel="noopener">
+                    Política de Privacidade
+                  </a>
+                  .
+                </p>
               )}
 
               <ErrorMessage

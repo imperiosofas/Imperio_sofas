@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import sharp from "sharp";
 import { requireCatalogAdmin } from "../../lib/supabase/admin-access";
+import { parseBrlToCents } from "../../lib/money";
 import { runCatalogStorageCleanup } from "./catalog-storage-cleanup.mjs";
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -136,12 +137,7 @@ function cleanupIds(value: unknown): string[] {
 
 function parsePriceCents(value: string) {
   if (!value.trim()) return undefined;
-  const trimmed = value.trim();
-  const normalized = trimmed.includes(",")
-    ? trimmed.replace(/\./g, "").replace(",", ".")
-    : trimmed;
-  if (!/^\d+(?:\.\d{1,2})?$/.test(normalized)) return Number.NaN;
-  return Math.round(Number(normalized) * 100);
+  return parseBrlToCents(value);
 }
 
 export async function saveProduct(
@@ -602,7 +598,18 @@ export async function uploadProductImage(formData: FormData) {
 
   let optimizedImage: Buffer;
   try {
-    optimizedImage = await sharp(Buffer.from(await file.arrayBuffer()), {
+    const input = Buffer.from(await file.arrayBuffer());
+    // The declared MIME type comes from the client; check the real format
+    // from the bytes so SVG/TIFF/GIF/HEIF never reach the decoders below.
+    const { format } = await sharp(input, {
+      limitInputPixels: 100_000_000,
+    }).metadata();
+    if (format !== "jpeg" && format !== "png" && format !== "webp")
+      return {
+        ok: false,
+        message: "Escolha um arquivo JPG, PNG ou WebP de verdade.",
+      };
+    optimizedImage = await sharp(input, {
       limitInputPixels: 100_000_000,
     })
       .rotate()

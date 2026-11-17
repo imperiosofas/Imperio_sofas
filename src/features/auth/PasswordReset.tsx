@@ -145,6 +145,7 @@ export function PasswordReset() {
                   <AuthField
                     id="new-password"
                     name="new-password"
+                    minLength={8}
                     label="Nova senha"
                     type={showPassword ? "text" : "password"}
                     autoComplete="new-password"

@@ -99,18 +99,33 @@ export async function startCheckoutAction(
   if (error || typeof data !== "string")
     return { error: friendly(error?.message) };
 
-  // The checkbox is enforced above; this stores which terms version was accepted.
-  // A failure here must not strand a paid-intent order, so it does not block payment.
-  await session.client.rpc("record_order_terms_acceptance", {
+  // The checkbox is enforced above; this stores which terms version was
+  // accepted. Payment refuses orders without it, so a failure is reported.
+  const terms = await session.client.rpc("record_order_terms_acceptance", {
     p_order_id: data,
     p_terms_version: TERMS_VERSION,
   });
+  if (terms.error) {
+    console.error("checkout: terms acceptance not recorded", {
+      code: terms.error.code,
+    });
+    // Same idempotency key on retry: create_checkout_order returns this order
+    // and the acceptance is recorded again.
+    return {
+      error: "Não foi possível registrar o aceite dos termos. Tente novamente.",
+    };
+  }
 
   // Optional and independent from the purchase; failure must not block payment.
-  if (formData.get("marketingWhatsapp") === "on")
-    await session.client.rpc("record_order_marketing_consent", {
+  if (formData.get("marketingWhatsapp") === "on") {
+    const consent = await session.client.rpc("record_order_marketing_consent", {
       p_order_id: data,
     });
+    if (consent.error)
+      console.error("checkout: marketing consent not recorded", {
+        code: consent.error.code,
+      });
+  }
 
   const payment = await startOrderPayment(session.client, data);
   revalidatePath("/carrinho");
@@ -122,9 +137,31 @@ export async function startCheckoutAction(
   redirect(payment.url);
 }
 
+/** Right of withdrawal (CDC art. 49): records the request with a timestamp. */
+export async function requestWithdrawalAction(
+  orderId: string,
+  formData: FormData,
+) {
+  const session = await getVerifiedCustomerSession();
+  if (!session) redirect("/conta");
+  if (!z.string().uuid().safeParse(orderId).success) redirect("/conta/pedidos");
+  const reasonValue = formData.get("reason");
+  const reason =
+    typeof reasonValue === "string" ? reasonValue.trim().slice(0, 500) : "";
+  const { error } = await session.client.rpc("request_order_withdrawal", {
+    p_order_id: orderId,
+    p_reason: reason || null,
+  });
+  revalidatePath(`/pedido/${orderId}`);
+  redirect(
+    `/pedido/${orderId}?retorno=${error ? "desistencia-erro" : "desistencia"}`,
+  );
+}
+
 export async function retryPaymentAction(orderId: string) {
   const session = await getVerifiedCustomerSession();
   if (!session) redirect("/conta");
+  if (!z.string().uuid().safeParse(orderId).success) redirect("/conta/pedidos");
   const result = await startOrderPayment(session.client, orderId);
   if (!result.ok) redirect(`/pedido/${orderId}?retorno=erro`);
   redirect(result.url);

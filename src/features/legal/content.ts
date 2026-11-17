@@ -136,8 +136,8 @@ export const returns: LegalDocument = {
     {
       title: "Compras pelo site ou WhatsApp: direito de arrependimento",
       paragraphs: [
-        "Nas compras realizadas fora do estabelecimento comercial, incluindo site e WhatsApp, o consumidor poderá exercer o direito de arrependimento em até 7 dias corridos, conforme o artigo 49 do Código de Defesa do Consumidor.",
-        "Nesses casos, a devolução dos valores pagos e os custos de recolhimento do produto serão de responsabilidade da Império Sofás, conforme a legislação.",
+        "Nas compras realizadas fora do estabelecimento comercial, incluindo site e WhatsApp, o consumidor poderá exercer o direito de arrependimento em até 7 dias corridos, contados do recebimento do produto (ou da retirada), conforme o artigo 49 do Código de Defesa do Consumidor.",
+        "Nesses casos, todos os valores pagos, inclusive o frete, serão devolvidos pelo mesmo meio de pagamento, e os custos de recolhimento do produto serão de responsabilidade da Império Sofás, conforme a legislação.",
       ],
     },
     {
@@ -145,12 +145,15 @@ export const returns: LegalDocument = {
       paragraphs: [
         "Produtos com defeito ou em desacordo com o pedido serão atendidos conforme o Código de Defesa do Consumidor.",
         "Os produtos dos fornecedores Valle e Mundial possuem garantia legal de 90 dias para defeitos aparentes ou de fácil constatação, contados a partir da entrega. Em caso de defeitos ocultos, o prazo legal de reclamação começa quando o problema se torna evidente.",
-        "A garantia cobre os defeitos pelos quais os fornecedores sejam legalmente responsáveis, não abrangendo danos comprovadamente decorrentes de mau uso ou acidentes.",
+        "A Império Sofás e os fabricantes respondem pelos defeitos nos termos do Código de Defesa do Consumidor. A garantia não abrange danos comprovadamente decorrentes de mau uso ou acidentes.",
       ],
     },
     {
       title: "Como solicitar",
-      paragraphs: ["Fale com a loja informando o número do pedido:"],
+      paragraphs: [
+        "Compras pelo site: abra o pedido em Minha conta > Pedidos e use o botão “Desistir da compra”. Você recebe na hora um número de protocolo com data e hora.",
+        "Você também pode falar com a loja informando o número do pedido:",
+      ],
       bullets: contactBullets,
     },
   ],
