@@ -124,6 +124,10 @@
   font-weight: 600;
 }
 .field select {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  text-overflow: ellipsis;
   min-height: 48px;
   padding: 0 12px;
   border: 1px solid #b4aea3;
@@ -310,7 +314,8 @@
     padding: 28px 16px 130px;
   }
   .columns {
-    grid-template-columns: 1fr;
+    /* minmax(0, 1fr): long option text must not widen the page */
+    grid-template-columns: minmax(0, 1fr);
     gap: 24px;
   }
   .summary {

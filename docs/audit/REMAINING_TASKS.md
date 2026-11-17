@@ -4,10 +4,10 @@ Tudo aqui depende de alguém de fora do código (dono, contador, jurídico, pain
 
 ## 1. Infraestrutura e acessos
 
-- **[bloqueia testes] Reativar o Supabase TEST** (`qsafyqsskwbjnailgoev`). Em 17/11 o domínio não resolve (NXDOMAIN): o catálogo do site de teste dá erro 500 e login/carrinho não funcionam. Reativar no painel do Supabase e rodar de novo os probes e o QA (ver QA_REPORT.md, "Como repetir").
+- **Supabase TEST**: estava pausado em 17/11 e foi reativado no mesmo dia. Projetos gratuitos pausam após dias sem uso — ao voltar a testar depois de uma pausa longa, conferir no painel.
 - **[bloqueia lançamento] Aplicar as migrations novas** no banco de teste e depois no de produção, nesta ordem:
-  1. `20261105120000_order_marketing_consent.sql` (ainda não aplicada no TEST)
-  2. `20261117120000_audit_hardening_withdrawal_and_review.sql`
+  1. `20261105120000_order_marketing_consent.sql` (aplicada no TEST em 17/11)
+  2. `20261117120000_audit_hardening_withdrawal_and_review.sql` (aplicada no TEST em 17/11)
      Depois rodar `npm run db:test` (pgTAP, inclui `supabase/tests/audit_hardening.sql`).
 - **[bloqueia lançamento] Projeto Supabase de produção**, Vercel Pro (uso comercial) e DNS do domínio.
 - **Supabase Auth (painel)**: senha mínima ≥ 8 com requisitos, proteção contra senhas vazadas, confirmação de e-mail obrigatória, "Secure password change", CAPTCHA em cadastro/recuperação, limites de taxa, **lista de redirecionamento exata sem curingas** (`*.vercel.app` permitiria roubo de conta pela recuperação de senha). Depois de configurar, copiar para `supabase/config.toml`.

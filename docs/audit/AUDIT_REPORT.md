@@ -12,15 +12,15 @@ A base é sólida: RLS ligada nas 27 tabelas públicas, funções `SECURITY DEFI
 
 Os problemas mais graves eram: **Next.js com CVE crítico**, **edição rápida de preço no admin gravando 100× o valor**, e lacunas legais do e-commerce (sem desistência pelo site, sem estorno no sistema, identificação do vendedor ausente em várias páginas).
 
-**Limite da auditoria:** o Supabase TEST estava fora do ar (DNS NXDOMAIN). Testes ao vivo de RLS e os fluxos logados (carrinho, conta, pedidos, admin) **não foram executados**. A análise do banco foi estática.
+**Testes ao vivo:** o Supabase TEST estava pausado na primeira rodada; foi reativado, as duas migrations pendentes foram aplicadas no TEST e rodaram ao vivo o probe de RLS (199 verificações, 0 acessos indevidos depois da migration) e os fluxos com login e de admin (47/47 verificações no navegador, com o código novo em build de produção local). O site da Vercel não foi atualizado.
 
 ## Números
 
 |                                                                     |                                                                                                              |
 | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Achados únicos (após remover duplicados entre agentes)              | **84**                                                                                                       |
-| Corrigidos nesta entrega (alguns parcialmente, ver tabela)          | **30**                                                                                                       |
-| Críticos restantes                                                  | **1 de ambiente** (Supabase TEST fora do ar) — nenhum crítico de código                                      |
+| Achados únicos (após remover duplicados entre agentes)              | **85**                                                                                                       |
+| Corrigidos nesta entrega (alguns parcialmente, ver tabela)          | **31**                                                                                                       |
+| Críticos restantes                                                  | **0** (o Supabase TEST foi reativado)                                                                        |
 | Altos restantes                                                     | **2**: e-mails transacionais (ECO-02, depende de Resend) e imagens sem otimização (FE-02, custo/performance) |
 | Bugs introduzidos pelas próprias correções e pegos na revisão final | 7 (1 alto, 4 médios, 2 baixos) — todos corrigidos antes do commit                                            |
 
@@ -58,8 +58,9 @@ Os problemas mais graves eram: **Next.js com CVE crítico**, **edição rápida 
 | 28  | ARC-03 testes do admin de logística fora do CI                                                | MÉDIO     | Incluídos no CI                                                                                                                     | `.github/workflows/ci.yml`                                                                                |
 | 29  | FE-08 `public/robots.txt`/`sitemap.xml` antigos competindo com os gerados                     | BAIXO     | Removidos (os de `src/app` bloqueiam indexação fora de produção)                                                                    | `public/`                                                                                                 |
 | 30  | QA-04 indicador da barra inferior errado após "Voltar" (teste falhando)                       | BAIXO     | Estado do toque limpo ao mudar de rota                                                                                              | `BottomNavigation.tsx`                                                                                    |
+| 31  | QA-08 checkout com rolagem horizontal no celular (122 px em 360 px), achado no teste ao vivo  | MÉDIO     | Grade `minmax(0, 1fr)` e `select` com largura 100%; reteste 0 px nas 5 larguras                                                     | `checkout.module.css`                                                                                     |
 
-Também: script de probe de RLS versionado em `scripts/audit/probe-db-authz.cjs` e testes pgTAP em `supabase/tests/audit_hardening.sql` (ambos ainda não executados — banco fora do ar).
+Também: script de probe de RLS versionado em `scripts/audit/probe-db-authz.cjs` e testes pgTAP em `supabase/tests/audit_hardening.sql` (o probe rodou ao vivo; o pgTAP precisa do Supabase local/Docker). Os testes de navegador com login ficaram em `scripts/audit/qa/`.
 
 ## Revisão independente das correções (Fase 6)
 
@@ -78,8 +79,8 @@ Aceitos: chave de idempotência pelo id do pedido é segura no banco (confirmado
 
 Bloqueiam o lançamento:
 
-1. Reativar Supabase TEST e repetir RLS ao vivo + QA logado.
-2. Aplicar migrations `20261105120000` e `20261117120000`; rodar pgTAP.
+1. Aplicar as migrations `20261105120000` e `20261117120000` também no banco de produção (no TEST já foram aplicadas).
+2. Rodar o pgTAP localmente (Docker) quando possível.
 3. Mercado Pago: credenciais, sandbox, webhook real, parcelas/boleto.
 4. E-mails transacionais de pedido (Resend + domínio).
 5. Revisão jurídica e ajustes nos Termos do cliente (prazo "do pagamento", garantia, cancelamento, retirada).
@@ -89,4 +90,4 @@ Bloqueiam o lançamento:
 
 ## Prontidão para produção
 
-**Não está pronto para produção.** O código ficou mais seguro e completo, mas os itens 1–8 acima são impeditivos, e os fluxos logados e o RLS ainda não foram testados ao vivo nesta rodada.
+**Não está pronto para produção.** O código ficou mais seguro e completo, mas os itens acima são impeditivos (pagamento real, e-mails transacionais, revisão jurídica, configurações de Auth/cron e ambiente de produção).

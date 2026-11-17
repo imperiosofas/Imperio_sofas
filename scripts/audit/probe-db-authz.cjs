@@ -355,13 +355,11 @@ function tinyPng() {
       "anon",
       "insert products",
       "DENIED",
-      await anon
-        .from("products")
-        .insert({
-          category_id: rnd(),
-          name: "audit",
-          slug: "audit-" + Date.now(),
-        }),
+      await anon.from("products").insert({
+        category_id: rnd(),
+        name: "audit",
+        slug: "audit-" + Date.now(),
+      }),
     );
     rec(
       "S1-anon-write",
@@ -382,15 +380,13 @@ function tinyPng() {
       "anon",
       "insert orders",
       "DENIED",
-      await anon
-        .from("orders")
-        .insert({
-          customer_id: rnd(),
-          idempotency_key: rnd(),
-          items_subtotal_cents: 1,
-          total_cents: 1,
-          payment_expires_at: new Date().toISOString(),
-        }),
+      await anon.from("orders").insert({
+        customer_id: rnd(),
+        idempotency_key: rnd(),
+        items_subtotal_cents: 1,
+        total_cents: 1,
+        payment_expires_at: new Date().toISOString(),
+      }),
     );
     rec(
       "S1-anon-write",
@@ -774,30 +770,26 @@ function tinyPng() {
       "A",
       "INSERT order for B",
       "DENIED",
-      await A.client
-        .from("orders")
-        .insert({
-          customer_id: B.id,
-          idempotency_key: rnd(),
-          items_subtotal_cents: 1,
-          total_cents: 1,
-          payment_expires_at: new Date().toISOString(),
-        }),
+      await A.client.from("orders").insert({
+        customer_id: B.id,
+        idempotency_key: rnd(),
+        items_subtotal_cents: 1,
+        total_cents: 1,
+        payment_expires_at: new Date().toISOString(),
+      }),
     );
     rec(
       "S3-modify-other-order",
       "A",
       "INSERT order_payments approved for B's order",
       "DENIED",
-      await A.client
-        .from("order_payments")
-        .insert({
-          order_id: bOrder || rnd(),
-          provider: "mock",
-          status: "approved",
-          amount_cents: 100,
-          idempotency_key: rnd(),
-        }),
+      await A.client.from("order_payments").insert({
+        order_id: bOrder || rnd(),
+        provider: "mock",
+        status: "approved",
+        amount_cents: 100,
+        idempotency_key: rnd(),
+      }),
     );
     rec(
       "S3-modify-other-order",
@@ -953,13 +945,11 @@ function tinyPng() {
       "A",
       "insert product (random category)",
       "RLS 42501 (not FK 23503)",
-      await A.client
-        .from("products")
-        .insert({
-          category_id: rnd(),
-          name: "audit",
-          slug: "audit-" + Date.now(),
-        }),
+      await A.client.from("products").insert({
+        category_id: rnd(),
+        name: "audit",
+        slug: "audit-" + Date.now(),
+      }),
     );
     rec(
       "S5-modify-catalog",
@@ -1238,13 +1228,11 @@ function tinyPng() {
       "A",
       "INSERT cart_item into B's cart",
       "DENIED",
-      await A.client
-        .from("cart_items")
-        .insert({
-          cart_id: bCartId || rnd(),
-          variant_id: variant ? variant.id : rnd(),
-          quantity: 99,
-        }),
+      await A.client.from("cart_items").insert({
+        cart_id: bCartId || rnd(),
+        variant_id: variant ? variant.id : rnd(),
+        quantity: 99,
+      }),
     );
     rec(
       "S8-delete-other",
