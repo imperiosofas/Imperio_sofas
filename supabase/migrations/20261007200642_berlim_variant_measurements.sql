@@ -14,7 +14,11 @@ begin
   where source_product_id = v_source_id
   for update;
 
-  if not found or v_import.target_product_id is distinct from v_product_id then
+  -- Fresh databases (local/CI) never ran the legacy import: nothing to backfill.
+  if not found then
+    return;
+  end if;
+  if v_import.target_product_id is distinct from v_product_id then
     raise exception 'berlin_import_ledger_missing_or_mismatched';
   end if;
 

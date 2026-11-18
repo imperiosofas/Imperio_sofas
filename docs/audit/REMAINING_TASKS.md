@@ -1,4 +1,4 @@
-# Pendências após a auditoria (17/11/2026)
+# Pendências após a auditoria (atualizado em 18/11/2026)
 
 Tudo aqui depende de alguém de fora do código (dono, contador, jurídico, painéis da Vercel/Supabase/Mercado Pago) ou de uma decisão. Itens marcados **[bloqueia lançamento]** precisam estar resolvidos antes de vender de verdade.
 
@@ -9,11 +9,15 @@ Tudo aqui depende de alguém de fora do código (dono, contador, jurídico, pain
   1. `20261105120000_order_marketing_consent.sql` (aplicada no TEST em 17/11)
   2. `20261117120000_audit_hardening_withdrawal_and_review.sql` (aplicada no TEST em 17/11)
      Depois rodar `npm run db:test` (pgTAP, inclui `supabase/tests/audit_hardening.sql`).
-- **[bloqueia lançamento] Projeto Supabase de produção**, Vercel Pro (uso comercial) e DNS do domínio.
-- **Supabase Auth (painel)**: senha mínima ≥ 8 com requisitos, proteção contra senhas vazadas, confirmação de e-mail obrigatória, "Secure password change", CAPTCHA em cadastro/recuperação, limites de taxa, **lista de redirecionamento exata sem curingas** (`*.vercel.app` permitiria roubo de conta pela recuperação de senha). Depois de configurar, copiar para `supabase/config.toml`.
+- **[bloqueia lançamento] Projeto Supabase de produção**, Vercel Pro (uso comercial; o time `imperio-sofas` está no plano Hobby) e DNS do domínio.
+- **CI do GitHub**: todos os commits da `staging` falhavam em duas etapas — checagem de formatação (1 arquivo) e criação do banco do zero (a migration `20261007200642` exigia dados da importação antiga). Corrigido localmente; confirmar verde no próximo push.
+- **Supabase Auth (painel) — conferido em 18/11 no projeto TEST:**
+  - já está certo: confirmação de e-mail ligada, confirmação na troca de e-mail ligada, limites de taxa configurados, SMTP customizado pelo Resend (`smtp.resend.com`, remetente `no-reply@imperiosofas.com.br`);
+  - falta ligar: **senha mínima 8** (hoje 6), **proteção contra senhas vazadas**, **"Secure password change"** e **exigir senha atual na troca** (hoje desligados), CAPTCHA (desligado);
+  - **lista de redirecionamento**: tem os curingas `https://imperio-*-sofas-imperio-sofas.vercel.app` e `.../**`. Qualquer projeto da Vercel com nome nesse formato casaria com o padrão; no projeto de produção usar só o domínio final, sem curinga. Site URL atual: `https://imperio-sofas-imperio-sofas.vercel.app/`.
 - **Expiração automática de pedidos**: definir `CRON_SECRET` (≥ 32 caracteres) e agendar `/api/cron/expire-orders` a cada 5–10 min. No plano Hobby da Vercel o cron só roda 1×/dia; usar Vercel Pro ou `pg_cron` no Supabase (`select cron.schedule('expire-pending-orders','*/5 * * * *', $$select public.expire_pending_orders();$$);`).
 - **Rate limit** no `/api/logistics/cep` e nos POSTs de Server Actions: regra no Vercel Firewall (ex.: 30 req/min por IP no CEP).
-- **Produção**: `APP_ENV=production`, `INTEGRATION_MODE=live`, `APP_URL` com o domínio final (hoje o sitemap usa a URL do deployment), sem provedor mock.
+- **Variáveis na Vercel** (conferidas em 18/11): existem as do Supabase, `APP_ENV`, `INTEGRATION_MODE`, `CATALOG_SOURCE`, `APP_URL`, `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET`. **Faltam** `CRON_SECRET`, `RESEND_API_KEY` e `MP_EXPECTED_COLLECTOR_ID`. Para produção: `APP_ENV=production`, `INTEGRATION_MODE=live`, `APP_URL` com o domínio final.
 
 ## 2. Pagamento (Mercado Pago) — integração pendente
 
@@ -23,14 +27,10 @@ Tudo aqui depende de alguém de fora do código (dono, contador, jurídico, pain
 
 ## 3. Jurídico e negócio
 
-- **[bloqueia lançamento] E-mails transacionais** (Decreto 7.962, art. 4º, III e IV): confirmação imediata do pedido e do pagamento com o resumo do contrato. Precisa de chave do Resend e domínio verificado.
-- **[bloqueia lançamento] Revisão jurídica** da Política de Privacidade e dos Termos.
-- Termos (texto do cliente, não alterado sem autorização) — propor ao cliente:
-  - prazo de entrega "a partir da confirmação do **pagamento**" (o sistema conta assim; o texto diz "do pedido");
-  - garantia: a loja responde junto com os fabricantes (CDC art. 18), não só "os fornecedores";
-  - regras de cancelamento depois do pagamento (seção 5 tem título mas não tem regra);
-  - regras de retirada no galpão (endereço, horário, documento, prazo para retirar).
-- Endereço completo (bairro, CEP) da empresa e do galpão; número oficial do WhatsApp.
+- **[bloqueia lançamento] E-mails de pedido** (Decreto 7.962, art. 4º, III e IV): o Resend já está pronto (domínio `imperiosofas.com.br` verificado e usado pelo Supabase para os e-mails de conta). Falta o código enviar a confirmação do pedido e do pagamento, e cadastrar uma `RESEND_API_KEY` na Vercel (hoje não existe lá).
+- Revisão jurídica: **feita** (informado pelo proprietário em 18/11).
+- Dados da empresa: **já estão no projeto** — Av. Cinderela, 2011, Jardim Gurilândia, Taubaté/SP, CEP 12071-500; WhatsApp (12) 99218-0333; galpão Rua Agostinho Abifadel, 35, Terra Nova, CEP 12081-670. O rodapé legal passou a mostrar bairro e CEP.
+- Observação: os Termos dizem que o prazo conta "da confirmação do pedido"; o sistema conta da confirmação do **pagamento**. Alinhar um dos dois.
 - Encarregado de dados (LGPD art. 41) ou declaração de dispensa como agente de pequeno porte.
 - Guarda de logs de acesso por 6 meses (Marco Civil, art. 15): definir fonte e mencionar na política.
 - Política de privacidade: citar Vercel/Supabase como operadores, o iframe do Google Maps (cookies do Google), prazos de retenção e que o nome do avaliador é público.
