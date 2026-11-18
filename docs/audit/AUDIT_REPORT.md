@@ -107,3 +107,5 @@ Verificado nos painéis (Supabase, Vercel, Resend, GitHub) e corrigido:
 | Endereço do rodapé legal sem bairro/CEP                                                                                                                 | BAIXO     | Corrigido com os dados que já estavam no projeto                                                                                   |
 | Subpáginas do admin perdiam o destino após login (QA-03)                                                                                                | BAIXO     | Corrigido (header `x-pathname` do proxy + allowlist das seções do admin, com teste)                                                |
 | `/favicon.ico` 404 e link "Continuar para a loja" na tela de erro (QA-06/09)                                                                            | BAIXO     | Corrigidos                                                                                                                         |
+
+Publicado na `staging` em 18/11 (deploy no site de teste). Testes ao vivo de cliente e admin no site publicado: 47/47.

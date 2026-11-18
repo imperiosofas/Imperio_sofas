@@ -11,7 +11,7 @@ Tudo aqui depende de alguém de fora do código (dono, contador, jurídico, pain
   3. `20261118120000_schedule_order_expiry.sql` (aplicada no TEST em 18/11; job `expire-pending-orders` ativo a cada 5 min)
      Depois rodar `npm run db:test` (pgTAP, inclui `supabase/tests/audit_hardening.sql`).
 - **[bloqueia lançamento] Projeto Supabase de produção**, Vercel Pro (uso comercial; o time `imperio-sofas` está no plano Hobby) e DNS do domínio.
-- **CI do GitHub**: todos os commits da `staging` falhavam em duas etapas — checagem de formatação (1 arquivo) e criação do banco do zero (a migration `20261007200642` exigia dados da importação antiga). Corrigido localmente; confirmar verde no próximo push.
+- **CI do GitHub**: **verde** desde 18/11 (run 50). Antes, todos os commits da `staging` falhavam: formatação, uma migration que quebrava em banco novo e testes pgTAP que nunca tinham rodado (dependiam de dados do TEST ou mudavam estoque como cliente). Os 15 arquivos pgTAP passam num banco criado do zero.
 - **Supabase Auth (painel) — conferido em 18/11 no projeto TEST:**
   - já está certo: confirmação de e-mail ligada, confirmação na troca de e-mail ligada, limites de taxa configurados, SMTP customizado pelo Resend (`smtp.resend.com`, remetente `no-reply@imperiosofas.com.br`);
   - ajustado em 18/11: **senha mínima 8** e **"Secure password change"** ligados;
