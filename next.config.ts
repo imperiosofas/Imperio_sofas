@@ -36,6 +36,10 @@ const nextConfig: NextConfig = {
   experimental: { serverActions: { bodySizeLimit: "11mb" } },
   distDir: process.env.NEXT_DIST_DIR ?? ".next",
   turbopack: { root: process.cwd() },
+  // Browsers ask for /favicon.ico even when the page declares /favicon.png.
+  async rewrites() {
+    return [{ source: "/favicon.ico", destination: "/favicon.png" }];
+  },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },

@@ -46,10 +46,10 @@ export default function GlobalError({
             Tentar novamente
           </button>
           <Link
-            href="/loja"
+            href="/"
             className="rounded-full border border-gold/50 px-6 py-3 font-semibold text-gold transition hover:bg-gold/10"
           >
-            Continuar para a loja
+            Voltar ao início
           </Link>
         </div>
       </div>

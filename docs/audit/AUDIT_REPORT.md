@@ -91,3 +91,19 @@ Bloqueiam o lançamento:
 ## Prontidão para produção
 
 **Não está pronto para produção.** O código ficou mais seguro e completo, mas os itens acima são impeditivos (pagamento real, e-mails transacionais, revisão jurídica, configurações de Auth/cron e ambiente de produção).
+
+## Atualização de 18/11/2026
+
+Verificado nos painéis (Supabase, Vercel, Resend, GitHub) e corrigido:
+
+| Achado                                                                                                                                                  | Gravidade | O que foi feito                                                                                                                    |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **`proxy.ts` nunca rodou**: o app fica em `src/app`, e o Next só lê o proxy em `src/`. A renovação de sessão no servidor nunca aconteceu desde outubro. | ALTO      | Movido para `src/proxy.ts`; o build agora lista "Proxy (Middleware)". Fluxos ao vivo (47 verificações) e E2E passam com ele ativo. |
+| CI do GitHub vermelho em todos os commits da `staging` (formatação + migration que quebrava em banco novo)                                              | MÉDIO     | Corrigidos os dois pontos; confirmar no próximo push                                                                               |
+| E-mails de pedido inexistentes (Decreto 7.962)                                                                                                          | ALTO      | Implementados (pedido, pagamento, desistência) via Resend, com idempotência; aguardam `RESEND_API_KEY` na Vercel                   |
+| Expiração de pedidos não agendada                                                                                                                       | MÉDIO     | `pg_cron` a cada 5 min no TEST (migration `20261118120000`)                                                                        |
+| Senha mínima 6 e troca de senha sem login recente (Supabase TEST)                                                                                       | MÉDIO     | Mínimo 8 e "Secure password change" ligados no painel                                                                              |
+| 9 produtos sem estoque visíveis                                                                                                                         | —         | Ocultados no TEST (rascunho)                                                                                                       |
+| Endereço do rodapé legal sem bairro/CEP                                                                                                                 | BAIXO     | Corrigido com os dados que já estavam no projeto                                                                                   |
+| Subpáginas do admin perdiam o destino após login (QA-03)                                                                                                | BAIXO     | Corrigido (header `x-pathname` do proxy + allowlist das seções do admin, com teste)                                                |
+| `/favicon.ico` 404 e link "Continuar para a loja" na tela de erro (QA-06/09)                                                                            | BAIXO     | Corrigidos                                                                                                                         |

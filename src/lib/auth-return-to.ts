@@ -22,7 +22,18 @@ export function getSafeAuthReturnTo(value: string | null | undefined) {
       value,
     );
 
-  return value && (safeDestinations.has(value) || isAdminProduct || isStorePage)
+  // Admin sections and their sub-pages (internal paths only, fixed prefixes).
+  const isAdminSection =
+    typeof value === "string" &&
+    /^\/admin\/(?:pedidos|entregas|analytics|relatorios)(?:\/[a-z0-9-]{1,64}){0,2}$/.test(
+      value,
+    );
+
+  return value &&
+    (safeDestinations.has(value) ||
+      isAdminProduct ||
+      isStorePage ||
+      isAdminSection)
     ? value
     : "/conta";
 }

@@ -8,16 +8,19 @@ Tudo aqui depende de alguém de fora do código (dono, contador, jurídico, pain
 - **[bloqueia lançamento] Aplicar as migrations novas** no banco de teste e depois no de produção, nesta ordem:
   1. `20261105120000_order_marketing_consent.sql` (aplicada no TEST em 17/11)
   2. `20261117120000_audit_hardening_withdrawal_and_review.sql` (aplicada no TEST em 17/11)
+  3. `20261118120000_schedule_order_expiry.sql` (aplicada no TEST em 18/11; job `expire-pending-orders` ativo a cada 5 min)
      Depois rodar `npm run db:test` (pgTAP, inclui `supabase/tests/audit_hardening.sql`).
 - **[bloqueia lançamento] Projeto Supabase de produção**, Vercel Pro (uso comercial; o time `imperio-sofas` está no plano Hobby) e DNS do domínio.
 - **CI do GitHub**: todos os commits da `staging` falhavam em duas etapas — checagem de formatação (1 arquivo) e criação do banco do zero (a migration `20261007200642` exigia dados da importação antiga). Corrigido localmente; confirmar verde no próximo push.
 - **Supabase Auth (painel) — conferido em 18/11 no projeto TEST:**
   - já está certo: confirmação de e-mail ligada, confirmação na troca de e-mail ligada, limites de taxa configurados, SMTP customizado pelo Resend (`smtp.resend.com`, remetente `no-reply@imperiosofas.com.br`);
-  - falta ligar: **senha mínima 8** (hoje 6), **proteção contra senhas vazadas**, **"Secure password change"** e **exigir senha atual na troca** (hoje desligados), CAPTCHA (desligado);
+  - ajustado em 18/11: **senha mínima 8** e **"Secure password change"** ligados;
+  - não ligados de propósito: "exigir senha atual na troca" (poderia travar a recuperação de quem esqueceu a senha; a tela de segurança já pede a senha atual) e proteção contra senhas vazadas (recurso do plano Pro do Supabase — ligar quando assinar);
+  - CAPTCHA: desligado (opcional; exige conta hCaptcha/Turnstile e ajuste no código);
   - **lista de redirecionamento**: tem os curingas `https://imperio-*-sofas-imperio-sofas.vercel.app` e `.../**`. Qualquer projeto da Vercel com nome nesse formato casaria com o padrão; no projeto de produção usar só o domínio final, sem curinga. Site URL atual: `https://imperio-sofas-imperio-sofas.vercel.app/`.
-- **Expiração automática de pedidos**: definir `CRON_SECRET` (≥ 32 caracteres) e agendar `/api/cron/expire-orders` a cada 5–10 min. No plano Hobby da Vercel o cron só roda 1×/dia; usar Vercel Pro ou `pg_cron` no Supabase (`select cron.schedule('expire-pending-orders','*/5 * * * *', $$select public.expire_pending_orders();$$);`).
+- **Expiração automática de pedidos**: **resolvida** com `pg_cron` dentro do banco (migration `20261118120000`), sem depender da Vercel nem de `CRON_SECRET`. A rota `/api/cron/expire-orders` continua disponível como alternativa.
 - **Rate limit** no `/api/logistics/cep` e nos POSTs de Server Actions: regra no Vercel Firewall (ex.: 30 req/min por IP no CEP).
-- **Variáveis na Vercel** (conferidas em 18/11): existem as do Supabase, `APP_ENV`, `INTEGRATION_MODE`, `CATALOG_SOURCE`, `APP_URL`, `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET`. **Faltam** `CRON_SECRET`, `RESEND_API_KEY` e `MP_EXPECTED_COLLECTOR_ID`. Para produção: `APP_ENV=production`, `INTEGRATION_MODE=live`, `APP_URL` com o domínio final.
+- **Variáveis na Vercel** (conferidas em 18/11): existem as do Supabase, `APP_ENV`, `INTEGRATION_MODE`, `CATALOG_SOURCE`, `APP_URL`, `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET`. **Faltam** `RESEND_API_KEY` (criar no Resend e colar na Vercel — passo do proprietário) e `MP_EXPECTED_COLLECTOR_ID`. `CRON_SECRET` deixou de ser necessário (pg_cron). Opcionais: `RESEND_FROM_EMAIL` (padrão `Império Sofás <pedidos@imperiosofas.com.br>`) e `STORE_NOTIFY_EMAIL` (padrão `imperiosofas20@gmail.com`, recebe cópia de pagamentos e desistências). Para produção: `APP_ENV=production`, `INTEGRATION_MODE=live`, `APP_URL` com o domínio final.
 
 ## 2. Pagamento (Mercado Pago) — integração pendente
 
@@ -27,7 +30,7 @@ Tudo aqui depende de alguém de fora do código (dono, contador, jurídico, pain
 
 ## 3. Jurídico e negócio
 
-- **[bloqueia lançamento] E-mails de pedido** (Decreto 7.962, art. 4º, III e IV): o Resend já está pronto (domínio `imperiosofas.com.br` verificado e usado pelo Supabase para os e-mails de conta). Falta o código enviar a confirmação do pedido e do pagamento, e cadastrar uma `RESEND_API_KEY` na Vercel (hoje não existe lá).
+- **E-mails de pedido** (Decreto 7.962, art. 4º, III e IV; art. 5º, § 4º): **implementados** em 18/11 — pedido recebido (resumo do contrato, prazo, retirada/entrega, links legais, identificação da loja), pagamento confirmado e desistência registrada (com cópia para a loja). Enviados pelo Resend depois da resposta, com chave de idempotência por pedido. **Só começam a sair quando a `RESEND_API_KEY` estiver na Vercel**; sem ela, o site funciona e registra "skipped" no log. Exemplo visual: `docs/audit/exemplo-email-pedido.png`.
 - Revisão jurídica: **feita** (informado pelo proprietário em 18/11).
 - Dados da empresa: **já estão no projeto** — Av. Cinderela, 2011, Jardim Gurilândia, Taubaté/SP, CEP 12071-500; WhatsApp (12) 99218-0333; galpão Rua Agostinho Abifadel, 35, Terra Nova, CEP 12081-670. O rodapé legal passou a mostrar bairro e CEP.
 - Observação: os Termos dizem que o prazo conta "da confirmação do pedido"; o sistema conta da confirmação do **pagamento**. Alinhar um dos dois.
@@ -41,7 +44,7 @@ Tudo aqui depende de alguém de fora do código (dono, contador, jurídico, pain
 
 ## 4. Catálogo
 
-- Ocultar os 8–9 produtos sem estoque indicados pelo cliente (confirmar se são 8 ou 9).
+- Os 9 produtos indicados pelo cliente em 04/11 foram **ocultados no TEST** em 18/11 (status rascunho, nada excluído): Rack Baru, Colchão Casal Tecnopedic, Guarda-roupa Dinamarca 4 Portas, Colchão Casal Hotel Paropas 2026, Cadeira Escritório, Guarda-roupa Paraty 3 Portas, Sofá Madri, Sofá Salvador, Sofá Império. Repetir no banco de produção.
 - Conferir preço e estoque dos demais antes de abrir.
 - Mundial (sob encomenda): avaliar mostrar "Sob encomenda · prazo" em vez de "Disponível".
 
@@ -57,4 +60,3 @@ Tudo aqui depende de alguém de fora do código (dono, contador, jurídico, pain
 - Avaliações sem compra e sem filtro de nome ("Império Sofás Oficial").
 - Pedido de `create_checkout_order` duplicado em concorrência devolve erro em vez do pedido existente (o banco não duplica).
 - Pagamento aprovado em duplicidade e estorno parcial não geram alerta.
-- `next=` perdido ao redirecionar subpáginas do admin para o login.

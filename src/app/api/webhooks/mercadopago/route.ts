@@ -1,4 +1,5 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, after, type NextRequest } from "next/server";
+import { sendOrderEmail } from "../../../../features/email/order-emails";
 import { z } from "zod";
 import { fetchPayment } from "../../../../features/checkout/mercadopago-client";
 import {
@@ -84,7 +85,8 @@ export async function POST(request: NextRequest) {
   });
   // A failure here must be retried by the provider.
   if (error) return respond(500);
-  return respond(200, {
-    outcome: (data as { outcome?: string } | null)?.outcome ?? null,
-  });
+  const outcome = (data as { outcome?: string } | null)?.outcome ?? null;
+  // Only the transition to paid sends the e-mail (duplicates are "already_paid").
+  if (outcome === "paid") after(() => sendOrderEmail(orderId.data, "paid"));
+  return respond(200, { outcome });
 }

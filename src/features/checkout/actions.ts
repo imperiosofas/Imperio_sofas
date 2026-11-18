@@ -2,6 +2,8 @@
 
 import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { sendOrderEmail } from "../email/order-emails";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { TERMS_VERSION } from "../legal/content";
@@ -127,6 +129,9 @@ export async function startCheckoutAction(
       });
   }
 
+  // Immediate confirmation with the order summary (Decreto 7.962, art. 4º).
+  after(() => sendOrderEmail(data, "created"));
+
   const payment = await startOrderPayment(session.client, data);
   revalidatePath("/carrinho");
   if (!payment.ok) {
@@ -152,6 +157,8 @@ export async function requestWithdrawalAction(
     p_order_id: orderId,
     p_reason: reason || null,
   });
+  // Confirmation of receipt of the withdrawal (Decreto 7.962, art. 5º, § 4º).
+  if (!error) after(() => sendOrderEmail(orderId, "withdrawal"));
   revalidatePath(`/pedido/${orderId}`);
   redirect(
     `/pedido/${orderId}?retorno=${error ? "desistencia-erro" : "desistencia"}`,
@@ -203,7 +210,7 @@ export async function simulateMockPaymentAction(
   if (!order || !service || order.status === "paid")
     redirect(`/pedido/${orderId}`);
 
-  await service.rpc("order_apply_payment_event", {
+  const { data: applied } = await service.rpc("order_apply_payment_event", {
     p_provider: "mock",
     p_event_id: `mock-${randomUUID()}`,
     p_order_id: orderId,
@@ -211,6 +218,8 @@ export async function simulateMockPaymentAction(
     p_status: outcome,
     p_amount_cents: order.total_cents,
   });
+  if ((applied as { outcome?: string } | null)?.outcome === "paid")
+    after(() => sendOrderEmail(orderId, "paid"));
   revalidatePath(`/pedido/${orderId}`);
   revalidatePath("/carrinho");
   redirect(
