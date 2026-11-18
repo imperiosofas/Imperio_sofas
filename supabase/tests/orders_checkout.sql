@@ -1,6 +1,39 @@
 begin;
 select plan(1);
 
+-- Self-contained fixtures (rolled back): a fresh CI database has no admin and
+-- no products assigned to the Vale/Mundial suppliers. On a seeded database
+-- these rows are extra and harmless.
+insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data)
+values ('0c0c0c0c-0c0c-4c0c-8c0c-0c0c0c0c0c01', '00000000-0000-0000-0000-000000000000',
+  'authenticated', 'authenticated', 'checkout-admin@example.invalid', '{}');
+insert into public.catalog_admins (user_id)
+values ('0c0c0c0c-0c0c-4c0c-8c0c-0c0c0c0c0c01');
+update public.categories set is_active = true where slug = 'sofas';
+insert into public.products (id, category_id, name, slug, status, supplier_id)
+select v.id, c.id, v.name, v.slug, 'draft', s.id
+from (values
+  ('0c0c0c0c-0c0c-4c0c-8c0c-0c0c0c0c0c11'::uuid, 'TEST Checkout Vale Sofa', 'test-checkout-vale-sofa', 'VALE'),
+  ('0c0c0c0c-0c0c-4c0c-8c0c-0c0c0c0c0c12'::uuid, 'TEST Checkout Mundial Sofa', 'test-checkout-mundial-sofa', 'MUNDIAL')
+) as v(id, name, slug, supplier)
+cross join public.categories c
+join public.logistics_suppliers s on s.code = v.supplier
+where c.slug = 'sofas';
+insert into public.product_variants (id, product_id, sku, width_mm, price_cents, is_active)
+values
+  ('0c0c0c0c-0c0c-4c0c-8c0c-0c0c0c0c0c21', '0c0c0c0c-0c0c-4c0c-8c0c-0c0c0c0c0c11', 'TEST-CHK-VALE', 2200, 150000, true),
+  ('0c0c0c0c-0c0c-4c0c-8c0c-0c0c0c0c0c22', '0c0c0c0c-0c0c-4c0c-8c0c-0c0c0c0c0c12', 'TEST-CHK-MUNDIAL', 2400, 250000, true);
+insert into public.inventory (variant_id, on_hand, reserved, low_stock_threshold)
+values
+  ('0c0c0c0c-0c0c-4c0c-8c0c-0c0c0c0c0c21', 30, 0, 2),
+  ('0c0c0c0c-0c0c-4c0c-8c0c-0c0c0c0c0c22', 30, 0, 2);
+insert into public.product_media (product_id, storage_path, alt_text)
+values
+  ('0c0c0c0c-0c0c-4c0c-8c0c-0c0c0c0c0c11', 'test/checkout-vale.jpg', 'Fixture de teste do checkout Vale'),
+  ('0c0c0c0c-0c0c-4c0c-8c0c-0c0c0c0c0c12', 'test/checkout-mundial.jpg', 'Fixture de teste do checkout Mundial');
+update public.products set status = 'active'
+where id in ('0c0c0c0c-0c0c-4c0c-8c0c-0c0c0c0c0c11', '0c0c0c0c-0c0c-4c0c-8c0c-0c0c0c0c0c12');
+
 create function pg_temp.chk(p_ok boolean, p_message text) returns void
 language plpgsql as $$
 begin

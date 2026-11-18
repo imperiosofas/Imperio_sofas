@@ -28,11 +28,11 @@ select is(
   'authenticated callers reach the admin check inside the function'
 );
 
-select is(
-  (select p.proconfig::text from pg_proc p
+-- Compare the element, not the array's text form (quoting differs by version).
+select ok(
+  (select 'search_path=""' = any(p.proconfig) from pg_proc p
     join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname = 'admin_get_engagement_summary'),
-  '{search_path=""}',
   'engagement summary pins an empty search_path'
 );
 

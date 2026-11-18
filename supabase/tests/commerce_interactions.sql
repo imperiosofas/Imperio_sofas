@@ -65,34 +65,44 @@ select throws_ok($$select public.set_cart_item('f6666666-6666-4666-8666-66666666
   'P0001', 'item unavailable', 'draft variant cannot be added');
 select throws_ok($$select public.set_cart_item('e5555555-5555-4555-8555-555555555555', 5)$$,
   'P0001', 'item unavailable', 'quantity cannot exceed stock');
+reset role; -- inventory is admin-only; customers cannot change it
 update public.inventory set low_stock_threshold = 4
 where variant_id = 'e5555555-5555-4555-8555-555555555555';
+set local role authenticated;
 select is(public.get_catalog_product_detail('test-commerce-sofa') #>> '{variants,0,stock_status}',
   'low_stock', 'positive threshold labels a qualifying variant as low stock');
 select is(public.get_my_cart() #>> '{0,stock_status}', 'low_stock',
   'cart uses the actual positive variant threshold');
 select is((select stock_status from public.get_catalog_products(null, 'test-commerce-sofa')),
   'available', 'aggregate stays available while another sellable option has zero threshold');
+reset role; -- inventory is admin-only; customers cannot change it
 update public.inventory set low_stock_threshold = 1
 where variant_id = 'e5555555-5555-4555-8555-555555555556';
+set local role authenticated;
 select is(public.get_catalog_product_detail('test-commerce-sofa') #>> '{variants,1,stock_status}',
   'available', 'positive threshold above available stock labels a variant available');
 select is((select stock_status from public.get_catalog_products(null, 'test-commerce-sofa')),
   'available', 'aggregate stays available when any sellable option is not low stock');
+reset role; -- inventory is admin-only; customers cannot change it
 update public.inventory set low_stock_threshold = 2
 where variant_id = 'e5555555-5555-4555-8555-555555555556';
+set local role authenticated;
 select is((select stock_status from public.get_catalog_products(null, 'test-commerce-sofa')),
   'low_stock', 'multi-option product is low stock when every sellable option meets its threshold');
 select is(public.get_my_favorite_products() #>> '{0,stock_status}', 'low_stock',
   'favorite card uses the conservative aggregate low-stock state');
+reset role; -- inventory is admin-only; customers cannot change it
 update public.inventory set on_hand = 0
 where variant_id = 'e5555555-5555-4555-8555-555555555555';
+set local role authenticated;
 select is(public.get_catalog_product_detail('test-commerce-sofa') #>> '{variants,0,stock_status}',
   'unavailable', 'zero stock remains visible on the product detail as unavailable');
 select is((select stock_status from public.get_catalog_products(null, 'test-commerce-sofa')),
   'low_stock', 'a remaining low-stock sellable option determines the aggregate state');
+reset role; -- inventory is admin-only; customers cannot change it
 update public.inventory set on_hand = 0
 where variant_id = 'e5555555-5555-4555-8555-555555555556';
+set local role authenticated;
 select is((select stock_status from public.get_catalog_products(null, 'test-commerce-sofa')),
   'unavailable', 'zero stock remains visible in catalog projections as unavailable');
 select is(public.get_my_favorite_products() #>> '{0,stock_status}', 'unavailable',
