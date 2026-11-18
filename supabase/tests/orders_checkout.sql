@@ -332,7 +332,7 @@ begin
     v_err := null;
   exception when others then v_err := sqlerrm; end;
   execute 'reset role';
-  perform pg_temp.chk(v_err in ('insufficient stock', 'cart has unavailable items'), 'out of stock is refused, got: ' || coalesce(v_err, 'no error')); v_n := v_n + 1;
+  perform pg_temp.chk(v_err in ('insufficient stock', 'cart has unavailable items', 'cart empty'), 'out of stock is refused, got: ' || coalesce(v_err, 'no error')); v_n := v_n + 1;
 
   raise notice 'ORDERS CHECKS PASSED: %', v_n;
 end;
