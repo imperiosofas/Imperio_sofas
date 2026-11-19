@@ -29,7 +29,7 @@ const svc = createClient(
   },
 );
 
-const BASE = "http://127.0.0.1:3190";
+const BASE = process.env.QA_BASE_URL ?? "http://127.0.0.1:3190";
 const SLUG = "poltrona-josy";
 const SHOTS = path.join(require("os").tmpdir(), "imperio-qa-shots");
 fs.mkdirSync(SHOTS, { recursive: true });

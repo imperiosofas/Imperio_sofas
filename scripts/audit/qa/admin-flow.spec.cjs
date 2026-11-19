@@ -25,7 +25,7 @@ const svc = createClient(
   env.SUPABASE_SECRET_KEY,
   { auth: { persistSession: false } },
 );
-const BASE = "http://127.0.0.1:3190";
+const BASE = process.env.QA_BASE_URL ?? "http://127.0.0.1:3190";
 const SLUG = "poltrona-josy";
 const results = [];
 const record = (id, status, note = "") => {
