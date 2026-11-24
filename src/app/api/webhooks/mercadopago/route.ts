@@ -50,7 +50,15 @@ export async function POST(request: NextRequest) {
     requestId: request.headers.get("x-request-id"),
     dataId,
   });
-  if (!valid) return respond(401);
+  if (!valid) {
+    // No signature or body content is logged, only what is needed to debug.
+    console.warn("mercadopago webhook: invalid signature", {
+      hasSignature: Boolean(request.headers.get("x-signature")),
+      hasRequestId: Boolean(request.headers.get("x-request-id")),
+      hasDataId: Boolean(dataId),
+    });
+    return respond(401);
+  }
 
   const type = request.nextUrl.searchParams.get("type") ?? body.type;
   if (type !== "payment" || !dataId) return respond(200, { ignored: true });

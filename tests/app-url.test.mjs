@@ -118,3 +118,34 @@ test("resolution leaves the supplied environment unchanged", () => {
   resolveAppUrl(env);
   assert.equal(env.APP_URL, "");
 });
+
+test("production deployments use the public production domain, not the protected deployment host", () => {
+  assert.equal(
+    resolveAppUrl({
+      APP_ENV: "staging",
+      VERCEL_ENV: "production",
+      VERCEL_PROJECT_PRODUCTION_URL: "imperio-sofas-woad.vercel.app",
+      VERCEL_URL: observedPreviewHost,
+    }).href,
+    "https://imperio-sofas-woad.vercel.app/",
+  );
+  // Previews keep their own deployment host.
+  assert.equal(
+    resolveAppUrl({
+      APP_ENV: "staging",
+      VERCEL_ENV: "preview",
+      VERCEL_PROJECT_PRODUCTION_URL: "imperio-sofas-woad.vercel.app",
+      VERCEL_URL: observedPreviewHost,
+    }).href,
+    `https://${observedPreviewHost}/`,
+  );
+  // An explicit APP_URL still wins.
+  assert.equal(
+    resolveAppUrl({
+      APP_URL: "https://loja.example/",
+      VERCEL_ENV: "production",
+      VERCEL_PROJECT_PRODUCTION_URL: "imperio-sofas-woad.vercel.app",
+    }).href,
+    "https://loja.example/",
+  );
+});

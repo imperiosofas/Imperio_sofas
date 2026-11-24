@@ -21,6 +21,27 @@ export function resolveAppUrl(env = process.env) {
     }
   }
 
+  // Production deployments must use the public production domain: the
+  // per-deployment VERCEL_URL sits behind Vercel Authentication, so payment
+  // notifications and return URLs sent there never reach the app.
+  const productionHost = env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  if (env.VERCEL_ENV === "production" && productionHost) {
+    try {
+      const url = new URL(`https://${productionHost}`);
+      if (
+        url.host === productionHost.toLowerCase() &&
+        url.pathname === "/" &&
+        !url.search &&
+        !url.hash &&
+        !url.username &&
+        !url.password
+      )
+        return url;
+    } catch {
+      // fall through to the deployment host
+    }
+  }
+
   const deploymentHost = env.VERCEL_URL?.trim();
   if (deploymentHost) {
     try {

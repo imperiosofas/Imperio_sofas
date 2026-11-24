@@ -95,3 +95,19 @@ export function buildPreference(order: PreferenceOrder, urls: PreferenceUrls) {
     metadata: { order_id: order.id, order_number: order.orderNumber },
   };
 }
+
+/**
+ * Which hosted-checkout URL to open. Mercado Pago's current test credentials
+ * are APP_USR- tokens of a test seller user: preferences created with them are
+ * "productive" and fail on sandbox_init_point ("Ops, ocorreu um erro",
+ * service_error / is_eligible:false), but work on init_point. Only legacy
+ * TEST- tokens still belong on sandbox_init_point.
+ */
+export function selectCheckoutUrl(
+  accessToken: string,
+  preference: { init_point: string; sandbox_init_point?: string | null },
+): string {
+  if (accessToken.startsWith("TEST-") && preference.sandbox_init_point)
+    return preference.sandbox_init_point;
+  return preference.init_point;
+}

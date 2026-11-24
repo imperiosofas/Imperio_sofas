@@ -2,6 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 import type { PaymentConfig } from "./payment-config";
+import { selectCheckoutUrl } from "./mercadopago-map";
 
 type MercadoPagoConfig = Extract<PaymentConfig, { provider: "mercadopago" }>;
 
@@ -55,14 +56,29 @@ export async function createPreference(
       body: JSON.stringify(payload),
       idempotencyKey,
     });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      // Safe diagnostics: HTTP status and Mercado Pago error code only.
+      const body = (await response.json().catch(() => null)) as {
+        error?: unknown;
+        message?: unknown;
+      } | null;
+      console.error("mercadopago: preference rejected", {
+        status: response.status,
+        error: typeof body?.error === "string" ? body.error : null,
+        message:
+          typeof body?.message === "string" ? body.message.slice(0, 160) : null,
+      });
+      return null;
+    }
     const parsed = preferenceResponse.safeParse(await response.json());
-    if (!parsed.success) return null;
-    const url =
-      config.environment === "sandbox"
-        ? (parsed.data.sandbox_init_point ?? parsed.data.init_point)
-        : parsed.data.init_point;
-    return { id: parsed.data.id, checkoutUrl: url };
+    if (!parsed.success) {
+      console.error("mercadopago: unexpected preference response");
+      return null;
+    }
+    return {
+      id: parsed.data.id,
+      checkoutUrl: selectCheckoutUrl(config.accessToken, parsed.data),
+    };
   } catch {
     return null;
   }
@@ -77,8 +93,15 @@ export async function fetchPayment(
     const response = await request(config, `/v1/payments/${paymentId}`, {
       method: "GET",
     });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.error("mercadopago: payment lookup failed", {
+        status: response.status,
+      });
+      return null;
+    }
     const parsed = paymentResponse.safeParse(await response.json());
+    if (!parsed.success)
+      console.error("mercadopago: unexpected payment response");
     return parsed.success ? parsed.data : null;
   } catch {
     return null;

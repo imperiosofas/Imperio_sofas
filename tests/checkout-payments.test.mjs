@@ -262,3 +262,19 @@ test("a pickup order has no freight lines", () => {
   assert.equal(preference.items.length, 1);
   assert.equal("payer" in preference, false);
 });
+
+test("APP_USR test-seller credentials open init_point; only legacy TEST- tokens use sandbox", async () => {
+  const { selectCheckoutUrl } =
+    await import("../src/features/checkout/mercadopago-map.ts");
+  const pref = {
+    init_point: "https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=x",
+    sandbox_init_point:
+      "https://sandbox.mercadopago.com.br/checkout/v1/redirect?pref_id=x",
+  };
+  assert.equal(selectCheckoutUrl("APP_USR-123", pref), pref.init_point);
+  assert.equal(selectCheckoutUrl("TEST-123", pref), pref.sandbox_init_point);
+  assert.equal(
+    selectCheckoutUrl("TEST-123", { init_point: pref.init_point }),
+    pref.init_point,
+  );
+});
