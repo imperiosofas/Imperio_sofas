@@ -36,6 +36,17 @@ const nextConfig: NextConfig = {
   experimental: { serverActions: { bodySizeLimit: "11mb" } },
   distDir: process.env.NEXT_DIST_DIR ?? ".next",
   turbopack: { root: process.cwd() },
+  // Catalog photos come from /media/catalog (same origin). Widths stop at
+  // 1280: the source photos are 900–1254 px, so larger variants would only
+  // cost bandwidth. minimumCacheTTL is also the cache window for resized
+  // copies after a product is unpublished (see features/catalog/image-url.ts).
+  images: {
+    deviceSizes: [384, 512, 640, 828, 1080, 1280],
+    imageSizes: [96, 128, 192, 256],
+    qualities: [75, 80],
+    formats: ["image/webp"],
+    minimumCacheTTL: 1800,
+  },
   // Browsers ask for /favicon.ico even when the page declares /favicon.png.
   async rewrites() {
     return [{ source: "/favicon.ico", destination: "/favicon.png" }];

@@ -36,14 +36,5 @@ export function HoverProductImage({
 
   if (!supportsHoverPointer) return null;
 
-  return (
-    <Image
-      src={src}
-      alt=""
-      fill
-      unoptimized
-      sizes={sizes}
-      className={className}
-    />
-  );
+  return <Image src={src} alt="" fill sizes={sizes} className={className} />;
 }

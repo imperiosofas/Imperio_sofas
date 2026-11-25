@@ -68,7 +68,6 @@ export function CartExperience({
                           src={item.imageSrc}
                           alt={item.name}
                           fill
-                          unoptimized
                           sizes="120px"
                         />
                       ) : (

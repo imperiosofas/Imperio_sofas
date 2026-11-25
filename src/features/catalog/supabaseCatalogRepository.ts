@@ -2,6 +2,7 @@ import "server-only";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { catalogImageUrl } from "./image-url";
 import type {
   CatalogCategory,
   CatalogListing,
@@ -71,30 +72,10 @@ function getSupabaseClient() {
 }
 
 async function toCatalogProduct(row: ProductRow): Promise<CatalogProduct> {
-  const client = getSupabaseClient();
-  // One request signs every image of the product. A missing file must not
-  // take the product (or the store) down: skip it and log the path.
-  const paths = row.media.map((item) => item.storage_path);
-  const signed = new Map<string, string>();
-  if (paths.length) {
-    const { data, error } = await client.storage
-      .from("catalog-images")
-      .createSignedUrls(paths, 15 * 60);
-    if (error || !data) {
-      console.warn("catalog: image signing failed", { product: row.slug });
-    } else {
-      data.forEach((item, index) => {
-        if (!item.error && item.signedUrl)
-          signed.set(paths[index], item.signedUrl);
-        else
-          console.warn("catalog: image unavailable", {
-            storage_path: paths[index],
-          });
-      });
-    }
-  }
+  // Stable /media/catalog URLs (the route serves published photos only, so a
+  // missing file is a broken image, never a failed page).
   const media = row.media.flatMap(({ storage_path, alt }) => {
-    const src = signed.get(storage_path);
+    const src = catalogImageUrl(storage_path);
     return src ? [{ src, alt }] : [];
   });
 
@@ -115,32 +96,6 @@ async function toCatalogProduct(row: ProductRow): Promise<CatalogProduct> {
 async function toListing(
   data: z.infer<typeof listingSchema>,
 ): Promise<CatalogListing> {
-  const paths = [
-    ...new Set(
-      data.products.flatMap((product) =>
-        product.media.map((item) => item.storage_path),
-      ),
-    ),
-  ];
-  const signed = new Map<string, string>();
-  if (paths.length) {
-    const { data: urls, error } = await getSupabaseClient()
-      .storage.from("catalog-images")
-      .createSignedUrls(paths, 15 * 60);
-    if (error || !urls) {
-      // Storage unavailable: show the listing without photos rather than a 500.
-      console.warn("catalog: image signing failed for the listing");
-    } else {
-      urls.forEach((item, index) => {
-        if (!item.error && item.signedUrl)
-          signed.set(paths[index], item.signedUrl);
-        else
-          console.warn("catalog: image unavailable", {
-            storage_path: paths[index],
-          });
-      });
-    }
-  }
   return {
     total: data.total,
     widths: data.widths.map((item) => ({
@@ -161,7 +116,7 @@ async function toListing(
       priceCents: row.price_cents,
       stockStatus: row.stock_status,
       media: row.media.flatMap((item) => {
-        const src = signed.get(item.storage_path);
+        const src = catalogImageUrl(item.storage_path);
         return src ? [{ src, alt: item.alt }] : [];
       }),
     })),

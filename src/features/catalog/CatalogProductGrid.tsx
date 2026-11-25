@@ -34,9 +34,9 @@ export function CatalogProductGrid({
                       src={image.src}
                       alt={image.alt}
                       fill
-                      unoptimized
                       sizes="(max-width: 600px) 46vw, (max-width: 1050px) 45vw, (max-width: 1600px) 29vw, 22vw"
                       priority={index < 2}
+                      fetchPriority={index < 2 ? "high" : undefined}
                       className={styles.primaryImage}
                     />
                     {second && (

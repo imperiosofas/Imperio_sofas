@@ -76,8 +76,9 @@ export function ProductExperience({
                   src={image.src}
                   alt={image.alt}
                   fill
-                  unoptimized
                   priority
+                  fetchPriority="high"
+                  quality={80}
                   sizes="(max-width: 900px) 100vw, 60vw"
                 />
               ) : (
@@ -114,13 +115,7 @@ export function ProductExperience({
                     aria-label={`Ver foto ${index + 1}`}
                     aria-current={photo === index ? "true" : undefined}
                   >
-                    <Image
-                      src={item.src}
-                      alt=""
-                      fill
-                      unoptimized
-                      sizes="84px"
-                    />
+                    <Image src={item.src} alt="" fill sizes="84px" />
                   </button>
                 ))}
               </div>

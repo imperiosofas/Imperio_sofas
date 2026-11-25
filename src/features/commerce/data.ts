@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { z } from "zod";
 import { createSupabaseServerClient } from "../../lib/supabase/server";
+import { catalogImageUrl } from "../catalog/image-url";
 import type { PublishedCatalogProduct } from "../catalog/types";
 import {
   getCartLogisticsProjection,
@@ -133,20 +134,6 @@ export async function getFavoriteProducts(): Promise<
   const { data, error } = await client.rpc("get_my_favorite_products");
   if (error) throw new Error("Não foi possível carregar seus favoritos.");
   const rows = z.array(favoriteProduct).parse(data);
-  const paths = [
-    ...new Set(
-      rows.flatMap((row) => row.media.map((item) => item.storage_path)),
-    ),
-  ];
-  const signed = new Map<string, string>();
-  if (paths.length) {
-    const { data: urls, error: imageError } = await client.storage
-      .from("catalog-images")
-      .createSignedUrls(paths, 15 * 60);
-    if (imageError || !urls || urls.some((url) => url.error || !url.signedUrl))
-      throw new Error("Não foi possível carregar as fotos dos favoritos.");
-    urls.forEach((url, index) => signed.set(paths[index], url.signedUrl!));
-  }
   return rows.map((row) => ({
     id: row.id,
     slug: row.slug,
@@ -157,10 +144,10 @@ export async function getFavoriteProducts(): Promise<
     status: "active" as const,
     priceCents: row.price_cents,
     stockStatus: row.stock_status,
-    media: row.media.map((item) => ({
-      src: signed.get(item.storage_path)!,
-      alt: item.alt,
-    })),
+    media: row.media.flatMap((item) => {
+      const src = catalogImageUrl(item.storage_path);
+      return src ? [{ src, alt: item.alt }] : [];
+    }),
   }));
 }
 
@@ -175,23 +162,12 @@ export const getProductDetail = cache(async function getProductDetail(
   if (error) throw new Error("Não foi possível carregar o produto.");
   if (!data) return null;
   const row = detail.parse(data);
-  const paths = [...new Set(row.media.map((item) => item.storage_path))];
-  const signed = new Map<string, string>();
-  if (paths.length) {
-    const { data: urls, error: imageError } = await client.storage
-      .from("catalog-images")
-      .createSignedUrls(paths, 15 * 60);
-    if (imageError || !urls || urls.some((url) => url.error || !url.signedUrl))
-      throw new Error("Não foi possível carregar as fotos do produto.");
-    urls.forEach((url, index) => signed.set(paths[index], url.signedUrl!));
-  }
   return {
     ...row,
-    images: row.media.map((item) => ({
-      src: signed.get(item.storage_path)!,
-      alt: item.alt,
-      variantId: item.variant_id,
-    })),
+    images: row.media.flatMap((item) => {
+      const src = catalogImageUrl(item.storage_path);
+      return src ? [{ src, alt: item.alt, variantId: item.variant_id }] : [];
+    }),
   };
 });
 
@@ -254,28 +230,10 @@ export async function getMyCart(): Promise<CartPageData> {
   const { data, error } = cartResult;
   if (error) throw new Error("Não foi possível carregar o carrinho.");
   const rows = z.array(cartItem).parse(data);
-  const paths = [
-    ...new Set(
-      rows
-        .map((row) => row.storage_path)
-        .filter((path): path is string => !!path),
-    ),
-  ];
-  const signed = new Map<string, string>();
-  if (paths.length) {
-    const { data: urls } = await client.storage
-      .from("catalog-images")
-      .createSignedUrls(paths, 15 * 60);
-    urls?.forEach((url, index) => {
-      if (url.signedUrl) signed.set(paths[index], url.signedUrl);
-    });
-  }
   return {
     items: rows.map((row) => ({
       ...row,
-      imageSrc: row.storage_path
-        ? (signed.get(row.storage_path) ?? null)
-        : null,
+      imageSrc: row.storage_path ? catalogImageUrl(row.storage_path) : null,
       logistics: toCartItemLogistics(logisticsProjection, row.variant_id),
     })),
     logistics: toCartLogisticsPresentation(logisticsProjection),
