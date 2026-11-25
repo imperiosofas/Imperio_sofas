@@ -99,7 +99,19 @@ Antes: toda foto vinha de link assinado novo → `MISS` sempre. Depois: 1º pedi
 
 ## 5. Exposição medida após despublicar (staging)
 
-**EXPOSURE**
+Produto temporário publicado, rota e versão redimensionada aquecidas na CDN (`MISS`
+→ `HIT`), depois despublicado. Verificação a cada 2 min:
+
+| Tempo após despublicar | Rota (original)              | Versão redimensionada | Endereço novo |
+| ---------------------- | ---------------------------- | --------------------- | ------------- |
+| 0 min                  | 200 (`HIT`)                  | 200 (`HIT`)           | 404           |
+| 2 → 28 min             | 200 (`HIT`, idade crescente) | 200 (`HIT`)           | —             |
+| **30,1 min**           | **404**                      | **404**               | —             |
+
+Resultado: neste teste as duas cópias deixaram de ser servidas em **30 min**. O
+limite documentado continua **60 min** para o pior caso (versão redimensionada
+gerada perto do fim do cache do original). Produto temporário removido; contagens
+voltaram ao normal (63 produtos, 105 variações, 122 fotos).
 
 ## 6. Observações
 
