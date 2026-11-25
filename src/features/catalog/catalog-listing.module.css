@@ -84,7 +84,7 @@
 .search input {
   flex: 1;
   min-width: 0;
-  height: 43px;
+  height: 44px;
   background: transparent;
   outline: none;
   color: #f4efe4;
@@ -254,7 +254,10 @@
 .productGrid > li {
   position: relative;
 }
-.productGrid > li :global(button[aria-label*="favoritos"]) {
+/* The wrapper (not the button) is placed over the card image: the wrapper is
+   position:relative, so an absolute button inside it was anchored to the
+   wrapper below the card and showed up on the next card. */
+.productGrid > li > .favoriteSlot {
   position: absolute;
   right: 12px;
   top: 12px;

@@ -117,7 +117,30 @@ function useDockPosition(target: number) {
 
   return reduced ? target : position;
 }
+// The on-screen keyboard shrinks the visual viewport well below the layout
+// viewport; browser chrome (URL bar) changes it by far less.
+const KEYBOARD_MIN_PX = 150;
+
+function useKeyboardOpen() {
+  return useSyncExternalStore(
+    (notify) => {
+      const viewport = window.visualViewport;
+      if (!viewport) return () => {};
+      viewport.addEventListener("resize", notify);
+      return () => viewport.removeEventListener("resize", notify);
+    },
+    () => {
+      const viewport = window.visualViewport;
+      return (
+        !!viewport && window.innerHeight - viewport.height > KEYBOARD_MIN_PX
+      );
+    },
+    () => false,
+  );
+}
+
 export function BottomNavigation() {
+  const keyboardOpen = useKeyboardOpen();
   const pathname = usePathname();
   const [cartCount, setCartCount] = useState(0);
   const [navWidth, setNavWidth] = useState(0);
@@ -253,11 +276,14 @@ export function BottomNavigation() {
     travel === 0 ? 1 : smooth(clamp((position - fromIndex) / travel));
 
   return (
-    <div className={styles.dockRoot}>
+    <div
+      className={styles.dockRoot}
+      data-keyboard={keyboardOpen ? "open" : undefined}
+    >
       <nav
         ref={navRef}
         className={styles.dockBar}
-        aria-label="Navegação principal"
+        aria-label="Navegação rápida"
       >
         <svg
           className={styles.dockPlate}

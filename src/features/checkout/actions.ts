@@ -194,12 +194,17 @@ export async function simulateMockPaymentAction(
   orderId: string,
   outcome: "approved" | "rejected",
 ) {
+  // Server Action arguments are untrusted: validate before any use.
+  if (
+    !z.string().uuid().safeParse(orderId).success ||
+    !z.enum(["approved", "rejected"]).safeParse(outcome).success
+  )
+    return;
   const session = await getVerifiedCustomerSession();
   if (!session) redirect("/conta");
   const config = getPaymentConfig();
   if (config.status !== "ready" || config.provider !== "mock")
     redirect(`/pedido/${orderId}`);
-  if (!z.string().uuid().safeParse(orderId).success) return;
 
   const { data: order } = await session.client
     .from("orders")

@@ -184,6 +184,8 @@ function getRouteContext(pathname: string) {
     return { group: "Sistema", title: "Limpeza de imagens" };
   if (pathname === "/admin/produtos/novo")
     return { group: "Catálogo", title: "Novo produto" };
+  if (pathname === "/admin/produtos")
+    return { group: "Catálogo", title: "Produtos" };
   if (isRouteOrDescendant(pathname, "/admin/produtos"))
     return { group: "Catálogo", title: "Editar produto" };
   if (isRouteOrDescendant(pathname, "/admin/pedidos"))

@@ -157,7 +157,9 @@ export function BarList({
               {name}
               <strong>
                 {formatNumber(row.value)}
-                {unit ? ` ${unit}` : ""}
+                {unit
+                  ? ` ${row.value === 1 && unit.endsWith("s") ? unit.slice(0, -1) : unit}`
+                  : ""}
               </strong>
             </div>
             <div className={styles.track} aria-hidden="true">

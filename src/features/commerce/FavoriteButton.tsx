@@ -9,10 +9,16 @@ export function FavoriteButton({
   productId,
   initial,
   returnTo,
+  productName,
+  className,
 }: {
   productId: string;
   initial: boolean;
   returnTo: string;
+  /** Makes the accessible name unique in grids ("Adicionar X aos favoritos"). */
+  productName?: string;
+  /** Extra class for the wrapper (e.g. absolute placement inside a card). */
+  className?: string;
 }) {
   const [saved, setSaved] = useState(initial);
   const [pending, startTransition] = useTransition();
@@ -26,11 +32,23 @@ export function FavoriteButton({
   }, [message]);
 
   return (
-    <div className={styles.favoriteWrap}>
+    <div
+      className={
+        className ? `${styles.favoriteWrap} ${className}` : styles.favoriteWrap
+      }
+    >
       <button
         type="button"
         className={`${styles.favorite} ${saved ? styles.favoriteOn : ""}`}
-        aria-label={saved ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+        aria-label={
+          productName
+            ? saved
+              ? `Remover ${productName} dos favoritos`
+              : `Adicionar ${productName} aos favoritos`
+            : saved
+              ? "Remover dos favoritos"
+              : "Adicionar aos favoritos"
+        }
         aria-pressed={saved}
         disabled={pending}
         onClick={() => {
@@ -38,7 +56,11 @@ export function FavoriteButton({
           // Optimistic: the heart reacts at once and rolls back on failure.
           setSaved(next);
           startTransition(async () => {
-            const result = await toggleFavorite(productId, saved);
+            const result = await toggleFavorite(productId, saved).catch(() => ({
+              ok: false,
+              requiresLogin: false,
+              message: "Sem conexão. Confira sua internet e tente de novo.",
+            }));
             if (result.requiresLogin) {
               setSaved(saved);
               router.push(`/conta?next=${encodeURIComponent(returnTo)}`);

@@ -47,7 +47,9 @@ export function CheckoutForm({
   );
 
   return (
-    <form action={action}>
+    // noValidate: the server answers in Portuguese (the browser's built-in
+    // "required" bubble shows in the browser language and is not announced).
+    <form action={action} noValidate>
       <input type="hidden" name="idempotencyKey" value={idempotencyKey} />
       <input type="hidden" name="quoteId" value={quoteId ?? ""} />
       <input type="hidden" name="pickup" value={payload} />
@@ -77,7 +79,15 @@ export function CheckoutForm({
         ))}
 
       <label className={styles.consent}>
-        <input type="checkbox" name="acceptTerms" required />
+        <input
+          type="checkbox"
+          name="acceptTerms"
+          required
+          aria-describedby="checkout-error"
+          aria-invalid={
+            state.error?.includes("aceite os termos") ? true : undefined
+          }
+        />
         <span>
           Li e aceito os <Link href="/termos">termos de compra</Link>, a{" "}
           <Link href="/trocas-e-devolucoes">
@@ -102,7 +112,12 @@ export function CheckoutForm({
       >
         {pending ? "Criando pedido…" : "Ir para o pagamento"}
       </button>
-      <p className={styles.error} role="alert" aria-live="assertive">
+      <p
+        id="checkout-error"
+        className={styles.error}
+        role="alert"
+        aria-live="assertive"
+      >
         {state.error}
       </p>
     </form>

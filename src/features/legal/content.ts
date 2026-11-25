@@ -15,7 +15,8 @@ export const COMPANY = {
   legalName: "Império Valle Móveis Ltda.",
   tradeName: "Império Sofás",
   cnpj: "42.046.387/0001-67",
-  address: "Avenida Cinderela, nº 2011, Jardim Gurilândia, Taubaté/SP, CEP 12071-500",
+  address:
+    "Avenida Cinderela, nº 2011, Jardim Gurilândia, Taubaté/SP, CEP 12071-500",
   phone: "(12) 99218-0333",
   email: "imperiosofas20@gmail.com",
   site: "www.imperiosofas.com.br",

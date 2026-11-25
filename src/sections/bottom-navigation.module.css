@@ -7,6 +7,13 @@
     padding-bottom: calc(82px + env(safe-area-inset-bottom));
   }
 
+  /* While the on-screen keyboard is up the dock would cover the field being
+     typed in. BottomNavigation sets data-keyboard when the visual viewport
+     shrinks (a focus alone does not always open the keyboard). */
+  .dockRoot[data-keyboard="open"] {
+    display: none;
+  }
+
   .dockRoot {
     position: fixed;
     z-index: 60;

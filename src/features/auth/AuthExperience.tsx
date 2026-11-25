@@ -68,6 +68,11 @@ function friendlyAuthFailure(
   if (error.status === 429) {
     return "Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente novamente.";
   }
+  // Supabase only reports this after the password matched, so it does not
+  // reveal whether an e-mail is registered.
+  if (error.code === "email_not_confirmed") {
+    return "Confirme seu e-mail antes de entrar: abra o link que enviamos para a sua caixa de entrada.";
+  }
   if (options.weakPassword && error.code === "weak_password") {
     return "Essa senha não atende aos requisitos de segurança da conta. Escolha outra e tente novamente.";
   }

@@ -53,6 +53,7 @@ const orderSchema = z.object({
   terms_version: z.string().nullable().optional(),
   withdrawal_requested_at: z.string().nullable().optional(),
   withdrawal_reason: z.string().nullable().optional(),
+  payment_alert_at: z.string().nullable().optional(),
   created_at: z.string(),
   cancel_reason: z.string().nullable(),
   groups: z.array(
@@ -104,6 +105,26 @@ const eventLabels: Record<string, string> = {
   group_ready_for_pickup: "Pronto para retirada",
   group_out_for_delivery: "Saiu para entrega",
   group_completed: "Concluído",
+  terms_accepted: "Termos aceitos pelo cliente",
+  marketing_whatsapp_consent: "Aceitou ofertas pelo WhatsApp",
+  withdrawal_requested: "Cliente pediu desistência",
+  order_refund_registered: "Estorno registrado",
+  order_review_closed: "Pedido em análise encerrado",
+  payment_duplicate_approved: "Pagamento aprovado em duplicidade (conferir)",
+  duplicate_payment_received: "Pagamento em duplicidade recebido (conferir)",
+  payment_amount_changed_after_approval:
+    "Valor do pagamento mudou após aprovação (conferir)",
+  expire_failed_inventory_drift:
+    "Falha ao expirar: estoque reservado divergente",
+};
+
+const paymentStatusLabels: Record<string, string> = {
+  pending: "aguardando",
+  in_process: "em análise",
+  approved: "aprovado",
+  rejected: "recusado",
+  cancelled: "cancelado",
+  refunded: "reembolsado",
 };
 
 const dateFormat = new Intl.DateTimeFormat("pt-BR", {
@@ -225,6 +246,15 @@ export default async function AdminOrderPage({
             : "Aceite dos termos não registrado"}
         </p>
       </div>
+
+      {order.payment_alert_at && (
+        <p className={styles.section} role="alert">
+          Atenção ao pagamento deste pedido (desde{" "}
+          {dateFormat.format(new Date(order.payment_alert_at))}): o provedor
+          avisou um pagamento em duplicidade ou um valor diferente do total.
+          Confira no painel do Mercado Pago e estorne o que não for devido.
+        </p>
+      )}
 
       {order.withdrawal_requested_at && (
         <p className={styles.section} role="alert">
@@ -448,9 +478,11 @@ export default async function AdminOrderPage({
                 {order.payments.map((payment, index) => (
                   <li key={index}>
                     <span>
-                      {payment.provider === "mock" ? "Teste" : "Mercado Pago"} ·{" "}
-                      {payment.status} ·{" "}
-                      {formatBrlFromCents(payment.amount_cents)}
+                      {payment.provider === "mock"
+                        ? "Pagamento simulado"
+                        : "Mercado Pago"}{" "}
+                      · {paymentStatusLabels[payment.status] ?? payment.status}{" "}
+                      · {formatBrlFromCents(payment.amount_cents)}
                     </span>
                     <time dateTime={payment.created_at}>
                       {dateFormat.format(new Date(payment.created_at))}

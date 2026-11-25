@@ -4,6 +4,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { Check, KeyRound, Mail, ShieldCheck } from "lucide-react";
 import { createSupabaseBrowserClient } from "../../lib/supabase/client";
 import { AuthField } from "./AuthField";
+import { verifyCurrentPassword } from "./password-actions";
 import styles from "../account/account.module.css";
 
 function authMessage(error: { code?: string; message?: string }) {
@@ -112,6 +113,22 @@ export function AccountSecurity({
       });
     setBusy(true);
     try {
+      // The current password is checked on the server before any change.
+      const verified = await verifyCurrentPassword(currentPassword).catch(
+        () => ({ ok: false, reason: "unavailable" as const }),
+      );
+      if (!verified.ok) {
+        setPasswordFeedback({
+          ok: false,
+          text:
+            verified.reason === "rate_limited"
+              ? "Muitas tentativas seguidas. Aguarde alguns minutos e tente de novo."
+              : verified.reason === "unavailable"
+                ? "Não foi possível confirmar a senha agora. Tente de novo."
+                : "A senha atual não confere.",
+        });
+        return;
+      }
       if (needsReauthCode) {
         if (!reauthCode.trim()) {
           setPasswordFeedback({

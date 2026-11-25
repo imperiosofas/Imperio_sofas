@@ -85,6 +85,8 @@ export function CatalogProductGrid({
               productId={product.id}
               initial={favorites.has(product.id)}
               returnTo={`/produto/${product.slug}`}
+              productName={product.name}
+              className={styles.favoriteSlot}
             />
           </li>
         );

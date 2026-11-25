@@ -422,3 +422,12 @@
     transition: none;
   }
 }
+
+/* Form labels and hints come from AuthField, styled for the light login
+   card; on the dark account panels they need light colours (contrast). */
+.panel label {
+  color: #e9e3d6;
+}
+.panel span[id$="-hint"] {
+  color: #b9b2a3;
+}

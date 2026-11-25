@@ -31,7 +31,11 @@ export function CartExperience({
   );
   function change(item: CartItem, quantity: number) {
     startTransition(async () => {
-      const result = await setCartItem(item.variant_id, quantity);
+      // A failed request (offline, timeout) must not replace the page.
+      const result = await setCartItem(item.variant_id, quantity).catch(() => ({
+        ok: false,
+        message: "Sem conexão. Confira sua internet e tente de novo.",
+      }));
       setNotice(result.message);
       if (result.ok) {
         window.dispatchEvent(new Event("cart:changed"));
@@ -142,9 +146,10 @@ export function CartExperience({
                   <strong>{formatBrlFromCents(total)}</strong>
                 </div>
                 <p>
-                  Retirada não tem frete. Para entrega, solicite a cotação
-                  abaixo, aguarde a resposta da loja e aceite em Minhas entregas
-                  antes de pagar.
+                  Sem cotação de entrega aceita, o pedido segue como retirada,
+                  sem frete. Para receber em casa, solicite a cotação abaixo,
+                  aguarde a resposta da loja e aceite em Minhas entregas antes
+                  de pagar.
                 </p>
                 <Link href="/checkout">Finalizar compra</Link>
                 <Link href="/loja">Continuar explorando a loja</Link>

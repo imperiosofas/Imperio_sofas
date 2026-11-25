@@ -72,17 +72,31 @@ function getSupabaseClient() {
 
 async function toCatalogProduct(row: ProductRow): Promise<CatalogProduct> {
   const client = getSupabaseClient();
-  const media = await Promise.all(
-    row.media.map(async ({ storage_path, alt }) => {
-      const { data, error } = await client.storage
-        .from("catalog-images")
-        .createSignedUrl(storage_path, 15 * 60);
-      if (error || !data?.signedUrl) {
-        throw new Error("Não foi possível carregar as imagens do produto.");
-      }
-      return { src: data.signedUrl, alt };
-    }),
-  );
+  // One request signs every image of the product. A missing file must not
+  // take the product (or the store) down: skip it and log the path.
+  const paths = row.media.map((item) => item.storage_path);
+  const signed = new Map<string, string>();
+  if (paths.length) {
+    const { data, error } = await client.storage
+      .from("catalog-images")
+      .createSignedUrls(paths, 15 * 60);
+    if (error || !data) {
+      console.warn("catalog: image signing failed", { product: row.slug });
+    } else {
+      data.forEach((item, index) => {
+        if (!item.error && item.signedUrl)
+          signed.set(paths[index], item.signedUrl);
+        else
+          console.warn("catalog: image unavailable", {
+            storage_path: paths[index],
+          });
+      });
+    }
+  }
+  const media = row.media.flatMap(({ storage_path, alt }) => {
+    const src = signed.get(storage_path);
+    return src ? [{ src, alt }] : [];
+  });
 
   return {
     id: row.id,
@@ -113,10 +127,19 @@ async function toListing(
     const { data: urls, error } = await getSupabaseClient()
       .storage.from("catalog-images")
       .createSignedUrls(paths, 15 * 60);
-    if (error || !urls || urls.some((item) => item.error || !item.signedUrl)) {
-      throw new Error("Não foi possível carregar as imagens dos produtos.");
+    if (error || !urls) {
+      // Storage unavailable: show the listing without photos rather than a 500.
+      console.warn("catalog: image signing failed for the listing");
+    } else {
+      urls.forEach((item, index) => {
+        if (!item.error && item.signedUrl)
+          signed.set(paths[index], item.signedUrl);
+        else
+          console.warn("catalog: image unavailable", {
+            storage_path: paths[index],
+          });
+      });
     }
-    urls.forEach((item, index) => signed.set(paths[index], item.signedUrl!));
   }
   return {
     total: data.total,
@@ -137,10 +160,10 @@ async function toListing(
       status: "active" as const,
       priceCents: row.price_cents,
       stockStatus: row.stock_status,
-      media: row.media.map((item) => ({
-        src: signed.get(item.storage_path)!,
-        alt: item.alt,
-      })),
+      media: row.media.flatMap((item) => {
+        const src = signed.get(item.storage_path);
+        return src ? [{ src, alt: item.alt }] : [];
+      }),
     })),
   };
 }

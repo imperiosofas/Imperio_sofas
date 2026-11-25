@@ -8,6 +8,7 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
+import { unstable_rethrow } from "next/navigation";
 import { saveProduct } from "./actions";
 import styles from "./admin.module.css";
 
@@ -34,7 +35,14 @@ export function ProductDetailsForm({ children }: { children: ReactNode }) {
       const result = await saveProduct(formData);
       setMessage(result.message);
       requestAnimationFrame(() => alertRef.current?.focus());
-    } catch {
+    } catch (error) {
+      // A successful save ends in redirect(), which Next.js already performs;
+      // unstable_rethrow throws only for that kind of internal error.
+      try {
+        unstable_rethrow(error);
+      } catch {
+        return;
+      }
       setMessage("Não foi possível concluir a operação. Tente novamente.");
       requestAnimationFrame(() => alertRef.current?.focus());
     } finally {

@@ -245,8 +245,21 @@ export default async function CheckoutPage() {
               <section className={styles.panel}>
                 <h2>Retirada</h2>
                 <p className={styles.lead}>
-                  Você retira o pedido no local escolhido ao lado, sem frete. A
-                  loja avisa quando estiver pronto.
+                  Sem uma cotação de entrega aceita, este pedido é para
+                  retirada: você retira no local escolhido nesta página, sem
+                  frete. A loja avisa quando estiver pronto.
+                </p>
+                <p className={styles.lead}>
+                  {awaitingResponse
+                    ? "Sua cotação de entrega ainda aguarda resposta da loja. Para receber em casa, aceite a cotação em Minhas entregas antes de pagar. "
+                    : "Prefere receber em casa? Solicite a cotação de entrega no carrinho antes de pagar. "}
+                  <Link
+                    href={awaitingResponse ? "/conta/entregas" : "/carrinho"}
+                  >
+                    {awaitingResponse
+                      ? "Ver minhas entregas"
+                      : "Voltar ao carrinho"}
+                  </Link>
                 </p>
               </section>
             )}

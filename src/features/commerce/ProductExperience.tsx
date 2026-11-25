@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -42,6 +42,14 @@ export function ProductExperience({
   const [photo, setPhoto] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [notice, setNotice] = useState("");
+  // The button is disabled while the request runs, which drops keyboard focus
+  // to the page body; move it to the result message instead (also scrolls it
+  // into view when it sits below the fold).
+  const [noticeSeq, setNoticeSeq] = useState(0);
+  const noticeRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (noticeSeq > 0) noticeRef.current?.focus();
+  }, [noticeSeq]);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
   const variant = product.variants.find((item) => item.id === selected)!;
@@ -283,7 +291,15 @@ export function ProductExperience({
                 disabled={pending || variant.stock_status === "unavailable"}
                 onClick={() =>
                   startTransition(async () => {
-                    const result = await addCartItem(selected, quantity);
+                    // A failed request (offline, timeout) must not replace the page.
+                    const result = await addCartItem(selected, quantity).catch(
+                      () => ({
+                        ok: false,
+                        requiresLogin: false,
+                        message:
+                          "Sem conexão. Confira sua internet e tente de novo.",
+                      }),
+                    );
                     if (result.requiresLogin) {
                       router.push(
                         `/conta?next=${encodeURIComponent(returnTo)}`,
@@ -291,6 +307,7 @@ export function ProductExperience({
                       return;
                     }
                     setNotice(result.message);
+                    setNoticeSeq((n) => n + 1);
                     if (result.ok) {
                       window.dispatchEvent(new Event("cart:changed"));
                       router.refresh();
@@ -302,7 +319,12 @@ export function ProductExperience({
                 <ArrowRight size={18} />
               </button>
             </div>
-            <div className={styles.notice} role="status">
+            <div
+              ref={noticeRef}
+              className={styles.notice}
+              role="status"
+              tabIndex={-1}
+            >
               {notice}
               {notice === "Adicionado ao carrinho." && (
                 <>
