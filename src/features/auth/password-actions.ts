@@ -10,8 +10,9 @@ export type CurrentPasswordCheck = {
 
 /**
  * Confirms the signed-in user's current password before a password change.
- * This is a UX guard: the server-side enforcement is Supabase's "secure
- * password change" setting (the client also sends `current_password`). It
+ * This is a UX guard: the server-side enforcement is Supabase's "require
+ * current password when updating" setting (the client also sends
+ * `current_password`). It
  * signs in with a throwaway, non-persistent client and ends that extra
  * session right away.
  */

@@ -19,6 +19,10 @@ function authMessage(error: { code?: string; message?: string }) {
       return "Por segurança, confirme sua identidade pelo e-mail da conta.";
     case "reauth_nonce_missing":
       return "Informe o código enviado para confirmar esta alteração.";
+    case "current_password_required":
+      return "Informe a senha atual para trocar a senha.";
+    case "current_password_invalid":
+      return "A senha atual não confere.";
     case "reauthentication_not_valid":
       return "O código não é válido. Confira a mensagem recebida e tente novamente.";
     default:

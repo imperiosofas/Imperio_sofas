@@ -12,12 +12,10 @@ os achados com status), `SECURITY_AUDIT.md`.
 ## 1. Veredito
 
 **Não aprovado para produção ainda.** Não há P0 aberto. Os P1 de código foram
-corrigidos e retestados, mas ficam dois P1 que dependem de decisão/configuração:
-
-- **QA-01 (P1, configuração):** a troca de senha só passa a exigir a senha atual no
-  servidor com "Secure password change" ligado no Supabase. O app já confere a senha
-  e já envia `current_password`, mas a conferência do app sozinha não impede quem
-  tiver uma sessão roubada.
+corrigidos e retestados. QA-01 (senha atual na troca de senha) foi fechado no TESTE
+ligando "Require current password when updating" no Supabase (4/4 testes, inclusive
+redefinição por e-mail); precisa da mesma opção no Supabase de produção. Fica um P1
+que depende de decisão:
 
 - **PERF-01 (P1, decisão):** imagens sem otimização deixam `/loja` lenta no celular
   (LCP 6.8–7.2 s). Precisa decidir entre bucket de imagens público/CDN ou manter URLs
@@ -43,7 +41,7 @@ Pagamento e estoque (migrações `20261125120000_payment_and_inventory_hardening
 e `20261125130000_payment_event_review_fixes.sql`, aplicadas no TESTE): DB2-01,
 DB2-02, DB2-03, DB2-04, DB2-07 (deadlock de webhooks), DB2-08.
 
-Código: SEC2-04, QA-01 (mitigado no app), QA-02, QA-04, QA-05, DB2-05 (UX-02/PERF-05), UX-01, UX-03,
+Código: SEC2-04, QA-01 (app + configuração do Supabase TESTE), QA-02, QA-04, QA-05, DB2-05 (UX-02/PERF-05), UX-01, UX-03,
 UX-06, UX-07, UX-08, plural do admin, A11Y-01, A11Y-02 (adicionar ao carrinho),
 A11Y-03, A11Y-04, A11Y-05 (nomes), RESP-01, RESP-02, RESP-03 ("ao lado"), PERF-02
 (assinatura de imagens em lote), QA-07, QA-08, QA-09.
