@@ -121,7 +121,11 @@ test("Scenario B - existing customer", async ({ page, browser }) => {
   const wc = await page
     .locator('[role="alert"], [role="status"]')
     .allInnerTexts();
-  record("B4b-password-wrong-current", "INFO", wc.join("|"));
+  record(
+    "B4b-password-wrong-current",
+    wc.some((t) => /senha atual não confere/.test(t)) ? "PASS" : "FAIL",
+    wc.join("|"),
+  );
   // B4c valid change
   await page.locator("#account-current-password").fill(u.password);
   await page.getByRole("button", { name: /Alterar senha/ }).click();
