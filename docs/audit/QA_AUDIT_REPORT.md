@@ -11,29 +11,33 @@ os achados com status), `SECURITY_AUDIT.md`.
 
 ## 1. Veredito
 
-**Não aprovado para produção ainda.** Não há P0 aberto. Os P1 de código foram
-corrigidos e retestados. QA-01 (senha atual na troca de senha) foi fechado no TESTE
-ligando "Require current password when updating" no Supabase (4/4 testes, inclusive
-redefinição por e-mail); precisa da mesma opção no Supabase de produção. Fica um P1
-que depende de decisão:
+**Aprovado no TESTE/staging; ainda não liberado para produção.** Não há P0 nem
+P1 aberto no código ou no ambiente de teste:
 
-- **PERF-01 (P1, decisão):** imagens sem otimização deixam `/loja` lenta no celular
-  (LCP 6.8–7.2 s). Precisa decidir entre bucket de imagens público/CDN ou manter URLs
-  assinadas.
+- QA-01 (senha atual na troca de senha) fechado no TESTE com "Require current
+  password when updating" (4/4 testes, inclusive redefinição por e-mail).
+- PERF-01 (imagens) fechado e validado no staging com rota de imagens em cache, sem
+  tornar o bucket público (`PERF_IMAGES_2026-11-25.md`).
+
+A liberação para produção depende de passos de go-live e de itens externos:
+
+- **Go-live:** ligar "Require current password when updating" no Supabase de
+  produção; aplicar todas as migrações (inclusive `20261125120000` e
+  `20261125130000`); acompanhar a cota de otimização de imagens da Vercel.
 - **Bloqueios externos:** credenciais de produção do Mercado Pago, `RESEND_API_KEY`,
   decisões comerciais (parcelamento, boleto × reserva) e aplicação das migrações no
   Supabase de produção.
 
 ## 2. Números
 
-| Frente                                                   | Verificações                                               | Resultado                                                                                                                             |
-| -------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Funcional E2E (cenários A, B, D, E + varredura de links) | 92 verificações em 9 specs                                 | 89 PASS, 3 FAIL — todos QA-03 (P3, HTTP 200 em página "não encontrado")                                                               |
-| Banco / concorrência (cenário C)                         | 21 testes + 15 rodadas de webhooks concorrentes            | Antes: 12 PASS / 6 FAIL (18 testes). Depois das 2 migrações: todos PASS, exceto C-18 parcial (P3); 0 deadlocks em 15 rodadas — ver §4 |
-| Segurança defensiva                                      | 6 frentes + 208 verificações de autorização                | 0 desvios; 4 achados (1 P2 corrigido, 3 P3 abertos)                                                                                   |
-| Acessibilidade (axe + teclado + zoom 200%)               | todas as páginas da loja, conta, checkout e admin          | 3 P1 corrigidos; P2/P3 restantes em `BUG_TRACKING.md`                                                                                 |
-| Responsivo (320 → 1920 px, 9 larguras)                   | todas as rotas principais                                  | sem quebra de layout; alvos de toque e teclado corrigidos                                                                             |
-| Lighthouse mobile (site publicado, antes das correções)  | `/` 76 · `/loja` 69–73 · produto 81–86 · `/carrinho` 75–83 | PERF-01 é o principal fator                                                                                                           |
+| Frente                                                                              | Verificações                                               | Resultado                                                                                                                             |
+| ----------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Funcional E2E (cenários A, B, D, E + varredura de links)                            | 92 verificações em 9 specs                                 | 89 PASS, 3 FAIL — todos QA-03 (P3, HTTP 200 em página "não encontrado")                                                               |
+| Banco / concorrência (cenário C)                                                    | 21 testes + 15 rodadas de webhooks concorrentes            | Antes: 12 PASS / 6 FAIL (18 testes). Depois das 2 migrações: todos PASS, exceto C-18 parcial (P3); 0 deadlocks em 15 rodadas — ver §4 |
+| Segurança defensiva                                                                 | 6 frentes + 208 verificações de autorização                | 0 desvios; 4 achados (1 P2 corrigido, 3 P3 abertos)                                                                                   |
+| Acessibilidade (axe + teclado + zoom 200%)                                          | todas as páginas da loja, conta, checkout e admin          | 3 P1 corrigidos; P2/P3 restantes em `BUG_TRACKING.md`                                                                                 |
+| Responsivo (320 → 1920 px, 9 larguras)                                              | todas as rotas principais                                  | sem quebra de layout; alvos de toque e teclado corrigidos                                                                             |
+| Lighthouse mobile (site publicado; `/loja` depois de PERF-01: 79–83, LCP 3,1–3,2 s) | `/` 76 · `/loja` 69–73 · produto 81–86 · `/carrinho` 75–83 | PERF-01 é o principal fator                                                                                                           |
 
 ## 3. Corrigido nesta rodada
 
