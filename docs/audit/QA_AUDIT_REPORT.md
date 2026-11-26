@@ -19,14 +19,12 @@ P1 aberto no código ou no ambiente de teste:
 - PERF-01 (imagens) fechado e validado no staging com rota de imagens em cache, sem
   tornar o bucket público (`PERF_IMAGES_2026-11-25.md`).
 
-A liberação para produção depende de passos de go-live e de itens externos:
+- QA-03 (HTTP 404 real para produto/categoria inexistente) corrigido em 2026-11-26.
 
-- **Go-live:** ligar "Require current password when updating" no Supabase de
-  produção; aplicar todas as migrações (inclusive `20261125120000` e
-  `20261125130000`); acompanhar a cota de otimização de imagens da Vercel.
-- **Bloqueios externos:** credenciais de produção do Mercado Pago, `RESEND_API_KEY`,
-  decisões comerciais (parcelamento, boleto × reserva) e aplicação das migrações no
-  Supabase de produção.
+A liberação para produção depende só de configuração e de itens externos, listados
+em `GO_LIVE_CHECKLIST.md` (plano Vercel, Supabase de produção, credenciais do
+Mercado Pago e do Resend, decisões comerciais). Relatório final:
+`PRODUCTION_READINESS_2026-11-26.md`.
 
 ## 2. Números
 
@@ -90,22 +88,27 @@ pedidos 2/2, produtos 63/63, estoque inalterado).
 - Testes ofensivos, força bruta e carga.
 - Navegadores Safari/Firefox reais (só Chromium via Playwright).
 
-## 6. Regressão final
+## 6. Regressão final (2026-11-26)
 
-Build de produção local com todas as correções, banco de TESTE já com as duas migrações:
+Build de produção local com todas as correções (inclui PERF-01 e QA-03), banco de
+TESTE com as duas migrações e "Require current password when updating" ligado.
 
-| Verificação                                               | Resultado                                           |
-| --------------------------------------------------------- | --------------------------------------------------- |
-| `npm run typecheck`                                       | OK                                                  |
-| `npm run lint`                                            | 0 erros (2 avisos antigos de `<img>` na landing)    |
-| Prettier nos arquivos alterados                           | OK                                                  |
-| Testes unitários (`node --test`, 19 arquivos)             | 146/146 PASS                                        |
-| `npm run build`                                           | OK                                                  |
-| E2E do repositório (`playwright.config.ts`)               | 39 PASS, 1 pulado (marcado no próprio arquivo)      |
-| E2E QA (`tests/e2e-qa`)                                   | 9/9 specs; 89 PASS, 3 FAIL = QA-03 (P3)             |
-| Banco (C-01 a C-21 + 15 rodadas de webhooks concorrentes) | todos PASS exceto C-18 parcial (P3)                 |
-| Teardown / resíduo no banco de TESTE                      | 0 (pedidos 2/2, produtos 63/63, estoque inalterado) |
+| Verificação                                                                               | Resultado                                                          |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Typecheck                                                                                 | OK                                                                 |
+| Lint                                                                                      | 0 erros (2 avisos antigos de `<img>` na landing)                   |
+| Testes unitários (`node --test`, 19 arquivos)                                             | 146/146 PASS                                                       |
+| Build de produção                                                                         | OK                                                                 |
+| E2E do repositório (`playwright.config.ts`)                                               | 39 PASS, 1 pulado (marcado no próprio arquivo)                     |
+| E2E QA (`tests/e2e-qa`, cenários A, B, D, E + links)                                      | 9/9 specs; **92 PASS, 0 FAIL**                                     |
+| Banco: concorrência e pagamentos (C-01 a C-21)                                            | 18/18 da suíte principal PASS                                      |
+| Webhooks simultâneos do mesmo pedido                                                      | 10 rodadas, 0 deadlocks, estoque exato                             |
+| Rota de imagens (publicado, rascunho, despublicado, inexistente, inválida, outro produto) | 11/11 PASS                                                         |
+| Troca de senha / redefinição por e-mail                                                   | 4/4 PASS                                                           |
+| 404 real (produto, categoria, produto excluído, rota inexistente)                         | PASS; páginas válidas continuam 200 com esqueleto de carregamento  |
+| Teardown / resíduo no banco de TESTE                                                      | 0 (pedidos 2/2, produtos 63/63, 105 variações, estoque inalterado) |
 
-Não verificado manualmente no navegador: o foco indo para a mensagem depois de
-"Adicionar ao carrinho" (A11Y-02) e os novos textos de retirada (UX-03); cobertos por
-typecheck/lint e pelos fluxos E2E que passam por essas telas.
+Não executado: `playwright.navigation.config.ts` (exige um build separado em
+`.next-nav-overflow-fix`); o comportamento que ele cobre (esqueleto na abertura
+direta do produto) foi conferido no HTML da página. Foco após "Adicionar ao
+carrinho" (A11Y-02) não foi conferido manualmente no navegador.

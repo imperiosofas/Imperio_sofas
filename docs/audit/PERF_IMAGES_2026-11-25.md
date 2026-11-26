@@ -126,3 +126,51 @@ voltaram ao normal (63 produtos, 105 variações, 122 fotos).
   de exposição após despublicar) ou subir de plano.
 - Em produção será preciso o mesmo deploy de código; nenhuma mudança de banco ou de
   bucket é necessária.
+
+## 7. Limites e custo da otimização de imagens na Vercel (pesquisa 2026-11-26)
+
+Fonte: documentação oficial da Vercel, "Image Optimization — Limits and Pricing" e
+"Hobby plan" (consultadas em 2026-11-26).
+
+**Como é cobrado**
+
+- Cada combinação foto × largura × qualidade × formato é uma entrada de cache.
+- **Transformação** = toda vez que a entrada não está em cache (MISS) ou expirou
+  (STALE). Também conta como escrita de cache.
+- Acesso em cache (HIT) não é transformação: conta como leitura de cache, e acessos
+  recentes na mesma região não são cobrados.
+- Redeploy não apaga o cache de imagens.
+
+**Limites e preços**
+
+| Plano | Transformações                                                | Leituras de cache | Escritas de cache | Ao passar do limite                                                                                                                                                    |
+| ----- | ------------------------------------------------------------- | ----------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hobby | 5.000/mês                                                     | 300.000/mês       | 100.000/mês       | fotos **novas** deixam de ser otimizadas e retornam erro 402 (o navegador mostra o texto alternativo); as já em cache continuam; sem cobrança; volta no ciclo seguinte |
+| Pro   | sem franquia própria; usa o crédito mensal de US$ 20 do plano | —                 | —                 | cobrado por uso: US$ 0,05–0,0812 por 1.000 transformações; US$ 0,40–0,64 por 1 milhão de leituras; US$ 4,00–6,40 por 1 milhão de escritas (varia por região)           |
+
+A página do plano Hobby não diz explicitamente, nas partes consultadas, se ele
+admite uso comercial; confirmar nos Termos de Serviço da Vercel.
+
+**Volume deste catálogo**
+
+- ~100 fotos publicadas. Larguras realmente pedidas pelo site: 192 (miniaturas),
+  384 (cards no celular), 512/640 (cards no desktop), 828/1080/1280 (foto principal
+  do produto). Na prática, até ~4–6 entradas por foto → **~400–600 entradas**.
+- Com cache de 30 min, uma entrada que continua sendo acessada é transformada de
+  novo a cada 30 min (até 48 vezes por dia).
+
+| Cenário                                                  | Transformações/mês (estimativa) | Hobby (5.000)            | Custo no Pro |
+| -------------------------------------------------------- | ------------------------------- | ------------------------ | ------------ |
+| Teste/staging (pouco acesso)                             | < 2.000                         | cabe                     | ~US$ 0       |
+| Loja pequena: ~150 entradas "quentes" durante ~14 h/dia  | ~150 × 28 × 30 ≈ 126.000        | **estoura em ~1–2 dias** | ~US$ 6–10    |
+| Pior caso: todas as ~600 entradas acessadas o tempo todo | ~600 × 48 × 30 ≈ 864.000        | estoura                  | ~US$ 43–70   |
+
+São estimativas de ordem de grandeza (não há dados de tráfego real). Leituras e
+escritas de cache ficam bem abaixo de US$ 1/mês nesses cenários.
+
+**Conclusão:** no Hobby, com cache de 30 min, a loja em produção esgotaria a cota em
+poucos dias e as fotos novas parariam de carregar. Recomendação: **plano Pro**
+(custo esperado de imagens na faixa de alguns dólares por mês, coberto em boa parte
+pelo crédito de US$ 20). Alternativa, se for ficar no Hobby: aumentar o cache para
+24 h (transformações caem ~48×) — mas o tempo máximo de exposição após despublicar
+um produto sobe na mesma proporção (até ~48 h).

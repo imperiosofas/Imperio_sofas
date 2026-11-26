@@ -1,5 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  catalogRouteExists,
+  catalogRouteTarget,
+} from "./lib/catalog-route-exists";
 import { supabaseCookieOptions } from "./lib/supabase/cookie-options";
 
 export async function proxy(request: NextRequest) {
@@ -14,6 +18,17 @@ export async function proxy(request: NextRequest) {
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
   if (!url || !key) return forward();
+
+  // QA-03: unknown product/category URLs get a real 404 (see the module).
+  const target = catalogRouteTarget(request.nextUrl.pathname);
+  if (target && (request.method === "GET" || request.method === "HEAD")) {
+    const exists = await catalogRouteExists(target.kind, target.slug, url, key);
+    if (exists === false) {
+      return NextResponse.rewrite(new URL("/_catalog-not-found", request.url), {
+        status: 404,
+      });
+    }
+  }
 
   let response = forward();
   const supabase = createServerClient(url, key, {
