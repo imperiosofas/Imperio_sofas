@@ -95,6 +95,9 @@ export async function POST(request: NextRequest) {
   if (error) return respond(500);
   const outcome = (data as { outcome?: string } | null)?.outcome ?? null;
   // Only the transition to paid sends the e-mail (duplicates are "already_paid").
-  if (outcome === "paid") after(() => sendOrderEmail(orderId.data, "paid"));
+  // A late payment that still found stock ("paid_late") is a paid order too.
+  // The Resend Idempotency-Key keeps it to one e-mail per order.
+  if (outcome === "paid" || outcome === "paid_late")
+    after(() => sendOrderEmail(orderId.data, "paid"));
   return respond(200, { outcome });
 }
