@@ -165,12 +165,52 @@ admite uso comercial; confirmar nos Termos de Serviço da Vercel.
 | Loja pequena: ~150 entradas "quentes" durante ~14 h/dia  | ~150 × 28 × 30 ≈ 126.000        | **estoura em ~1–2 dias** | ~US$ 6–10    |
 | Pior caso: todas as ~600 entradas acessadas o tempo todo | ~600 × 48 × 30 ≈ 864.000        | estoura                  | ~US$ 43–70   |
 
-São estimativas de ordem de grandeza (não há dados de tráfego real). Leituras e
-escritas de cache ficam bem abaixo de US$ 1/mês nesses cenários.
+**Premissas das estimativas** (todas a confirmar com tráfego real)
+
+| Premissa                             | Valor usado                             | Por que importa                                                     |
+| ------------------------------------ | --------------------------------------- | ------------------------------------------------------------------- |
+| Fotos publicadas                     | ~100                                    | cada foto vira várias entradas de cache                             |
+| Larguras realmente pedidas por foto  | 4–6                                     | definidas pelo `sizes` das páginas e pelos aparelhos dos visitantes |
+| Formato                              | só WebP                                 | um formato só → uma entrada por largura                             |
+| Validade do cache                    | 30 min                                  | cada entrada acessada é refeita no máximo 48×/dia                   |
+| Horas com movimento                  | ~14 h/dia                               | fora disso quase não há transformação                               |
+| Entradas "quentes" numa loja pequena | ~150                                    | produtos mais vistos; o resto é acessado raramente                  |
+| Região dos visitantes                | quase todos no Brasil (1 região da CDN) | outras regiões multiplicam as transformações                        |
+| Visitas/dia (para leituras de cache) | até ~3.000, ~15 fotos por visita        | define as leituras, não as transformações                           |
+
+**Custos que dependem do tráfego real**
+
+| Item                                        | Loja pequena (premissas acima)   | Pior caso                | Depende de                                                                 |
+| ------------------------------------------- | -------------------------------- | ------------------------ | -------------------------------------------------------------------------- |
+| Transformações                              | ~126.000/mês → US$ 6–10          | ~864.000/mês → US$ 43–70 | quantos produtos são vistos ao longo do dia                                |
+| Leituras de cache                           | ~1,35 milhão/mês → US$ 0,54–0,86 | proporcional às visitas  | número de visitas                                                          |
+| Escritas de cache                           | = transformações → US$ 0,50–0,81 | ~US$ 3,50–5,50           | igual às transformações                                                    |
+| Transferência de dados e requisições da CDN | não estimado                     | —                        | visitas × peso das páginas (~0,5 MB por página na 1ª visita, ~20 KB na 2ª) |
+
+Os valores de preço são os da página oficial da Vercel (faixa por região). A
+mensalidade do plano Pro em si está na página de preços da Vercel e não foi
+somada aqui.
+
+**O plano Pro é suficiente?**
+
+Sim, para o volume projetado. No Pro **não existe teto de transformações**: o uso é
+cobrado sob demanda e as fotos nunca param de carregar por cota (diferente do
+Hobby). Nas premissas da loja pequena, imagens custariam algo como US$ 7–12/mês
+somando transformações, leituras e escritas, dentro do crédito mensal de US$ 20
+do Pro — desde que o restante do uso (funções, transferência) não consuma esse
+crédito. No pior caso, ~US$ 47–77/mês só de imagens.
+
+**Como confirmar com tráfego real (primeira semana)**
+
+1. Painel da Vercel → Usage → Image Optimization: transformações, leituras e
+   escritas por dia.
+2. Multiplicar a média diária por 30 e comparar com a tabela acima.
+3. Configurar alerta de gasto (Spend Management) no time da Vercel.
+4. Se o custo de transformações ficar alto: aumentar o cache (ex.: 2 h reduz ~4×),
+   sabendo que o tempo máximo de exposição após despublicar sobe na mesma
+   proporção.
 
 **Conclusão:** no Hobby, com cache de 30 min, a loja em produção esgotaria a cota em
-poucos dias e as fotos novas parariam de carregar. Recomendação: **plano Pro**
-(custo esperado de imagens na faixa de alguns dólares por mês, coberto em boa parte
-pelo crédito de US$ 20). Alternativa, se for ficar no Hobby: aumentar o cache para
-24 h (transformações caem ~48×) — mas o tempo máximo de exposição após despublicar
-um produto sobe na mesma proporção (até ~48 h).
+poucos dias e as fotos novas parariam de carregar. **Plano Pro recomendado e
+suficiente.** Se, por algum motivo, for ficar no Hobby: aumentar o cache para 24 h
+(transformações caem ~48×), aceitando até ~48 h de exposição após despublicar.

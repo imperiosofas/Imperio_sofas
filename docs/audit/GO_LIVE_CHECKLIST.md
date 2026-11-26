@@ -1,97 +1,106 @@
-# GO_LIVE_CHECKLIST — Império Sofás (2026-11-26)
+# GO_LIVE_CHECKLIST — Império Sofás (revisado em 2026-11-26)
 
-Tudo abaixo depende do responsável pelo projeto, do cliente ou de credenciais
-externas. Nada disso foi feito em produção. Segredos (chaves, tokens, senhas) são
-cadastrados **diretamente** no painel de cada serviço pelo dono da conta — nunca
-por e-mail, chat ou repositório.
+Versão validada no staging: commit **`ec407a9`** (branch `staging`). Os commits
+posteriores mudam só documentação e o script `check:production` (não o que roda na
+loja).
 
-Legenda: ☐ pendente · ☑ já resolvido · **Dono** = quem precisa agir.
+Nada desta lista foi feito em produção. Segredos (chaves, tokens, senhas) são
+cadastrados **direto no painel de cada serviço** pelo dono da conta — nunca por
+e-mail, chat ou repositório.
 
-Substitui, para o go-live, a lista antiga `docs/production-blockers.md` (02/10),
-que ficou desatualizada.
+**Quem faz:** **Você** = responsável pelo projeto · **Cliente** = Império Sofás ·
+**Externo** = depende de credencial/conta de terceiro (Mercado Pago, Resend,
+Vercel, Supabase) · **Eu** = posso fazer com sua autorização explícita.
 
-## 1. Já resolvido (não precisa repetir)
+Já resolvido: dados da empresa, revisão jurídica, catálogo no TESTE, Mercado Pago
+validado com credenciais de teste, auditoria QA e PERF-01 (staging aprovado).
 
-- ☑ Dados da empresa e revisão jurídica dos textos (termos, privacidade, trocas).
-- ☑ Catálogo sincronizado no TESTE (preços revisados; estoque provisório 10).
-- ☑ Fluxo Mercado Pago validado no TESTE com credenciais de teste (pedido pago via
-  webhook).
-- ☑ Correções da auditoria QA e PERF-01 validadas no staging.
+---
 
-## 2. Vercel
+## Fase 1 — Decisões (antes de tudo)
 
-| ☐   | Item                                                                                                                     | Dono           | Observação                                                                                                                                                                                                                                                                                                                          |
-| --- | ------------------------------------------------------------------------------------------------------------------------ | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ☐   | **Plano Pro** no time que vai hospedar a loja                                                                            | Você           | O time "Imperio Sofas" está no Hobby. A cota de otimização de imagens do Hobby (5.000 transformações/mês) se esgota rápido numa loja com tráfego, e então **fotos novas param de carregar (erro 402)**. Confirme também nos Termos da Vercel se o Hobby admite uso comercial. Estimativa de custo em `PERF_IMAGES_2026-11-25.md` §7 |
-| ☐   | Definir qual projeto/branch será produção (hoje a branch de produção do projeto de teste é `staging`)                    | Você           | O `main` do GitHub ainda é o código antigo                                                                                                                                                                                                                                                                                          |
-| ☐   | Região das funções = região do Supabase de produção (ex.: `gru1` São Paulo)                                              | Você           | PERF-04: reduz a latência de cada página                                                                                                                                                                                                                                                                                            |
-| ☐   | Variáveis de ambiente de produção (tabela da §6)                                                                         | Você           | `NEXT_PUBLIC_*` como tipo Config                                                                                                                                                                                                                                                                                                    |
-| ☐   | Domínio: decidir como o e-commerce entra no lugar da landing `www.imperiosofas.com.br` (outra conta Vercel), DNS e HTTPS | Você + cliente | A landing atual não foi tocada                                                                                                                                                                                                                                                                                                      |
-| ☐   | Acompanhar o uso de "Image Optimization" na primeira semana                                                              | Você           | Se ficar alto: plano maior ou cache maior (aumenta o tempo de exposição após despublicar)                                                                                                                                                                                                                                           |
+| #   | Tarefa                                                                                                 | Quem           |
+| --- | ------------------------------------------------------------------------------------------------------ | -------------- |
+| 1.1 | Parcelamento: até quantas vezes, com ou sem juros                                                      | Cliente        |
+| 1.2 | Boleto: aceitar ou não (a reserva do estoque dura 30 min)                                              | Cliente        |
+| 1.3 | Bling: usar agora ou depois? (a loja funciona sem; o `check:production` só exige se for configurado)   | Você + Cliente |
+| 1.4 | Domínio: como o e-commerce substitui a landing `www.imperiosofas.com.br` (outra conta Vercel) e quando | Você + Cliente |
+| 1.5 | Qual branch/projeto Vercel será produção (`main` hoje tem código antigo)                               | Você           |
 
-## 3. Supabase de produção
+## Fase 2 — Contas e planos
 
-| ☐   | Item                                                                                                                       | Dono                                       | Observação                                              |
-| --- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------- |
-| ☐   | Criar/definir o projeto de **produção** (separado do TESTE `qsafyqsskwbjnailgoev`)                                         | Você                                       | Hoje só existe o TESTE                                  |
-| ☐   | Aplicar as 42 migrações de `supabase/migrations` em ordem (inclui `20261125120000` e `20261125130000`)                     | Você (ou eu, com sua autorização e acesso) | Cria tabelas, RLS, RPCs, pg_cron de expiração           |
-| ☐   | Auth → Email: **Require current password when updating = ligado**, Secure password change = ligado, Confirm email = ligado | Você                                       | Igual ao TESTE (QA-01)                                  |
-| ☐   | Auth → URL Configuration: Site URL e Redirect URLs do domínio de produção                                                  | Você                                       |                                                         |
-| ☐   | Auth → SMTP próprio (Resend) para e-mails de cadastro e recuperação                                                        | Você                                       | O SMTP padrão do Supabase tem limite baixo              |
-| ☐   | MFA: manter opcional (não obrigatório)                                                                                     | Você                                       | Decisão já tomada                                       |
-| ☐   | Storage: bucket `catalog-images` **privado** (as migrações já criam as policies)                                           | Você                                       | Não tornar público — a loja usa a rota `/media/catalog` |
-| ☐   | Cadastrar o administrador (tabela `catalog_admins`)                                                                        | Você                                       |                                                         |
-| ☐   | Carregar catálogo real: produtos, fotos, preços e **estoque real** (no TESTE está 10 provisório)                           | Você + cliente                             |                                                         |
-| ☐   | Backups / point-in-time recovery conforme o plano do Supabase                                                              | Você                                       |                                                         |
+| #   | Tarefa                                                                                                                     | Quem                            |
+| --- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| 2.1 | Vercel: time em **plano Pro** (Hobby esgota a cota de imagens em dias; confirmar nos Termos se Hobby admite uso comercial) | Você (Externo: Vercel)          |
+| 2.2 | Vercel: alerta de gasto (Spend Management)                                                                                 | Você                            |
+| 2.3 | Supabase: criar o projeto de **produção**, separado do TESTE, na região de São Paulo se possível                           | Você (Externo: Supabase)        |
+| 2.4 | Supabase: backups / point-in-time recovery conforme o plano                                                                | Você                            |
+| 2.5 | Resend: verificar o domínio do remetente                                                                                   | Você (Externo: Resend)          |
+| 2.6 | Mercado Pago: conta de produção ativa e aprovada para receber                                                              | Cliente (Externo: Mercado Pago) |
 
-## 4. Mercado Pago
+## Fase 3 — Banco de produção
 
-| ☐   | Item                                                                                                | Dono                                    | Observação                             |
-| --- | --------------------------------------------------------------------------------------------------- | --------------------------------------- | -------------------------------------- |
-| ☐   | Credenciais **de produção** (Access Token) e segredo do webhook de produção                         | Cliente (conta MP) → cadastra na Vercel | `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET` |
-| ☐   | Webhook de produção apontando para `https://<domínio>/api/webhooks/mercadopago` (evento Pagamentos) | Cliente                                 |                                        |
-| ☐   | `MP_ENV=production` e `MP_EXPECTED_COLLECTOR_ID` = ID da conta recebedora                           | Você                                    | Impede pagamento em conta errada       |
-| ☐   | Decisão comercial: parcelamento (até 18x com juros?)                                                | Cliente                                 |                                        |
-| ☐   | Decisão comercial: aceitar boleto apesar da reserva de 30 min                                       | Cliente                                 |                                        |
-| ☐   | 1 compra real de valor baixo + estorno, feita por vocês                                             | Você + cliente                          | Eu não faço pagamentos reais           |
+| #   | Tarefa                                                                                                                     | Quem                                 |
+| --- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| 3.1 | Aplicar as 42 migrações de `supabase/migrations`, em ordem (inclui `20261125120000` e `20261125130000`)                    | Você, ou Eu com autorização e acesso |
+| 3.2 | Auth → Email: **Require current password when updating = ligado**; Secure password change = ligado; Confirm email = ligado | Você                                 |
+| 3.3 | Auth → URL Configuration: Site URL e Redirect URLs do domínio final                                                        | Você                                 |
+| 3.4 | Auth → SMTP próprio (Resend) para cadastro e recuperação de senha                                                          | Você                                 |
+| 3.5 | MFA opcional (não obrigatório)                                                                                             | Você                                 |
+| 3.6 | Storage: bucket `catalog-images` **privado** (não tornar público)                                                          | Você                                 |
+| 3.7 | Cadastrar o administrador (`catalog_admins`)                                                                               | Você                                 |
+| 3.8 | Catálogo real: produtos, fotos, preços e **estoque real** (no TESTE é 10 provisório)                                       | Você + Cliente                       |
 
-## 5. E-mail (Resend)
+## Fase 4 — Credenciais e variáveis na Vercel de produção
 
-| ☐   | Item                                                                              | Dono |
-| --- | --------------------------------------------------------------------------------- | ---- |
-| ☐   | Domínio do remetente verificado no Resend                                         | Você |
-| ☐   | `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `STORE_NOTIFY_EMAIL` na Vercel de produção | Você |
-| ☐   | Teste: pedido gera e-mail para o cliente e para a loja                            | Você |
+Cada valor é colado pelo dono da conta direto na Vercel. `NEXT_PUBLIC_*` como tipo
+Config.
 
-## 6. Variáveis de ambiente de produção (Vercel)
+| #    | Variável                                                                                  | Valor / origem                                         | Quem                            |
+| ---- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------ | ------------------------------- |
+| 4.1  | `APP_ENV`                                                                                 | `production`                                           | Você                            |
+| 4.2  | `APP_URL`                                                                                 | domínio final com `https://`                           | Você                            |
+| 4.3  | `CATALOG_SOURCE`                                                                          | `supabase`                                             | Você                            |
+| 4.4  | `INTEGRATION_MODE`                                                                        | `live`                                                 | Você                            |
+| 4.5  | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` | Supabase de produção                                   | Você (Externo)                  |
+| 4.6  | `MP_ACCESS_TOKEN`                                                                         | Access Token **de produção**                           | Cliente (Externo: Mercado Pago) |
+| 4.7  | `MP_WEBHOOK_SECRET`                                                                       | assinatura secreta do webhook de produção              | Cliente (Externo)               |
+| 4.8  | `MP_ENV`                                                                                  | **`live`**                                             | Você                            |
+| 4.9  | `MP_EXPECTED_COLLECTOR_ID`                                                                | ID (user id) da conta que recebe                       | Cliente informa, Você cadastra  |
+| 4.10 | `RESEND_API_KEY`, `RESEND_FROM_EMAIL`                                                     | Resend                                                 | Você (Externo)                  |
+| 4.11 | `STORE_NOTIFY_EMAIL`                                                                      | e-mail da loja que recebe cópia dos pedidos (opcional) | Cliente informa                 |
+| 4.12 | `CRON_SECRET`                                                                             | texto aleatório com 32+ caracteres                     | Você                            |
+| 4.13 | `SENTRY_DSN`                                                                              | monitoramento de erros (opcional)                      | Você                            |
+| 4.14 | Bling (`BLING_*`, `INTEGRATION_ENCRYPTION_KEY`)                                           | só se 1.3 = usar agora; os 4 juntos                    | Você + Cliente                  |
+| 4.15 | Região das funções = região do Supabase (ex.: `gru1`)                                     | —                                                      | Você                            |
 
-| Variável                                                                                     | Origem                 | Obrigatória                                                                                                                                    |
-| -------------------------------------------------------------------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `APP_ENV=production`, `APP_URL` (domínio final)                                              | Você                   | Sim                                                                                                                                            |
-| `CATALOG_SOURCE=supabase`                                                                    | Você                   | Sim                                                                                                                                            |
-| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`    | Supabase de produção   | Sim                                                                                                                                            |
-| `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET`, `MP_ENV`, `MP_EXPECTED_COLLECTOR_ID`                 | Mercado Pago (cliente) | Sim                                                                                                                                            |
-| `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `STORE_NOTIFY_EMAIL`                                  | Resend                 | Sim                                                                                                                                            |
-| `CRON_SECRET` (32+ caracteres aleatórios)                                                    | Você                   | Sim                                                                                                                                            |
-| `QUOTE_SIGNING_SECRET`                                                                       | Você (aleatório)       | Sim (exigida pelo `check:production`)                                                                                                          |
-| `INTEGRATION_MODE=live`                                                                      | Você                   | Sim (exigida pelo `check:production`)                                                                                                          |
-| `BLING_CLIENT_ID`, `BLING_CLIENT_SECRET`, `BLING_REDIRECT_URI`, `INTEGRATION_ENCRYPTION_KEY` | Bling                  | **Decisão:** o script `check:production` exige, mas o código da loja ainda não usa o Bling. Ou fornecer, ou eu ajusto o script para não exigir |
-| `SENTRY_DSN`                                                                                 | Sentry                 | Opcional                                                                                                                                       |
-| `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED`, `NEXT_PUBLIC_AUTH_APPLE_ENABLED`                          | Você                   | Opcional (hoje desligados)                                                                                                                     |
+Conferência: `npm run check:production` com essas variáveis deve passar (ele não
+mostra os valores).
 
-## 7. Dia do go-live (ordem sugerida)
+## Fase 5 — Mercado Pago de produção
 
-1. Supabase de produção pronto (§3) e migrações aplicadas.
-2. Variáveis na Vercel (§6) e `npm run check:production` passando com elas.
-3. Deploy do mesmo commit validado no staging.
-4. Smoke test: loja, produto, carrinho, cadastro/login, troca de senha, admin,
-   upload de foto, 404 de produto inexistente.
-5. Compra real de valor baixo + estorno (§4).
-6. Domínio apontado (§2).
-7. Primeira semana: acompanhar erros, uso de imagens na Vercel e webhooks.
+| #   | Tarefa                                                                                   | Quem              |
+| --- | ---------------------------------------------------------------------------------------- | ----------------- |
+| 5.1 | Webhook de produção para `https://<domínio>/api/webhooks/mercadopago`, evento Pagamentos | Cliente (Externo) |
+| 5.2 | Aplicar as decisões 1.1 e 1.2 na conta (meios de pagamento, parcelas)                    | Cliente           |
 
-## 8. Melhorias abertas (não bloqueiam o go-live)
+## Fase 6 — Deploy e verificação
 
-P2/P3 listados em `BUG_TRACKING.md`: UX-04/05, A11Y-05/06/07, PERF-02/03/06,
-RESP-03, SEC2-01/02/03 (CSP com nonce, cookie de sessão, idade do timestamp do
-webhook), DB2-06/09, QA-06, QA-10.
+| #   | Tarefa                                                                                                                 | Quem                         |
+| --- | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| 6.1 | Deploy em produção do mesmo código validado (`ec407a9` + commits só de docs/script)                                    | Você (Eu só com autorização) |
+| 6.2 | Smoke test: loja, produto, 404 de produto inexistente, carrinho, cadastro/login, troca de senha, admin, upload de foto | Você ou Eu                   |
+| 6.3 | Testes pendentes de `PRE_LAUNCH_TESTS.md`: Safari, Firefox, carga (no staging)                                         | Você + Eu                    |
+| 6.4 | **Compra real de valor baixo + estorno**                                                                               | Você + Cliente               |
+| 6.5 | E-mails de pedido chegam ao cliente e à loja                                                                           | Você                         |
+
+## Fase 7 — Abertura
+
+| #   | Tarefa                                                                                      | Quem |
+| --- | ------------------------------------------------------------------------------------------- | ---- |
+| 7.1 | Apontar o domínio (decisão 1.4), HTTPS ativo                                                | Você |
+| 7.2 | Primeira semana: erros, webhooks, uso de imagens na Vercel (`PERF_IMAGES_2026-11-25.md` §7) | Você |
+
+---
+
+Melhorias abertas que **não bloqueiam** o go-live: ver `BUG_TRACKING.md` (P2/P3).

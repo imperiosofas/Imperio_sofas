@@ -70,8 +70,12 @@ Resumo de `GO_LIVE_CHECKLIST.md`:
 3. Mercado Pago: credenciais e webhook de produção, ID da conta recebedora,
    decisões de parcelamento e boleto, compra real de teste + estorno.
 4. Resend: domínio verificado e chaves.
-5. Decidir sobre o Bling (o `check:production` exige as variáveis, o código ainda
-   não usa).
+5. Bling: o `check:production` agora só exige as variáveis do Bling se a
+   integração for configurada (a loja não usa o Bling hoje). Mercado Pago em
+   produção exige `MP_ENV=live` e `MP_EXPECTED_COLLECTOR_ID` — o script passou a
+   conferir isso.
+6. Testes ainda pendentes antes da abertura: Safari, Firefox, carga e pagamento
+   real com estorno — roteiro em `PRE_LAUNCH_TESTS.md`.
 
 ## Limitações desta avaliação
 
