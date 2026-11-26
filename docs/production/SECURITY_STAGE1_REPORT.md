@@ -141,7 +141,7 @@ Build local com as dependências atualizadas, banco TESTE:
 | Lighthouse CI 0.16.1             | healthcheck OK, 3 relatórios gerados                                                                                                                                                                                                                                                                              |
 
 A remoção das variáveis vale no próximo deploy do staging; smoke test após o deploy
-desta etapa: **SMOKE**.
+desta etapa: deploy `ec73c43` "Ready" (só o projeto do time reportou — a landing não reage mais a push), CI quality + database verdes, 22 páginas sem erro (celular e desktop), rotas protegidas redirecionam, 404 corretos, webhook sem assinatura 401, imagens 200, landing 200.
 
 ## Pendências
 
