@@ -16,7 +16,8 @@
     "knip": "knip",
     "db:reset": "supabase db reset --local",
     "db:test": "supabase test db",
-    "check:production": "node scripts/check-production-ready.mjs"
+    "check:production": "node scripts/check-production-ready.mjs",
+    "check:migrations": "node scripts/verify-migrations.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",

@@ -100,3 +100,34 @@ test("optional settings only produce warnings", () => {
   assert.deepEqual(result.errors, []);
   assert.equal(result.warnings.length, 2);
 });
+
+test(".env.production.example lists every required production variable", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const { requiredForProduction } =
+    await import("../scripts/check-production-ready.mjs");
+  const template = await readFile(
+    new URL("../.env.production.example", import.meta.url),
+    "utf8",
+  );
+  const declared = new Set(
+    template
+      .split(/\r?\n/)
+      .map((line) => /^([A-Z][A-Z0-9_]*)=/.exec(line)?.[1])
+      .filter(Boolean),
+  );
+  for (const name of requiredForProduction)
+    assert.ok(declared.has(name), `${name} missing from the template`);
+  // The template must never carry something that looks like a real secret.
+  assert.doesNotMatch(
+    template,
+    /sb_secret_[A-Za-z0-9]{8,}|APP_USR-\d{6,}|re_[A-Za-z0-9]{12,}/,
+  );
+});
+
+test("a Mercado Pago TEST- token is refused in production", () => {
+  const result = checkProductionEnv({
+    ...complete,
+    MP_ACCESS_TOKEN: "TEST-0000-placeholder",
+  });
+  assert.ok(result.errors.some((e) => e.includes("TEST-")));
+});

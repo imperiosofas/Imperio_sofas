@@ -62,6 +62,17 @@ export function checkProductionEnv(env) {
 
   if (filled(env, "MP_ENV") && env.MP_ENV.trim() !== "live")
     errors.push("APP_ENV=production exige MP_ENV=live.");
+  // Legacy Mercado Pago test tokens start with TEST-. Current test-user
+  // credentials look like production ones (APP_USR-), so the runtime guard
+  // against them is MP_EXPECTED_COLLECTOR_ID (payments to any other account
+  // never mark an order as paid).
+  if (
+    filled(env, "MP_ACCESS_TOKEN") &&
+    /^TEST-/i.test(env.MP_ACCESS_TOKEN.trim())
+  )
+    errors.push(
+      "MP_ACCESS_TOKEN é uma credencial de teste (TEST-); use a de produção.",
+    );
   if (filled(env, "CRON_SECRET") && env.CRON_SECRET.trim().length < 32)
     errors.push("CRON_SECRET precisa ter pelo menos 32 caracteres.");
   if (filled(env, "APP_URL")) {

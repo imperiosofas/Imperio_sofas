@@ -1,5 +1,8 @@
 # Bloqueios de produção — Império Sofás
 
+> **Desatualizado (02/10/2026).** Situação atual e pendências de lançamento:
+> `docs/production/PRE_LAUNCH_AUDIT.md` e `docs/production/PRODUCTION_SETUP_RUNBOOK.md`.
+
 Este arquivo lista dependências que impedem ativar venda real ou declarar o sistema pronto para produção. Não há credenciais externas homologadas no estado atual. A ausência de uma credencial bloqueia a integração correspondente; não bloqueia a implementação de mocks, contratos e testes determinísticos.
 
 ## Bloqueios comerciais e cadastrais

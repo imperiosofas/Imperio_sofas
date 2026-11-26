@@ -1,0 +1,3 @@
+categoria_slug;produto_slug;produto_nome;produto_descricao;produto_status;sku;largura_cm;profundidade_cm;altura_cm;tecido;cor;preco;estoque;estoque_minimo;imagens;texto_alternativo
+sofas;exemplo-sofa-modelo;EXEMPLO Sofá Modelo (apagar);Descrição do produto para a página.;rascunho;EXEMPLO-SOFA-210;210;95;90;Suede;Cinza;2.799,00;;2;exemplo-sofa-1.webp|exemplo-sofa-2.webp;Sofá Modelo cinza de 2,10 m
+sofas;exemplo-sofa-modelo;EXEMPLO Sofá Modelo (apagar);Descrição do produto para a página.;rascunho;EXEMPLO-SOFA-250;250;95;90;Suede;Cinza;3.099,00;;2;;

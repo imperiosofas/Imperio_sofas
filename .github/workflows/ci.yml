@@ -68,3 +68,6 @@ jobs:
 
       - name: Unit tests
         run: node --test tests/*.test.mjs src/features/admin/logistics/*.test.mjs
+
+      - name: Migration inventory (offline)
+        run: npm run check:migrations

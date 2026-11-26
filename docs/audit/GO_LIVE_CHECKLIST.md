@@ -1,8 +1,14 @@
 # GO_LIVE_CHECKLIST — Império Sofás (revisado em 2026-11-26)
 
-Versão validada no staging: commit **`ec407a9`** (branch `staging`). Os commits
-posteriores mudam só documentação e o script `check:production` (não o que roda na
-loja).
+> **Atualização 2026-11-26:** a sequência detalhada de lançamento agora está em
+> `docs/production/PRODUCTION_SETUP_RUNBOOK.md` (com rollback em
+> `docs/production/ROLLBACK_PLAN.md`). Esta lista continua válida como resumo por
+> responsável; em caso de diferença, vale o runbook.
+
+Versão validada no staging: commit **`ec407a9`** (branch `staging`). Depois dele:
+scripts de verificação, testes, documentação e **uma correção no webhook** (e-mail
+de pagamento tardio), que precisa ir ao staging e ser validada antes do lançamento
+(`docs/production/PRE_LAUNCH_AUDIT.md`).
 
 Nada desta lista foi feito em produção. Segredos (chaves, tokens, senhas) são
 cadastrados **direto no painel de cada serviço** pelo dono da conta — nunca por
