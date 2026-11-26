@@ -40,7 +40,7 @@
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
     "@knip/mcp": "0.0.36",
-    "@lhci/cli": "0.15.1",
+    "@lhci/cli": "0.16.1",
     "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^24.13.3",
